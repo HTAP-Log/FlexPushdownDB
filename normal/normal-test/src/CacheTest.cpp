@@ -37,7 +37,7 @@ TEST_CASE ("CacheTest"
   cols.emplace_back("l_extendedprice");
   auto s3selectScan = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan",
                                                                        "mit-caching",
-                                                                       "test/a.tbl",
+                                                                       "lineitem.tbl",
                                                                        "select SUM(CAST(l_extendedprice AS FLOAT)) from S3Object",
                                                                        "a",
                                                                        cols,
@@ -84,7 +84,7 @@ TEST_CASE ("CacheTest"
 //  auto mgr2 = std::make_shared<OperatorManager>();
 ////  auto s3selectScan2 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan2",
 ////                                                                         "mit-caching",
-////                                                                         "test/a.tbl",
+////                                                                         "lineitemwithH.tbl",
 ////                                                                         "select  * from S3Object",
 ////                                                                         "a",
 ////                                                                         "all",
@@ -101,9 +101,15 @@ TEST_CASE ("CacheTest"
   for (int i=0; i<60; ++i) {
     colIndexList[i] = rand() % 8;
   }
-  //cache every time
-    auto start = std::chrono::system_clock::now();
+
+  std::ofstream outfile;
+
+  outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+
+   //cache every time
+  auto start = std::chrono::system_clock::now();
   for (int i=0; i<60; ++i) {
+      auto startTime = std::chrono::system_clock::now();
       int colIndex  = colIndexList[i];
       std::string colName = colList[colIndex];
       cols.clear();
@@ -113,11 +119,11 @@ TEST_CASE ("CacheTest"
       s3selectScan->setQuery(query);
       mgr->start();
       mgr->join();
-
-
-
-
       mgr->stop();
+      auto endTime = std::chrono::system_clock::now();
+      auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+
+      outfile << elapsedTime.count() << std::endl;
   }
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
@@ -136,6 +142,7 @@ TEST_CASE ("CacheTest"
 
 
     for (int i=0; i<60; ++i) {
+        auto startTime = std::chrono::system_clock::now();
         int colIndex  = colIndexList[i];
         std::string colName = colList[colIndex];
         cols.clear();
@@ -152,10 +159,15 @@ TEST_CASE ("CacheTest"
 
 
         mgr->stop();
+        auto endTime = std::chrono::system_clock::now();
+        auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+
+        outfile << elapsedTime.count() << std::endl;
     }
     end = std::chrono::system_clock::now();
     elapsed =
             std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::cout << elapsed.count() << '\n';
+    outfile.close();
   client.shutdown();
 }

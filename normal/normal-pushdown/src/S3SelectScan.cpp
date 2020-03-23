@@ -89,7 +89,11 @@ void S3SelectScan::onStart() {
   if (m_col.at(0)=="NA"){
       pushdown = true;
   }
+  std::ofstream outfile;
+
+  outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
   if (pushdown){
+      outfile << "miss,";
       Aws::String bucketName = Aws::String(s3Bucket_);
 
       SelectObjectContentRequest selectObjectContentRequest;
@@ -156,6 +160,7 @@ void S3SelectScan::onStart() {
       //no found
 
       if (cacheMap.empty() || cacheMap.find(cacheID) == cacheMap.end()) {
+          outfile << "miss,";
           Aws::String bucketName = Aws::String(s3Bucket_);
 
           SelectObjectContentRequest selectObjectContentRequest;
@@ -230,6 +235,7 @@ void S3SelectScan::onStart() {
           auto selectObjectContentOutcome = this->s3Client_->SelectObjectContent(selectObjectContentRequest);
 
       } else {
+          outfile << "hit,";
           std::shared_ptr<normal::core::TupleSet> tupleSet = cacheMap[cacheID];
           std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
           ctx()->tell(message);
@@ -238,6 +244,7 @@ void S3SelectScan::onStart() {
           this->ctx()->operatorActor()->quit();
       }
   }
+  outfile.close();
 
 }
 
