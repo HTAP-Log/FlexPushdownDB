@@ -123,39 +123,39 @@ TEST_CASE ("CacheTest"
     auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::cout << elapsed.count() << '\n';
   //push down every time
-//    start = std::chrono::system_clock::now();
-//    auto collate2 = std::make_shared<normal::pushdown::Collate>("collate");
-//    s3selectScan->produce(collate2);
-//
-//    collate2->consume(s3selectScan);
-//    auto mgr2 = std::make_shared<OperatorManager>();
-//
-//    mgr2->put(s3selectScan);
-//
-//    mgr2->put(collate2);
-//
-//
-//    for (int i=0; i<60; ++i) {
-//        int colIndex  = colIndexList[i];
-//        std::string colName = colList[colIndex];
-//        cols.clear();
-//        cols.emplace_back(colName);
-//        std::string query = "select SUM(CAST(" +colName+ " AS FLOAT)) from S3Object";
-//        s3selectScan->setCols({"NA"});
-//        s3selectScan->setQuery(query);
-//        mgr2->start();
-//        mgr2->join();
-//
-//        tuples = collate2->tuples();
-//
-//        val = std::stod(tuples->getValue("f0", 0));
-//
-//
-//        mgr->stop();
-//    }
-//    end = std::chrono::system_clock::now();
-//    elapsed =
-//            std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-//    std::cout << elapsed.count() << '\n';
+    start = std::chrono::system_clock::now();
+    auto collate2 = std::make_shared<normal::pushdown::Collate>("collate");
+    s3selectScan->produce(collate2);
+
+    collate2->consume(s3selectScan);
+    auto mgr2 = std::make_shared<OperatorManager>();
+
+    mgr2->put(s3selectScan);
+
+    mgr2->put(collate2);
+
+
+    for (int i=0; i<60; ++i) {
+        int colIndex  = colIndexList[i];
+        std::string colName = colList[colIndex];
+        cols.clear();
+        cols.emplace_back(colName);
+        std::string query = "select SUM(CAST(" +colName+ " AS FLOAT)) from S3Object";
+        s3selectScan->setCols({"NA"});
+        s3selectScan->setQuery(query);
+        mgr2->start();
+        mgr2->join();
+
+        tuples = collate2->tuples();
+
+        val = std::stod(tuples->getValue("f0", 0));
+
+
+        mgr->stop();
+    }
+    end = std::chrono::system_clock::now();
+    elapsed =
+            std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    std::cout << elapsed.count() << '\n';
   client.shutdown();
 }
