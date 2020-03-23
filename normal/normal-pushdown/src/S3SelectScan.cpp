@@ -58,93 +58,185 @@ using namespace Aws::S3;
 using namespace Aws::S3::Model;
 
 namespace normal::pushdown {
+//check if swap in or push down
+bool S3SelectScan::checkCache() {
+    std::unordered_map<std::string, std::shared_ptr<normal::core::TupleSet>> cacheMap = m_cache->m_cacheData;
+    int sizeOfQuery = m_col.size();
+    int match =0;
+    std::vector<std::string>::iterator ptr;
+    for (ptr=m_col.begin();ptr<m_col.end();ptr++){
+        if (!cacheMap.empty() && cacheMap.find(*ptr)!=cacheMap.end()){
+            match++;
+        }
+    }
+    if (match >=0){
+        return true;
+    } else{
+        return false;
+    }
+}
 
 void S3SelectScan::onStart() {
 
 
   //get tbl and col info
-  std::string colName = m_col;
   std::string tblName = m_tbl;
 
-  std::string cacheID = tblName + "." + colName;
+  std::string cacheID = tblName+m_col.at(0);
   std::unordered_map<std::string, std::shared_ptr<normal::core::TupleSet>> cacheMap = m_cache->m_cacheData;
-  //no found
-  if (cacheMap.empty() || cacheMap.find(cacheID)==cacheMap.end()) {
-    Aws::String bucketName = Aws::String(s3Bucket_);
+  auto cacheQueue = m_cache->m_cacheQueue;
+  bool pushdown = !checkCache();
+  if (m_col.at(0)=="NA"){
+      pushdown = true;
+  }
+  if (pushdown){
+      Aws::String bucketName = Aws::String(s3Bucket_);
 
-    SelectObjectContentRequest selectObjectContentRequest;
-    selectObjectContentRequest.SetBucket(bucketName);
-    selectObjectContentRequest.SetKey(Aws::String(s3Object_));
+      SelectObjectContentRequest selectObjectContentRequest;
+      selectObjectContentRequest.SetBucket(bucketName);
+      selectObjectContentRequest.SetKey(Aws::String(s3Object_));
 
-    selectObjectContentRequest.SetExpressionType(ExpressionType::SQL);
+      selectObjectContentRequest.SetExpressionType(ExpressionType::SQL);
 
-    selectObjectContentRequest.SetExpression(sql_.c_str());
+      selectObjectContentRequest.SetExpression(sql_.c_str());
 
-    CSVInput csvInput;
-    csvInput.SetFileHeaderInfo(FileHeaderInfo::USE);
-    csvInput.SetFieldDelimiter("|");
-    csvInput.SetRecordDelimiter("|\n");
-    InputSerialization inputSerialization;
-    inputSerialization.SetCSV(csvInput);
-    selectObjectContentRequest.SetInputSerialization(inputSerialization);
+      CSVInput csvInput;
+      csvInput.SetFileHeaderInfo(FileHeaderInfo::USE);
+      csvInput.SetFieldDelimiter("|");
+      csvInput.SetRecordDelimiter("|\n");
+      InputSerialization inputSerialization;
+      inputSerialization.SetCSV(csvInput);
+      selectObjectContentRequest.SetInputSerialization(inputSerialization);
 
-    CSVOutput csvOutput;
-    OutputSerialization outputSerialization;
-    outputSerialization.SetCSV(csvOutput);
-    selectObjectContentRequest.SetOutputSerialization(outputSerialization);
+      CSVOutput csvOutput;
+      OutputSerialization outputSerialization;
+      outputSerialization.SetCSV(csvOutput);
+      selectObjectContentRequest.SetOutputSerialization(outputSerialization);
 
-    std::vector<unsigned char> partial{};
-    S3SelectParser s3SelectParser{};
+      std::vector<unsigned char> partial{};
+      S3SelectParser s3SelectParser{};
 
-    SelectObjectContentHandler handler;
-    handler.SetRecordsEventCallback([&](const RecordsEvent &recordsEvent) {
-      auto payload = recordsEvent.GetPayload();
-      std::shared_ptr<normal::core::TupleSet> tupleSet = s3SelectParser.parsePayload(payload);
+      SelectObjectContentHandler handler;
+      handler.SetRecordsEventCallback([&](const RecordsEvent &recordsEvent) {
+          auto payload = recordsEvent.GetPayload();
+          std::shared_ptr<normal::core::TupleSet> tupleSet = s3SelectParser.parsePayload(payload);
+          tupleSet->printSchema();
+          std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
+          ctx()->tell(message);
 
-      std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
-      ctx()->tell(message);
-
-      //add to cache
-      if (m_cache->m_cacheData.empty() ||  m_cache->m_cacheData.find(cacheID)==cacheMap.end()){
-          m_cache->m_cacheData[cacheID] = tupleSet;
       }
-      else {
-          m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet, m_cache->m_cacheData[cacheID]);
-      }
-    });
-    handler.SetStatsEventCallback([&](const StatsEvent &statsEvent) {
-      SPDLOG_DEBUG("Bytes scanned: {} ", statsEvent.GetDetails().GetBytesScanned());
-      SPDLOG_DEBUG("Bytes processed: {}", statsEvent.GetDetails().GetBytesProcessed());
-      SPDLOG_DEBUG("Bytes returned: {}", statsEvent.GetDetails().GetBytesReturned());
-    });
-    handler.SetEndEventCallback([&]() {
-      SPDLOG_DEBUG("EndEvent:");
+      );
+      handler.SetStatsEventCallback([&](const StatsEvent &statsEvent) {
+          SPDLOG_DEBUG("Bytes scanned: {} ", statsEvent.GetDetails().GetBytesScanned());
+          SPDLOG_DEBUG("Bytes processed: {}", statsEvent.GetDetails().GetBytesProcessed());
+          SPDLOG_DEBUG("Bytes returned: {}", statsEvent.GetDetails().GetBytesReturned());
+      });
+      handler.SetEndEventCallback([&]() {
+          SPDLOG_DEBUG("EndEvent:");
 
-      std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::CompleteMessage>();
-      ctx()->tell(message);
+          std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::CompleteMessage>();
+          ctx()->tell(message);
 
-      this->ctx()->operatorActor()->quit();
-    });
-    handler.SetOnErrorCallback([&](const AWSError<S3Errors> &errors) {
-      SPDLOG_DEBUG("Error: {}", errors.GetMessage());
+          this->ctx()->operatorActor()->quit();
+      });
+      handler.SetOnErrorCallback([&](const AWSError<S3Errors> &errors) {
+          SPDLOG_DEBUG("Error: {}", errors.GetMessage());
 
-      // FIXME: Propagate errors here
+          // FIXME: Propagate errors here
 
-      this->ctx()->operatorActor()->quit();
-    });
+          this->ctx()->operatorActor()->quit();
+      });
 
-    selectObjectContentRequest.SetEventStreamHandler(handler);
+      selectObjectContentRequest.SetEventStreamHandler(handler);
 
-    auto selectObjectContentOutcome = this->s3Client_->SelectObjectContent(selectObjectContentRequest);
-
+      auto selectObjectContentOutcome = this->s3Client_->SelectObjectContent(selectObjectContentRequest);
   }
   else {
-    std::shared_ptr<normal::core::TupleSet> tupleSet = cacheMap[cacheID];
-    std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
-    ctx()->tell(message);
-    message = std::make_shared<normal::core::CompleteMessage>();
-    ctx()->tell(message);
-    this->ctx()->operatorActor()->quit();
+      //swap in
+      //no found
+
+      if (cacheMap.empty() || cacheMap.find(cacheID) == cacheMap.end()) {
+          Aws::String bucketName = Aws::String(s3Bucket_);
+
+          SelectObjectContentRequest selectObjectContentRequest;
+          selectObjectContentRequest.SetBucket(bucketName);
+          selectObjectContentRequest.SetKey(Aws::String(s3Object_));
+
+          selectObjectContentRequest.SetExpressionType(ExpressionType::SQL);
+
+          selectObjectContentRequest.SetExpression(sql_.c_str());
+
+          CSVInput csvInput;
+          csvInput.SetFileHeaderInfo(FileHeaderInfo::USE);
+          csvInput.SetFieldDelimiter("|");
+          csvInput.SetRecordDelimiter("|\n");
+          InputSerialization inputSerialization;
+          inputSerialization.SetCSV(csvInput);
+          selectObjectContentRequest.SetInputSerialization(inputSerialization);
+
+          CSVOutput csvOutput;
+          OutputSerialization outputSerialization;
+          outputSerialization.SetCSV(csvOutput);
+          selectObjectContentRequest.SetOutputSerialization(outputSerialization);
+
+          std::vector<unsigned char> partial{};
+          S3SelectParser s3SelectParser{};
+
+          SelectObjectContentHandler handler;
+          handler.SetRecordsEventCallback([&](const RecordsEvent &recordsEvent) {
+              auto payload = recordsEvent.GetPayload();
+              std::shared_ptr<normal::core::TupleSet> tupleSet = s3SelectParser.parsePayload(payload);
+
+              std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
+              ctx()->tell(message);
+
+              //add to cache
+              if (m_cache->m_cacheData.empty() || m_cache->m_cacheData.find(cacheID) == cacheMap.end()) {
+                  m_cache->m_cacheData[cacheID] = tupleSet;
+              } else {
+                  m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
+                                                                                      m_cache->m_cacheData[cacheID]);
+              }
+              cacheQueue.emplace(cacheID);
+              if (cacheQueue.size()>4){
+                  std::string front = cacheQueue.front();
+                  cacheQueue.pop();
+                  m_cache->m_cacheData.erase(front);
+              }
+          });
+          handler.SetStatsEventCallback([&](const StatsEvent &statsEvent) {
+              SPDLOG_DEBUG("Bytes scanned: {} ", statsEvent.GetDetails().GetBytesScanned());
+              SPDLOG_DEBUG("Bytes processed: {}", statsEvent.GetDetails().GetBytesProcessed());
+              SPDLOG_DEBUG("Bytes returned: {}", statsEvent.GetDetails().GetBytesReturned());
+          });
+          handler.SetEndEventCallback([&]() {
+              SPDLOG_DEBUG("EndEvent:");
+
+              std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::CompleteMessage>();
+              ctx()->tell(message);
+
+              this->ctx()->operatorActor()->quit();
+          });
+          handler.SetOnErrorCallback([&](const AWSError<S3Errors> &errors) {
+              SPDLOG_DEBUG("Error: {}", errors.GetMessage());
+
+              // FIXME: Propagate errors here
+
+              this->ctx()->operatorActor()->quit();
+          });
+
+          selectObjectContentRequest.SetEventStreamHandler(handler);
+
+          auto selectObjectContentOutcome = this->s3Client_->SelectObjectContent(selectObjectContentRequest);
+
+      } else {
+          std::shared_ptr<normal::core::TupleSet> tupleSet = cacheMap[cacheID];
+          std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
+          ctx()->tell(message);
+          message = std::make_shared<normal::core::CompleteMessage>();
+          ctx()->tell(message);
+          this->ctx()->operatorActor()->quit();
+      }
   }
 
 }
@@ -154,7 +246,7 @@ S3SelectScan::S3SelectScan(std::string name,
                            std::string s3Object,
                            std::string sql,
                            std::string m_tbl,
-                           std::string m_col,
+                           std::vector<std::string> m_col,
                            std::shared_ptr<Aws::S3::S3Client> s3Client)
     : Operator(std::move(name)),
       s3Bucket_(std::move(s3Bucket)),

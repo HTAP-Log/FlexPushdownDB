@@ -28,13 +28,14 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate") {
   std::string current_working_dir(buff);
 
   SPDLOG_DEBUG("Current working dir: {}", current_working_dir);
-
+  std::vector<std::string> cols;
+  cols.emplace_back("l_extendedprice");
   auto s3selectScan = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan",
                                                                        "s3filter",
                                                                        "tpch-sf1/customer.csv",
                                                                        "select * from S3Object limit 1000",
                                                                        "N/A",
-                                                                       "N/A",
+                                                                       cols,
                                                                        client.defaultS3Client());
 
   auto sumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f5");

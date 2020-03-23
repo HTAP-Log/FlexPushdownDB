@@ -33,16 +33,18 @@ TEST_CASE ("CacheTest"
 
   SPDLOG_DEBUG("Current working dir: {}", current_working_dir);
 
+  std::vector<std::string> cols;
+  cols.emplace_back("l_extendedprice");
   auto s3selectScan = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan",
                                                                        "mit-caching",
                                                                        "test/a.tbl",
-                                                                       "select  * from S3Object",
+                                                                       "select SUM(CAST(l_extendedprice AS FLOAT)) from S3Object",
                                                                        "a",
-                                                                       "all",
+                                                                       cols,
                                                                        client.defaultS3Client());
   auto cache = s3selectScan->getCache();
 
-  auto sumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f5");
+  auto sumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
   auto expressions2 =
       std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
   expressions2->push_back(sumExpr);
@@ -94,19 +96,66 @@ TEST_CASE ("CacheTest"
 //  mgr2->put(s3selectScan);
 //  mgr2->put(aggregate);
 //  mgr2->put(collate);
+  std::string colList[] = {"l_quantity","l_extendedprice","l_discount","L_ORDERKEY","L_PARTKEY","L_SUPPKEY","L_LINENUMBER","L_TAX"};
+  int colIndexList[60];
+  for (int i=0; i<60; ++i) {
+    colIndexList[i] = rand() % 8;
+  }
+  //cache every time
+    auto start = std::chrono::system_clock::now();
+  for (int i=0; i<60; ++i) {
+      int colIndex  = colIndexList[i];
+      std::string colName = colList[colIndex];
+      cols.clear();
+      cols.emplace_back(colName);
+      std::string query = "select " +colName+ " from S3Object";
+      s3selectScan->setCols(cols);
+      s3selectScan->setQuery(query);
+      mgr->start();
+      mgr->join();
 
-  mgr->start();
-  mgr->join();
 
-  tuples = collate->tuples();
 
-  val = std::stod(tuples->getValue("sum", 0));
 
-            CHECK(tuples->numRows() == 2);
-            CHECK(tuples->numColumns() == 1);
-            //CHECK(val == 4400227);
-
-            mgr->stop();
-
+      mgr->stop();
+  }
+    auto end = std::chrono::system_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    std::cout << elapsed.count() << '\n';
+  //push down every time
+//    start = std::chrono::system_clock::now();
+//    auto collate2 = std::make_shared<normal::pushdown::Collate>("collate");
+//    s3selectScan->produce(collate2);
+//
+//    collate2->consume(s3selectScan);
+//    auto mgr2 = std::make_shared<OperatorManager>();
+//
+//    mgr2->put(s3selectScan);
+//
+//    mgr2->put(collate2);
+//
+//
+//    for (int i=0; i<60; ++i) {
+//        int colIndex  = colIndexList[i];
+//        std::string colName = colList[colIndex];
+//        cols.clear();
+//        cols.emplace_back(colName);
+//        std::string query = "select SUM(CAST(" +colName+ " AS FLOAT)) from S3Object";
+//        s3selectScan->setCols({"NA"});
+//        s3selectScan->setQuery(query);
+//        mgr2->start();
+//        mgr2->join();
+//
+//        tuples = collate2->tuples();
+//
+//        val = std::stod(tuples->getValue("f0", 0));
+//
+//
+//        mgr->stop();
+//    }
+//    end = std::chrono::system_clock::now();
+//    elapsed =
+//            std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+//    std::cout << elapsed.count() << '\n';
   client.shutdown();
 }

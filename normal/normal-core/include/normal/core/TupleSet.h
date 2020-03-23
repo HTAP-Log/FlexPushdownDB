@@ -34,6 +34,11 @@ public:
   void table(const std::shared_ptr<arrow::Table> &table);
   std::string getValue(const std::string &columnName, int row);
   int64_t numColumns();
+  void printSchema(){
+      for(int i=0; i<table_->schema()->field_names().size(); ++i)
+          printf("%s\n",table_->schema()->field_names()[i].c_str());
+  }
+
 
 
 };

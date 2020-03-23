@@ -34,3 +34,10 @@ find_package(caf REQUIRED)
 add_subdirectory("normal-core")
 add_subdirectory("normal-pushdown")
 add_subdirectory("normal-test")
+
+# set @rpaths for libraries to link against
+
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+SET(CMAKE_INSTALL_RPATH "/Users/jialing/Desktop/research/pushdownDB/normal/cmake-build-debug/contrib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)

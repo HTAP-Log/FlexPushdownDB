@@ -7,7 +7,8 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map> 
+#include <unordered_map>
+#include <queue>
 
 #include "normal/core/Operator.h"
 #include "normal/core/TupleSet.h"
@@ -21,7 +22,7 @@ private:
 public:
 	//name/id->tupleSets
   std::unordered_map<std::string, std::shared_ptr<normal::core::TupleSet>> m_cacheData;
-
+  std::queue<std::string> m_cacheQueue;
   ~Cache() = default;
 };
 
