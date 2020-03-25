@@ -83,8 +83,8 @@ void S3SelectScan::onStart() {
   std::string tblName = m_tbl;
 
   std::string cacheID = tblName+m_col.at(0);
-  std::unordered_map<std::string, std::shared_ptr<normal::core::TupleSet>> cacheMap = m_cache->m_cacheData;
-  auto cacheQueue = m_cache->m_cacheQueue;
+  //std::unordered_map<std::string, std::shared_ptr<normal::core::TupleSet>> cacheMap = m_cache->m_cacheData;
+  std::queue<std::string> cacheQueue = m_cache->m_cacheQueue;
   bool pushdown = !checkCache();
   if (m_col.at(0)=="NA"){
       pushdown = true;
@@ -127,7 +127,7 @@ void S3SelectScan::onStart() {
           tupleSet->printSchema();
           std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
           ctx()->tell(message);
-
+          SPDLOG_DEBUG("transmit!!");
       }
       );
       handler.SetStatsEventCallback([&](const StatsEvent &statsEvent) {
@@ -159,7 +159,7 @@ void S3SelectScan::onStart() {
       //swap in
       //no found
 
-      if (cacheMap.empty() || cacheMap.find(cacheID) == cacheMap.end()) {
+      if (m_cache->m_cacheData.empty() || m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
           outfile << "miss,";
           Aws::String bucketName = Aws::String(s3Bucket_);
 
@@ -196,17 +196,21 @@ void S3SelectScan::onStart() {
               ctx()->tell(message);
 
               //add to cache
-              if (m_cache->m_cacheData.empty() || m_cache->m_cacheData.find(cacheID) == cacheMap.end()) {
+              if (m_cache->m_cacheData.empty() || m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
                   m_cache->m_cacheData[cacheID] = tupleSet;
+                  m_cache->m_cacheQueue.push(cacheID);
+                  cacheQueue.push(cacheID);
               } else {
                   m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
                                                                                       m_cache->m_cacheData[cacheID]);
               }
-              cacheQueue.emplace(cacheID);
-              if (cacheQueue.size()>4){
-                  std::string front = cacheQueue.front();
-                  cacheQueue.pop();
+              //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
+              if (m_cache->m_cacheQueue.size()>4){
+                  std::string front = m_cache->m_cacheQueue.front();
+                  m_cache->m_cacheQueue.pop();
                   m_cache->m_cacheData.erase(front);
+                  std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
+                  std::cout<<cacheID<<std::endl;
               }
           });
           handler.SetStatsEventCallback([&](const StatsEvent &statsEvent) {
@@ -236,7 +240,7 @@ void S3SelectScan::onStart() {
 
       } else {
           outfile << "hit,";
-          std::shared_ptr<normal::core::TupleSet> tupleSet = cacheMap[cacheID];
+          std::shared_ptr<normal::core::TupleSet> tupleSet = m_cache->m_cacheData[cacheID];
           std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
           ctx()->tell(message);
           message = std::make_shared<normal::core::CompleteMessage>();

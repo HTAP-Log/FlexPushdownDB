@@ -37,8 +37,8 @@ TEST_CASE ("CacheTest"
   cols.emplace_back("l_extendedprice");
   auto s3selectScan = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan",
                                                                        "mit-caching",
-                                                                       "lineitem.tbl",
-                                                                       "select SUM(CAST(l_extendedprice AS FLOAT)) from S3Object",
+                                                                       "lineitemwithH.tbl",
+                                                                       "select l_extendedprice  from S3Object",
                                                                        "a",
                                                                        cols,
                                                                        client.defaultS3Client());
@@ -101,7 +101,15 @@ TEST_CASE ("CacheTest"
   for (int i=0; i<60; ++i) {
     colIndexList[i] = rand() % 8;
   }
-
+  colIndexList[0] = 7;
+    colIndexList[1] = 6;
+    colIndexList[2] = 1;
+    colIndexList[3] = 3;
+    colIndexList[4] = 1;
+    colIndexList[5] = 7;
+    colIndexList[6] = 2;
+    colIndexList[7] = 4;
+    colIndexList[8] = 1;
   std::ofstream outfile;
 
   outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
@@ -114,6 +122,7 @@ TEST_CASE ("CacheTest"
       std::string colName = colList[colIndex];
       cols.clear();
       cols.emplace_back(colName);
+      outfile << colName << ",";
       std::string query = "select " +colName+ " from S3Object";
       s3selectScan->setCols(cols);
       s3selectScan->setQuery(query);
@@ -145,6 +154,7 @@ TEST_CASE ("CacheTest"
         auto startTime = std::chrono::system_clock::now();
         int colIndex  = colIndexList[i];
         std::string colName = colList[colIndex];
+        outfile << colName << ",";
         cols.clear();
         cols.emplace_back(colName);
         std::string query = "select SUM(CAST(" +colName+ " AS FLOAT)) from S3Object";
