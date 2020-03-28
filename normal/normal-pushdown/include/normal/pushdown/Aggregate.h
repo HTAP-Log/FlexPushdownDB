@@ -10,8 +10,8 @@
 #include <vector>
 
 #include <normal/core/Operator.h>
-#include <normal/core/TupleMessage.h>
-#include <normal/core/CompleteMessage.h>
+#include <normal/core/message/TupleMessage.h>
+#include <normal/core/message/CompleteMessage.h>
 #include <normal/pushdown/aggregate/AggregationResult.h>
 #include <normal/pushdown/aggregate/AggregationFunction.h>
 
@@ -23,10 +23,10 @@ private:
   std::shared_ptr<std::vector<std::shared_ptr<aggregate::AggregationFunction>>> functions_;
   std::shared_ptr<aggregate::AggregationResult> result_;
 
-  void onReceive(const normal::core::Envelope &message) override;
+  void onReceive(const normal::core::message::Envelope &message) override;
 
-  void onTuple(const core::TupleMessage &message);
-  void onComplete(const normal::core::CompleteMessage &message);
+  void onTuple(const normal::core::message::TupleMessage &message);
+  void onComplete(const normal::core::message::CompleteMessage &message);
   void onStart();
 
 public:

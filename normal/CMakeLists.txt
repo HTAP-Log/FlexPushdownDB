@@ -10,21 +10,20 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_LIST_DIR}/cmake")
 #set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "/usr/bin/iwyu;")
 
 include(CMakeUtils)
-include(ExternalProject)
-find_package(Git REQUIRED)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Dependencies
 #-----------------------------------------------------------------------------------------------------------------------
 
-set(DEPENDENCIES_BASE_DIR "${CMAKE_BINARY_DIR}/contrib")
+set(DEPS_PREFIX "_deps")
 
-find_package(spdlog REQUIRED)
-find_package(doctest REQUIRED)
-find_package(AWSCPPSDK REQUIRED)
-find_package(arrow REQUIRED)
-find_package(caf REQUIRED)
+include(External_spdlog)
+include(External_doctest)
+include(External_caf)
+include(External_arrow)
+include(External_AWSCPPSDK)
+include(External_ANTLR)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -33,6 +32,7 @@ find_package(caf REQUIRED)
 
 add_subdirectory("normal-core")
 add_subdirectory("normal-pushdown")
+add_subdirectory("normal-sql")
 add_subdirectory("normal-test")
 
 # set @rpaths for libraries to link against

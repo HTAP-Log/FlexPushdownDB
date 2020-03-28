@@ -9,8 +9,8 @@
 #include <memory>                  // for unique_ptr
 
 #include <arrow/api.h>
-#include <normal/core/TupleMessage.h>
-#include <normal/core/CompleteMessage.h>
+#include <normal/core/message/TupleMessage.h>
+#include <normal/core/message/CompleteMessage.h>
 
 #include "normal/core/Operator.h"
 #include "normal/core/OperatorContext.h"
@@ -29,9 +29,9 @@ private:
   std::shared_ptr<normal::core::TupleSet> tuples_;
   void onStart();
 
-  void onComplete(const normal::core::CompleteMessage &message);
-  void onTuple(const normal::core::TupleMessage& message);
-  void onReceive(const normal::core::Envelope &message) override;
+  void onComplete(const normal::core::message::CompleteMessage &message);
+  void onTuple(const normal::core::message::TupleMessage& message);
+  void onReceive(const normal::core::message::Envelope &message) override;
 
 public:
   explicit Collate(std::string name);

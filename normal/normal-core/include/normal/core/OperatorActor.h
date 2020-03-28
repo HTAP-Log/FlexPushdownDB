@@ -9,23 +9,26 @@
 
 #include <caf/all.hpp>
 
-#include "normal/core/Message.h"
+#include "normal/core/message/Message.h"
 #include "normal/core/Operator.h"
-#include "normal/core/StartMessage.h"
+#include "normal/core/message/StartMessage.h"
 
 namespace normal::core {
 
 class Operator;
 
+/**
+ * Operator actor implements caf::actor and combines the operators behaviour and state
+ */
 class OperatorActor : public caf::event_based_actor {
 
 private:
-  std::shared_ptr<normal::core::Operator> opBehaviour_;
+  std::shared_ptr<Operator> opBehaviour_;
 
 public:
-  OperatorActor(caf::actor_config &cfg, std::shared_ptr<normal::core::Operator> opBehaviour);
+  OperatorActor(caf::actor_config &cfg, std::shared_ptr<Operator> opBehaviour);
 
-  std::shared_ptr<normal::core::Operator> operator_() const;
+  std::shared_ptr<Operator> operator_() const;
 
   caf::behavior make_behavior() override;
 

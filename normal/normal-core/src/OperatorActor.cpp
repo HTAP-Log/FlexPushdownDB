@@ -5,13 +5,14 @@
 #include "normal/core/OperatorActor.h"
 
 #include <utility>
+#include <normal/core/message/CompleteMessage.h>
 
 #include "normal/core/Globals.h"
-#include "normal/core/Envelope.h"
+#include "normal/core/message/Envelope.h"
 
 namespace normal::core {
 
-OperatorActor::OperatorActor(caf::actor_config &cfg, std::shared_ptr<normal::core::Operator> opBehaviour) :
+OperatorActor::OperatorActor(caf::actor_config &cfg, std::shared_ptr<Operator> opBehaviour) :
     caf::event_based_actor(cfg),
     opBehaviour_(std::move(opBehaviour)) {
 
@@ -23,13 +24,19 @@ caf::behavior behaviour(OperatorActor *self) {
   auto functionName = __FUNCTION__;
 
   return {
-      [=](const normal::core::Envelope &msg) {
+      [=](const normal::core::message::Envelope &msg) {
 
 #define __FUNCTION__ functionName
 
-        SPDLOG_DEBUG("Message received  |  actor: '{}', messageKind: '{}'",
+        SPDLOG_DEBUG("Message received  |  recipient: '{}', sender: '{}', type: '{}'",
                      self->operator_()->name(),
+                     msg.message().sender(),
                      msg.message().type());
+
+        if (msg.message().type() == "CompleteMessage") {
+          auto completeMessage = dynamic_cast<const message::CompleteMessage &>(msg.message());
+          self->operator_()->ctx()->operatorMap().setComplete(msg.message().sender());
+        }
 
         self->operator_()->onReceive(msg);
       }

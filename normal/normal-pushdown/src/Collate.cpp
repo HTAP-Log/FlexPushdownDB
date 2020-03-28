@@ -9,8 +9,8 @@
 #include <arrow/table.h>               // for ConcatenateTables, Table (ptr ...
 #include <arrow/pretty_print.h>
 
-#include <normal/core/TupleMessage.h>
-#include <normal/core/CompleteMessage.h>
+#include <normal/core/message/TupleMessage.h>
+#include <normal/core/message/CompleteMessage.h>
 
 #include "normal/pushdown/Globals.h"
 
@@ -18,27 +18,33 @@ namespace normal::pushdown {
 
 void Collate::onStart() {
   SPDLOG_DEBUG("Starting");
+
+  // FIXME: Not the best way to reset the tuples structure
+  this->tuples_ = nullptr;
 }
 
 Collate::Collate(std::string name) : Operator(std::move(name)) {
 }
 
-void Collate::onReceive(const normal::core::Envelope &message) {
+void Collate::onReceive(const normal::core::message::Envelope &message) {
   if (message.message().type() == "StartMessage") {
     this->onStart();
   } else if (message.message().type() == "TupleMessage") {
-    auto tupleMessage = dynamic_cast<const normal::core::TupleMessage &>(message.message());
+    auto tupleMessage = dynamic_cast<const normal::core::message::TupleMessage &>(message.message());
     this->onTuple(tupleMessage);
   } else if (message.message().type() == "CompleteMessage") {
-    auto completeMessage = dynamic_cast<const normal::core::CompleteMessage &>(message.message());
+    auto completeMessage = dynamic_cast<const normal::core::message::CompleteMessage &>(message.message());
     this->onComplete(completeMessage);
   } else {
     throw;
   }
 }
 
-void Collate::onComplete(const normal::core::CompleteMessage &msg) {
-  ctx()->operatorActor()->quit();
+void Collate::onComplete(const normal::core::message::CompleteMessage &) {
+
+  ctx()->notifyComplete();
+
+//  ctx()->operatorActor()->quit();
 }
 
 void Collate::show() {
@@ -54,7 +60,7 @@ std::shared_ptr<normal::core::TupleSet> Collate::tuples() {
 
   return tuples_;
 }
-void Collate::onTuple(const normal::core::TupleMessage& message) {
+void Collate::onTuple(const normal::core::message::TupleMessage &message) {
 
   SPDLOG_DEBUG("Received tuples");
 
@@ -66,8 +72,10 @@ void Collate::onTuple(const normal::core::TupleMessage& message) {
     std::shared_ptr<arrow::Table> table;
     tables.push_back(message.tuples()->table());
     tables.push_back(tuples_->table());
-    arrow::ConcatenateTables(tables, &table);
-    tuples_->table(table);
+    const arrow::Result<std::shared_ptr<arrow::Table>> &res = arrow::ConcatenateTables(tables);
+    if (!res.ok())
+      abort();
+    tuples_->table(*res);
   }
 }
 

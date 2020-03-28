@@ -36,7 +36,7 @@ public:
   std::shared_ptr<Cache> getCache(){
       return m_cache;
   }
-  void onReceive(const core::Envelope &message) override;
+  void onReceive(const normal::core::message::Envelope &message) override;
   //check if caching is needed or not
   bool checkCache();
   void setCols(std::vector<std::string> newcols){

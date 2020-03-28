@@ -39,11 +39,11 @@
 #include <aws/s3/model/SelectObjectContentHandler.h>        // for SelectObj...
 #include <aws/s3/model/StatsEvent.h>                        // for StatsEvent
 
-#include "normal/core/Message.h"                            // for Message
+#include "normal/core/message/Message.h"                            // for Message
 #include "normal/core/TupleSet.h"                           // for TupleSet
 #include "s3/S3SelectParser.h"
-#include <normal/core/TupleMessage.h>
-#include <normal/core/CompleteMessage.h>
+#include <normal/core/message/TupleMessage.h>
+#include <normal/core/message/CompleteMessage.h>
 
 #include "normal/pushdown/Globals.h"
 
@@ -192,7 +192,7 @@ void S3SelectScan::onStart() {
               auto payload = recordsEvent.GetPayload();
               std::shared_ptr<normal::core::TupleSet> tupleSet = s3SelectParser.parsePayload(payload);
 
-              std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
+               std::shared_ptr<normal::core::message::Message> message = std::make_shared<normal::core::message::TupleMessage>(tupleSet, this->name());
               ctx()->tell(message);
 
               //add to cache
@@ -221,10 +221,11 @@ void S3SelectScan::onStart() {
           handler.SetEndEventCallback([&]() {
               SPDLOG_DEBUG("EndEvent:");
 
-              std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::CompleteMessage>();
-              ctx()->tell(message);
-
-              this->ctx()->operatorActor()->quit();
+//              std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::CompleteMessage>();
+//              ctx()->tell(message);
+//
+//              this->ctx()->operatorActor()->quit();
+              ctx()->notifyComplete();
           });
           handler.SetOnErrorCallback([&](const AWSError<S3Errors> &errors) {
               SPDLOG_DEBUG("Error: {}", errors.GetMessage());
@@ -240,12 +241,14 @@ void S3SelectScan::onStart() {
 
       } else {
           outfile << "hit,";
-          std::shared_ptr<normal::core::TupleSet> tupleSet = m_cache->m_cacheData[cacheID];
-          std::shared_ptr<normal::core::Message> message = std::make_shared<normal::core::TupleMessage>(tupleSet);
+          std::shared_ptr<normal::core::TupleSet> tupleSet = cacheMap[cacheID];
+          std::shared_ptr<normal::core::message::Message> message = std::make_shared<normal::core::message::TupleMessage>(tupleSet, this->name());
           ctx()->tell(message);
-          message = std::make_shared<normal::core::CompleteMessage>();
-          ctx()->tell(message);
-          this->ctx()->operatorActor()->quit();
+//        message = std::make_shared<normal::core::CompleteMessage>();
+//        ctx()->tell(message);
+//      this->ctx()->operatorActor()->quit();
+
+        ctx()->notifyComplete();
       }
   }
   outfile.close();
@@ -269,7 +272,7 @@ S3SelectScan::S3SelectScan(std::string name,
       s3Client_(std::move(s3Client)){
 }
 
-void S3SelectScan::onReceive(const normal::core::Envelope &message) {
+void S3SelectScan::onReceive(const normal::core::message::Envelope &message) {
   if (message.message().type() == "StartMessage") {
     this->onStart();
   } else {

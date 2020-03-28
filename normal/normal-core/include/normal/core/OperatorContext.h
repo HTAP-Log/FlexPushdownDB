@@ -8,35 +8,39 @@
 #include <memory>
 #include <string>
 
-#include "Operator.h"
-#include "OperatorMeta.h"
-#include "OperatorActor.h"
-
-//class OperatorManager;
-
+#include "normal/core/Operator.h"
+#include "normal/core/OperatorActor.h"
+#include "normal/core/LocalOperatorDirectory.h"
+#include "normal/core/message/Message.h"
 
 namespace normal::core {
 
 class OperatorActor;
 class Operator;
 
+/**
+ * The API operators use to interact with their environment, e.g. sending messages
+ */
 class OperatorContext {
 private:
-  std::shared_ptr<normal::core::Operator> operator_;
+  std::shared_ptr<Operator> operator_;
   OperatorActor* operatorActor_;
-  std::map<std::string, normal::core::OperatorMeta> operatorMap_;
+  LocalOperatorDirectory operatorMap_;
+  caf::actor rootActor_;
 
 public:
-  explicit OperatorContext(std::shared_ptr<normal::core::Operator> op);
+  OperatorContext(std::shared_ptr<Operator> op, caf::actor& rootActor);
 
-  std::shared_ptr<normal::core::Operator> op();
+  std::shared_ptr<Operator> op();
 
-  normal::core::OperatorActor* operatorActor();
-  void operatorActor(normal::core::OperatorActor *operatorActor);
+  OperatorActor* operatorActor();
+  void operatorActor(OperatorActor *operatorActor);
 
-  std::map<std::string, normal::core::OperatorMeta> &operatorMap();
+  LocalOperatorDirectory &operatorMap();
 
-  void tell(std::shared_ptr<normal::core::Message> &msg);
+  void tell(std::shared_ptr<message::Message> &msg);
+
+  void notifyComplete();
 
 };
 

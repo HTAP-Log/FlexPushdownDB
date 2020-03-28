@@ -18,7 +18,7 @@
 #include <normal/pushdown/aggregate/Sum.h>
 #include "Globals.h"
 
-TEST_CASE ("S3SelectScan -> Sum -> Collate") {
+TEST_CASE ("S3SelectScan -> Sum -> Collate" * doctest::skip(true)) {
 
   normal::pushdown::AWSClient client;
   client.init();
@@ -28,6 +28,9 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate") {
   std::string current_working_dir(buff);
 
   SPDLOG_DEBUG("Current working dir: {}", current_working_dir);
+
+  auto mgr = std::make_shared<normal::core::OperatorManager>();
+
   std::vector<std::string> cols;
   cols.emplace_back("l_extendedprice");
   auto s3selectScan = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan",
@@ -52,11 +55,11 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate") {
   aggregate->produce(collate);
   collate->consume(aggregate);
 
-  auto mgr = std::make_shared<OperatorManager>();
-
   mgr->put(s3selectScan);
   mgr->put(aggregate);
   mgr->put(collate);
+
+  mgr->boot();
 
   mgr->start();
   mgr->join();

@@ -65,6 +65,8 @@ TEST_CASE ("CacheTest"
   mgr->put(aggregate);
   mgr->put(collate);
 
+  mgr->boot();
+
   mgr->start();
   mgr->join();
 
@@ -84,7 +86,7 @@ TEST_CASE ("CacheTest"
 //  auto mgr2 = std::make_shared<OperatorManager>();
 ////  auto s3selectScan2 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan2",
 ////                                                                         "mit-caching",
-////                                                                         "lineitemwithH.tbl",
+////                                                                         "test/a.tbl",
 ////                                                                         "select  * from S3Object",
 ////                                                                         "a",
 ////                                                                         "all",
