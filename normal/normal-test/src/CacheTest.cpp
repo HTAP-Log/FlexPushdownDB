@@ -37,7 +37,7 @@ TEST_CASE ("CacheTest"
   cols.emplace_back("l_extendedprice");
   auto s3selectScan = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan",
                                                                        "mit-caching",
-                                                                       "lineitemwithH.tbl",
+                                                                       "test/a.tbl",
                                                                        "select l_extendedprice  from S3Object",
                                                                        "a",
                                                                        cols,
@@ -59,7 +59,7 @@ TEST_CASE ("CacheTest"
   aggregate->produce(collate);
   collate->consume(aggregate);
 
-  auto mgr = std::make_shared<OperatorManager>();
+  auto mgr = std::make_shared<normal::core::OperatorManager>();
 
   mgr->put(s3selectScan);
   mgr->put(aggregate);
@@ -128,6 +128,7 @@ TEST_CASE ("CacheTest"
       std::string query = "select " +colName+ " from S3Object";
       s3selectScan->setCols(cols);
       s3selectScan->setQuery(query);
+      mgr->boot();
       mgr->start();
       mgr->join();
       mgr->stop();
@@ -145,7 +146,7 @@ TEST_CASE ("CacheTest"
     s3selectScan->produce(collate2);
 
     collate2->consume(s3selectScan);
-    auto mgr2 = std::make_shared<OperatorManager>();
+    auto mgr2 = std::make_shared<normal::core::OperatorManager>();
 
     mgr2->put(s3selectScan);
 
