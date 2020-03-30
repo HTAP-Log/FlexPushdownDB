@@ -35,35 +35,108 @@ TEST_CASE ("CacheTest"
 
   std::vector<std::string> cols;
   cols.emplace_back("l_extendedprice");
-  auto s3selectScan = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan",
+  auto s3selectScan1 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan1",
                                                                        "mit-caching",
                                                                        "test/a.tbl",
                                                                        "select l_extendedprice  from S3Object",
                                                                        "a",
                                                                        cols,
                                                                        client.defaultS3Client());
-  auto cache = s3selectScan->getCache();
+  auto s3selectScan2 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan2",
+                                                                         "mit-caching",
+                                                                         "test/a.tbl",
+                                                                         "select l_extendedprice  from S3Object",
+                                                                         "a",
+                                                                         cols,
+                                                                         client.defaultS3Client());
+  auto s3selectScan3 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan3",
+                                                                         "mit-caching",
+                                                                         "test/a.tbl",
+                                                                         "select l_extendedprice  from S3Object",
+                                                                         "a",
+                                                                         cols,
+                                                                         client.defaultS3Client());
+  auto s3selectScan4 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan4",
+                                                                          "mit-caching",
+                                                                          "test/a.tbl",
+                                                                          "select l_extendedprice  from S3Object",
+                                                                          "a",
+                                                                          cols,
+                                                                          client.defaultS3Client());
 
-  auto sumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
-  auto expressions2 =
+  auto sumExpr1 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+  auto expressions1 =
       std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
-  expressions2->push_back(sumExpr);
+  expressions1->push_back(sumExpr1);
 
-  auto aggregate = std::make_shared<normal::pushdown::Aggregate>("aggregate", expressions2);
+    auto sumExpr2 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto expressions2 =
+            std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
+    expressions2->push_back(sumExpr2);
+
+    auto sumExpr3 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto expressions3 =
+            std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
+    expressions3->push_back(sumExpr3);
+
+    auto sumExpr4 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto expressions4 =
+            std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
+    expressions4->push_back(sumExpr4);
+
+  auto aggregate1 = std::make_shared<normal::pushdown::Aggregate>("aggregate1", expressions1);
+    auto aggregate2 = std::make_shared<normal::pushdown::Aggregate>("aggregate2", expressions2);
+    auto aggregate3 = std::make_shared<normal::pushdown::Aggregate>("aggregate3", expressions3);
+    auto aggregate4 = std::make_shared<normal::pushdown::Aggregate>("aggregate4", expressions4);
+
+    auto reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "sum");
+    auto
+            reduceAggregateExpressions =
+            std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
+    reduceAggregateExpressions->emplace_back(reduceSumExpr);
+    auto reduceAggregate = std::make_shared<normal::pushdown::Aggregate>("reduceAggregate", reduceAggregateExpressions);
 
   auto collate = std::make_shared<normal::pushdown::Collate>("collate");
 
-  s3selectScan->produce(aggregate);
-  aggregate->consume(s3selectScan);
+  s3selectScan1->produce(aggregate1);
+  aggregate1->consume(s3selectScan1);
 
-  aggregate->produce(collate);
-  collate->consume(aggregate);
+    s3selectScan2->produce(aggregate2);
+    aggregate2->consume(s3selectScan2);
+
+    s3selectScan3->produce(aggregate3);
+    aggregate3->consume(s3selectScan3);
+
+    s3selectScan4->produce(aggregate4);
+    aggregate4->consume(s3selectScan4);
+
+  aggregate1->produce(reduceAggregate);
+  reduceAggregate->consume(aggregate1);
+
+  aggregate2->produce(reduceAggregate);
+    reduceAggregate->consume(aggregate2);
+
+    aggregate3->produce(reduceAggregate);
+    reduceAggregate->consume(aggregate3);
+
+    aggregate4->produce(reduceAggregate);
+    reduceAggregate->consume(aggregate4);
+
+    reduceAggregate->produce(collate);
+    collate->consume(reduceAggregate);
 
   auto mgr = std::make_shared<normal::core::OperatorManager>();
 
-  mgr->put(s3selectScan);
-  mgr->put(aggregate);
-  mgr->put(collate);
+    mgr->put(s3selectScan1);
+    mgr->put(s3selectScan2);
+    mgr->put(s3selectScan3);
+    mgr->put(s3selectScan4);
+    mgr->put(aggregate1);
+    mgr->put(aggregate2);
+    mgr->put(aggregate3);
+    mgr->put(aggregate4);
+    mgr->put(reduceAggregate);
+    mgr->put(collate);
 
   mgr->boot();
 
@@ -115,7 +188,7 @@ TEST_CASE ("CacheTest"
   std::ofstream outfile;
 
   outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
-
+    mgr->boot();
    //cache every time
   auto start = std::chrono::system_clock::now();
   for (int i=0; i<60; ++i) {
@@ -126,12 +199,18 @@ TEST_CASE ("CacheTest"
       cols.emplace_back(colName);
       outfile << colName << ",";
       std::string query = "select " +colName+ " from S3Object";
-      s3selectScan->setCols(cols);
-      s3selectScan->setQuery(query);
-      mgr->boot();
+      s3selectScan1->setCols(cols);
+      s3selectScan1->setQuery(query);
+      s3selectScan2->setCols(cols);
+      s3selectScan2->setQuery(query);
+      s3selectScan3->setCols(cols);
+      s3selectScan3->setQuery(query);
+      s3selectScan4->setCols(cols);
+      s3selectScan4->setQuery(query);
+
       mgr->start();
       mgr->join();
-      mgr->stop();
+
       auto endTime = std::chrono::system_clock::now();
       auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
@@ -140,19 +219,36 @@ TEST_CASE ("CacheTest"
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::cout << elapsed.count() << '\n';
+    mgr->stop();
   //push down every time
     start = std::chrono::system_clock::now();
     auto collate2 = std::make_shared<normal::pushdown::Collate>("collate");
-    s3selectScan->produce(collate2);
 
-    collate2->consume(s3selectScan);
+    s3selectScan1->produce(reduceAggregate);
+    reduceAggregate->consume(s3selectScan1);
+
+    s3selectScan2->produce(reduceAggregate);
+    reduceAggregate->consume(s3selectScan2);
+
+    s3selectScan3->produce(reduceAggregate);
+    reduceAggregate->consume(s3selectScan3);
+
+    s3selectScan4->produce(reduceAggregate);
+    reduceAggregate->consume(s3selectScan4);
+
+    reduceAggregate->produce(collate2);
+
+    collate2->consume(reduceAggregate);
     auto mgr2 = std::make_shared<normal::core::OperatorManager>();
 
-    mgr2->put(s3selectScan);
-
+    mgr2->put(s3selectScan1);
+    mgr2->put(s3selectScan2);
+    mgr2->put(s3selectScan3);
+    mgr2->put(s3selectScan4);
+    mgr2->put(reduceAggregate);
     mgr2->put(collate2);
 
-
+    mgr2->boot();
     for (int i=0; i<60; ++i) {
         auto startTime = std::chrono::system_clock::now();
         int colIndex  = colIndexList[i];
@@ -161,8 +257,14 @@ TEST_CASE ("CacheTest"
         cols.clear();
         cols.emplace_back(colName);
         std::string query = "select SUM(CAST(" +colName+ " AS FLOAT)) from S3Object";
-        s3selectScan->setCols({"NA"});
-        s3selectScan->setQuery(query);
+        s3selectScan1->setCols({"NA"});
+        s3selectScan1->setQuery(query);
+        s3selectScan2->setCols({"NA"});
+        s3selectScan2->setQuery(query);
+        s3selectScan3->setCols({"NA"});
+        s3selectScan3->setQuery(query);
+        s3selectScan4->setCols({"NA"});
+        s3selectScan4->setQuery(query);
         mgr2->start();
         mgr2->join();
 
@@ -171,12 +273,13 @@ TEST_CASE ("CacheTest"
         val = std::stod(tuples->getValue("f0", 0));
 
 
-        mgr->stop();
+
         auto endTime = std::chrono::system_clock::now();
         auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
         outfile << elapsedTime.count() << std::endl;
     }
+    mgr2->stop();
     end = std::chrono::system_clock::now();
     elapsed =
             std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
