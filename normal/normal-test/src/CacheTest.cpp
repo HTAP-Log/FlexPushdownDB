@@ -191,31 +191,31 @@ TEST_CASE ("CacheTest"
     //mgr->boot();
    //cache every time
   auto start = std::chrono::system_clock::now();
-//  for (int i=0; i<60; ++i) {
-//      auto startTime = std::chrono::system_clock::now();
-//      int colIndex  = colIndexList[i];
-//      std::string colName = colList[colIndex];
-//      cols.clear();
-//      cols.emplace_back(colName);
-//      outfile << colName << ",";
-//      std::string query = "select " +colName+ " from S3Object";
-//      s3selectScan1->setCols(cols);
-//      s3selectScan1->setQuery(query);
-//      s3selectScan2->setCols(cols);
-//      s3selectScan2->setQuery(query);
-//      s3selectScan3->setCols(cols);
-//      s3selectScan3->setQuery(query);
-//      s3selectScan4->setCols(cols);
-//      s3selectScan4->setQuery(query);
-//
-//      mgr->start();
-//      mgr->join();
-//
-//      auto endTime = std::chrono::system_clock::now();
-//      auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-//
-//      outfile << elapsedTime.count() << std::endl;
-//  }
+  for (int i=0; i<60; ++i) {
+      auto startTime = std::chrono::system_clock::now();
+      int colIndex  = colIndexList[i];
+      std::string colName = colList[colIndex];
+      cols.clear();
+      cols.emplace_back(colName);
+      outfile << colName << ",";
+      std::string query = "select " +colName+ " from S3Object";
+      s3selectScan1->setCols(cols);
+      s3selectScan1->setQuery(query);
+      s3selectScan2->setCols(cols);
+      s3selectScan2->setQuery(query);
+      s3selectScan3->setCols(cols);
+      s3selectScan3->setQuery(query);
+      s3selectScan4->setCols(cols);
+      s3selectScan4->setQuery(query);
+
+      mgr->start();
+      mgr->join();
+
+      auto endTime = std::chrono::system_clock::now();
+      auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+
+      outfile << elapsedTime.count() << std::endl;
+  }
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::cout << elapsed.count() << '\n';
