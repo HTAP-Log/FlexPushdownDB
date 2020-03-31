@@ -136,10 +136,10 @@ TEST_CASE ("CacheTest"
     auto aggregate2 = std::make_shared<normal::pushdown::Aggregate>("aggregate2", expressions2);
     auto aggregate3 = std::make_shared<normal::pushdown::Aggregate>("aggregate3", expressions3);
     auto aggregate4 = std::make_shared<normal::pushdown::Aggregate>("aggregate4", expressions4);
-    auto aggregate5 = std::make_shared<normal::pushdown::Aggregate>("aggregate5", expressions4);
-    auto aggregate6 = std::make_shared<normal::pushdown::Aggregate>("aggregate6", expressions4);
-    auto aggregate7 = std::make_shared<normal::pushdown::Aggregate>("aggregate7", expressions4);
-    auto aggregate8 = std::make_shared<normal::pushdown::Aggregate>("aggregate8", expressions4);
+    auto aggregate5 = std::make_shared<normal::pushdown::Aggregate>("aggregate5", expressions5);
+    auto aggregate6 = std::make_shared<normal::pushdown::Aggregate>("aggregate6", expressions6);
+    auto aggregate7 = std::make_shared<normal::pushdown::Aggregate>("aggregate7", expressions7);
+    auto aggregate8 = std::make_shared<normal::pushdown::Aggregate>("aggregate8", expressions8);
 
     auto reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "sum");
     auto
@@ -161,6 +161,18 @@ TEST_CASE ("CacheTest"
 
     s3selectScan4->produce(aggregate4);
     aggregate4->consume(s3selectScan4);
+
+    s3selectScan5->produce(aggregate5);
+    aggregate5->consume(s3selectScan5);
+
+    s3selectScan6->produce(aggregate6);
+    aggregate6->consume(s3selectScan6);
+
+    s3selectScan7->produce(aggregate7);
+    aggregate7->consume(s3selectScan7);
+
+    s3selectScan8->produce(aggregate8);
+    aggregate8->consume(s3selectScan8);
 
   aggregate1->produce(reduceAggregate);
   reduceAggregate->consume(aggregate1);
