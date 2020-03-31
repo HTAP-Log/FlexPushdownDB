@@ -188,41 +188,49 @@ TEST_CASE ("CacheTest"
   std::ofstream outfile;
 
   outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
-    mgr->boot();
+    //mgr->boot();
    //cache every time
   auto start = std::chrono::system_clock::now();
-  for (int i=0; i<60; ++i) {
-      auto startTime = std::chrono::system_clock::now();
-      int colIndex  = colIndexList[i];
-      std::string colName = colList[colIndex];
-      cols.clear();
-      cols.emplace_back(colName);
-      outfile << colName << ",";
-      std::string query = "select " +colName+ " from S3Object";
-      s3selectScan1->setCols(cols);
-      s3selectScan1->setQuery(query);
-      s3selectScan2->setCols(cols);
-      s3selectScan2->setQuery(query);
-      s3selectScan3->setCols(cols);
-      s3selectScan3->setQuery(query);
-      s3selectScan4->setCols(cols);
-      s3selectScan4->setQuery(query);
-
-      mgr->start();
-      mgr->join();
-
-      auto endTime = std::chrono::system_clock::now();
-      auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-
-      outfile << elapsedTime.count() << std::endl;
-  }
+//  for (int i=0; i<60; ++i) {
+//      auto startTime = std::chrono::system_clock::now();
+//      int colIndex  = colIndexList[i];
+//      std::string colName = colList[colIndex];
+//      cols.clear();
+//      cols.emplace_back(colName);
+//      outfile << colName << ",";
+//      std::string query = "select " +colName+ " from S3Object";
+//      s3selectScan1->setCols(cols);
+//      s3selectScan1->setQuery(query);
+//      s3selectScan2->setCols(cols);
+//      s3selectScan2->setQuery(query);
+//      s3selectScan3->setCols(cols);
+//      s3selectScan3->setQuery(query);
+//      s3selectScan4->setCols(cols);
+//      s3selectScan4->setQuery(query);
+//
+//      mgr->start();
+//      mgr->join();
+//
+//      auto endTime = std::chrono::system_clock::now();
+//      auto elapsedTime  = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+//
+//      outfile << elapsedTime.count() << std::endl;
+//  }
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
     std::cout << elapsed.count() << '\n';
-    mgr->stop();
+   // mgr->stop();
   //push down every time
     start = std::chrono::system_clock::now();
-    auto collate2 = std::make_shared<normal::pushdown::Collate>("collate");
+
+    reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+
+    reduceAggregateExpressions =
+            std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
+    reduceAggregateExpressions->emplace_back(reduceSumExpr);
+    reduceAggregate = std::make_shared<normal::pushdown::Aggregate>("reduceAggregate", reduceAggregateExpressions);
+
+    auto collate2 = std::make_shared<normal::pushdown::Collate>("collate2");
 
     s3selectScan1->produce(reduceAggregate);
     reduceAggregate->consume(s3selectScan1);
@@ -270,7 +278,7 @@ TEST_CASE ("CacheTest"
 
         tuples = collate2->tuples();
 
-        val = std::stod(tuples->getValue("f0", 0));
+        val = std::stod(tuples->getValue("sum", 0));
 
 
 
