@@ -23,7 +23,7 @@
  */
 TEST_CASE ("CacheTest"
                * doctest::skip(false)) {
-
+    for (int k = 0; k < 60; ++k) {
     normal::pushdown::AWSClient client;
     client.init();
 
@@ -259,7 +259,7 @@ TEST_CASE ("CacheTest"
                              "L_LINENUMBER", "L_TAX"};
     int colIndexList[60];
     srand(time(NULL));
-    for (int k = 0; k < 60; ++k) {
+
         for (int i = 0; i < 60; ++i) {
             colIndexList[i] = rand() % 8;
         }
