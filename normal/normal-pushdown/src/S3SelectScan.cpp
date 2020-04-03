@@ -206,7 +206,7 @@ void S3SelectScan::onStart() {
                                                                                       m_cache->m_cacheData[cacheID]);
               }
               //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
-              if (m_cache->m_cacheQueue.size()>4){
+              if (m_cache->m_cacheQueue.size()>cacheSize_){
                   std::string front = m_cache->m_cacheQueue.front();
                   m_cache->m_cacheQueue.pop();
                   m_cache->m_cacheData.erase(front);
@@ -262,7 +262,9 @@ S3SelectScan::S3SelectScan(std::string name,
                            std::string sql,
                            std::string m_tbl,
                            std::vector<std::string> m_col,
-                           std::shared_ptr<Aws::S3::S3Client> s3Client)
+                           std::shared_ptr<Aws::S3::S3Client> s3Client,
+                           int m_cacheSize
+                           )
     : Operator(std::move(name)),
       s3Bucket_(std::move(s3Bucket)),
       s3Object_(std::move(s3Object)),
@@ -270,7 +272,9 @@ S3SelectScan::S3SelectScan(std::string name,
       m_cache(std::make_shared<Cache>()),
       m_col(std::move(m_col)),
       m_tbl(std::move(m_tbl)),
-      s3Client_(std::move(s3Client)){
+      s3Client_(std::move(s3Client)
+      ){
+      cacheSize_ = m_cacheSize;
 }
 
 void S3SelectScan::onReceive(const normal::core::message::Envelope &message) {

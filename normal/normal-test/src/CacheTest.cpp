@@ -23,7 +23,15 @@
  */
 TEST_CASE ("CacheTest"
                * doctest::skip(false)) {
-    for (int k = 0; k < 60; ++k) {
+    std::string colList[] = {"l_quantity", "l_extendedprice", "l_discount", "L_ORDERKEY", "L_PARTKEY", "L_SUPPKEY",
+                             "L_LINENUMBER", "L_TAX"};
+    int colIndexList[60];
+    srand(time(NULL));
+
+    for (int i = 0; i < 60; ++i) {
+        colIndexList[i] = rand() % 8;
+    }
+    for (int k = 1; k < 8; ++k) {
     normal::pushdown::AWSClient client;
     client.init();
 
@@ -41,56 +49,64 @@ TEST_CASE ("CacheTest"
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
     auto s3selectScan2 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan2",
                                                                           "mit-caching",
                                                                           "test/a.tbl",
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
     auto s3selectScan3 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan3",
                                                                           "mit-caching",
                                                                           "test/a.tbl",
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
     auto s3selectScan4 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan4",
                                                                           "mit-caching",
                                                                           "test/a.tbl",
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
     auto s3selectScan5 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan5",
                                                                           "mit-caching",
                                                                           "test/a.tbl",
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
     auto s3selectScan6 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan6",
                                                                           "mit-caching",
                                                                           "test/a.tbl",
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
     auto s3selectScan7 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan7",
                                                                           "mit-caching",
                                                                           "test/a.tbl",
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
     auto s3selectScan8 = std::make_shared<normal::pushdown::S3SelectScan>("s3SelectScan8",
                                                                           "mit-caching",
                                                                           "test/a.tbl",
                                                                           "select l_extendedprice  from S3Object",
                                                                           "a",
                                                                           cols,
-                                                                          client.defaultS3Client());
+                                                                          client.defaultS3Client(),
+                                                                          k);
 
     auto sumExpr1 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
     auto expressions1 =
@@ -224,19 +240,19 @@ TEST_CASE ("CacheTest"
 
     mgr->boot();
 
-    mgr->start();
-    mgr->join();
-
-    auto tuples = collate->tuples();
-
-    auto val = std::stod(tuples->getValue("sum", 0));
-
-            CHECK(tuples->numRows() == 1);
-            CHECK(tuples->numColumns() == 1);
-    // CHECK(val == 4400227);
-
-    mgr->stop();
-    printf("again!");
+//    mgr->start();
+//    mgr->join();
+//
+//    auto tuples = collate->tuples();
+//
+//    auto val = std::stod(tuples->getValue("sum", 0));
+//
+//            CHECK(tuples->numRows() == 1);
+//            CHECK(tuples->numColumns() == 1);
+//    // CHECK(val == 4400227);
+//
+//    mgr->stop();
+//    printf("again!");
 
 
     //run it again to test cache
@@ -255,14 +271,7 @@ TEST_CASE ("CacheTest"
 //  mgr2->put(s3selectScan);
 //  mgr2->put(aggregate);
 //  mgr2->put(collate);
-    std::string colList[] = {"l_quantity", "l_extendedprice", "l_discount", "L_ORDERKEY", "L_PARTKEY", "L_SUPPKEY",
-                             "L_LINENUMBER", "L_TAX"};
-    int colIndexList[60];
-    srand(time(NULL));
 
-        for (int i = 0; i < 60; ++i) {
-            colIndexList[i] = rand() % 8;
-        }
 //        colIndexList[0] = 7;
 //        colIndexList[1] = 6;
 //        colIndexList[2] = 1;
@@ -279,7 +288,7 @@ TEST_CASE ("CacheTest"
         //cache every time
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < 60; ++i) {
-            auto startTime = std::chrono::system_clock::now();
+
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
             cols.clear();
@@ -302,7 +311,7 @@ TEST_CASE ("CacheTest"
             s3selectScan7->setQuery(query);
             s3selectScan8->setCols(cols);
             s3selectScan8->setQuery(query);
-
+            auto startTime = std::chrono::system_clock::now();
             mgr->start();
             mgr->join();
 
@@ -369,7 +378,7 @@ TEST_CASE ("CacheTest"
 
         mgr2->boot();
         for (int i = 0; i < 60; ++i) {
-            auto startTime = std::chrono::system_clock::now();
+
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
             outfile << colName << ",";
@@ -392,12 +401,13 @@ TEST_CASE ("CacheTest"
             s3selectScan7->setQuery(query);
             s3selectScan8->setCols({"NA"});
             s3selectScan8->setQuery(query);
+            auto startTime = std::chrono::system_clock::now();
             mgr2->start();
             mgr2->join();
 
-            tuples = collate2->tuples();
-
-            val = std::stod(tuples->getValue("sum", 0));
+//            tuples = collate2->tuples();
+//
+//            val = std::stod(tuples->getValue("sum", 0));
 
 
             auto endTime = std::chrono::system_clock::now();

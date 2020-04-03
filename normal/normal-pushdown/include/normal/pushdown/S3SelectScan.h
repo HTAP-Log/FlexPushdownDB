@@ -26,12 +26,12 @@ private:
   std::vector<std::string> m_col;
   std::string m_tbl;
   std::shared_ptr<Aws::S3::S3Client> s3Client_;
-
+  int cacheSize_;
   void onStart();
 
 
 public:
-  S3SelectScan(std::string name, std::string s3Bucket, std::string s3Object, std::string sql, std::string m_tbl, std::vector<std::string> m_col, std::shared_ptr<Aws::S3::S3Client> s3Client);
+  S3SelectScan(std::string name, std::string s3Bucket, std::string s3Object, std::string sql, std::string m_tbl, std::vector<std::string> m_col, std::shared_ptr<Aws::S3::S3Client> s3Client,int m_cacheSize);
   ~S3SelectScan() override = default;
   std::shared_ptr<Cache> getCache(){
       return m_cache;

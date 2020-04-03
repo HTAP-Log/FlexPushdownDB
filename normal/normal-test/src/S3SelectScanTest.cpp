@@ -39,7 +39,8 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate" * doctest::skip(true)) {
                                                                        "select * from S3Object limit 1000",
                                                                        "N/A",
                                                                        cols,
-                                                                       client.defaultS3Client());
+                                                                       client.defaultS3Client(),
+                                                                       4);
 
   auto sumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f5");
   auto expressions2 =
