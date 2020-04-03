@@ -31,7 +31,10 @@ TEST_CASE ("CacheTest"
     for (int i = 0; i < 60; ++i) {
         colIndexList[i] = rand() % 8;
     }
-    for (int k = 1; k < 10; ++k) {
+    for (int k = 0; k < 9; ++k) {
+        if (k!=0 and k!=8){
+            break;
+        }
     normal::pushdown::AWSClient client;
     client.init();
 
@@ -284,48 +287,48 @@ TEST_CASE ("CacheTest"
         std::ofstream outfile;
 
         outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
-//        mgr->boot();
-//        //cache every time
-//        auto start = std::chrono::system_clock::now();
-//        for (int i = 0; i < 60; ++i) {
-//
-//            int colIndex = colIndexList[i];
-//            std::string colName = colList[colIndex];
-//            cols.clear();
-//            cols.emplace_back(colName);
-//            outfile << colName << ",";
-//            std::string query = "select " + colName + " from S3Object";
-//            s3selectScan1->setCols(cols);
-//            s3selectScan1->setQuery(query);
-//            s3selectScan2->setCols(cols);
-//            s3selectScan2->setQuery(query);
-//            s3selectScan3->setCols(cols);
-//            s3selectScan3->setQuery(query);
-//            s3selectScan4->setCols(cols);
-//            s3selectScan4->setQuery(query);
-//            s3selectScan5->setCols(cols);
-//            s3selectScan5->setQuery(query);
-//            s3selectScan6->setCols(cols);
-//            s3selectScan6->setQuery(query);
-//            s3selectScan7->setCols(cols);
-//            s3selectScan7->setQuery(query);
-//            s3selectScan8->setCols(cols);
-//            s3selectScan8->setQuery(query);
-//            auto startTime = std::chrono::system_clock::now();
-//            mgr->start();
-//            mgr->join();
-//
-//            auto endTime = std::chrono::system_clock::now();
-//            auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-//
-//            outfile << elapsedTime.count() << std::endl;
-//        }
-//        auto end = std::chrono::system_clock::now();
-//        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-//        std::cout << elapsed.count() << '\n';
-//        mgr->stop();
-        //push down every time
+        mgr->boot();
+        //cache every time
         auto start = std::chrono::system_clock::now();
+        for (int i = 0; i < 60; ++i) {
+
+            int colIndex = colIndexList[i];
+            std::string colName = colList[colIndex];
+            cols.clear();
+            cols.emplace_back(colName);
+            outfile << colName << ",";
+            std::string query = "select " + colName + " from S3Object";
+            s3selectScan1->setCols(cols);
+            s3selectScan1->setQuery(query);
+            s3selectScan2->setCols(cols);
+            s3selectScan2->setQuery(query);
+            s3selectScan3->setCols(cols);
+            s3selectScan3->setQuery(query);
+            s3selectScan4->setCols(cols);
+            s3selectScan4->setQuery(query);
+            s3selectScan5->setCols(cols);
+            s3selectScan5->setQuery(query);
+            s3selectScan6->setCols(cols);
+            s3selectScan6->setQuery(query);
+            s3selectScan7->setCols(cols);
+            s3selectScan7->setQuery(query);
+            s3selectScan8->setCols(cols);
+            s3selectScan8->setQuery(query);
+            auto startTime = std::chrono::system_clock::now();
+            mgr->start();
+            mgr->join();
+
+            auto endTime = std::chrono::system_clock::now();
+            auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+
+            outfile << elapsedTime.count() << std::endl;
+        }
+        auto end = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+        std::cout << elapsed.count() << '\n';
+        mgr->stop();
+        //push down every time
+        start = std::chrono::system_clock::now();
 
         reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
 
@@ -416,8 +419,8 @@ TEST_CASE ("CacheTest"
             outfile << elapsedTime.count() << std::endl;
         }
         mgr2->stop();
-        auto end = std::chrono::system_clock::now();
-        auto elapsed =
+        end = std::chrono::system_clock::now();
+        elapsed =
                 std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
         std::cout << elapsed.count() << '\n';
         outfile.close();
