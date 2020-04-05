@@ -33,7 +33,7 @@ TEST_CASE ("CacheTest"
     }
     for (int k = 0; k < 9; ++k) {
         if (k!=0 and k!=8){
-            break;
+            continue;
         }
     normal::pushdown::AWSClient client;
     client.init();
@@ -290,7 +290,7 @@ TEST_CASE ("CacheTest"
         mgr->boot();
         //cache every time
         auto start = std::chrono::system_clock::now();
-        for (int i = 0; i < 60; ++i) {
+        for (int i = 0; i < 1; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
@@ -380,7 +380,7 @@ TEST_CASE ("CacheTest"
         mgr2->put(collate2);
 
         mgr2->boot();
-        for (int i = 0; i < 60; ++i) {
+        for (int i = 0; i < 1; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
