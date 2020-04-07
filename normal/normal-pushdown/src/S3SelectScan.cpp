@@ -253,11 +253,12 @@ void S3SelectScan::onStart() {
 
       }
   }
-  outfile.close();
+
     auto endTime = std::chrono::system_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
     outfile << elapsedTime.count() << ",";
+    outfile.close();
 }
 
 S3SelectScan::S3SelectScan(std::string name,
