@@ -288,7 +288,7 @@ TEST_CASE ("CacheTest"
         mgr->boot();
         //cache every time
         auto start = std::chrono::system_clock::now();
-        for (int i = 0; i < 1; ++i) {
+        for (int i = 0; i < 60; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
@@ -378,7 +378,7 @@ TEST_CASE ("CacheTest"
         mgr2->put(collate2);
 
         mgr2->boot();
-        for (int i = 0; i < 1; ++i) {
+        for (int i = 0; i < 60; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
