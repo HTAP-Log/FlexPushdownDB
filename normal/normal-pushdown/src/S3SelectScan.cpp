@@ -77,8 +77,7 @@ bool S3SelectScan::checkCache() {
 }
 
 void S3SelectScan::onStart() {
-
-
+    auto startTime = std::chrono::system_clock::now();
   //get tbl and col info
   std::string tblName = m_tbl;
 
@@ -242,7 +241,7 @@ void S3SelectScan::onStart() {
 
       } else {
           outfile << "hit,";
-          auto startTime = std::chrono::system_clock::now();
+
           std::shared_ptr<normal::core::TupleSet> tupleSet = m_cache->m_cacheData[cacheID];
           std::shared_ptr<normal::core::message::Message> message = std::make_shared<normal::core::message::TupleMessage>(tupleSet, this->name());
           ctx()->tell(message);
@@ -251,14 +250,14 @@ void S3SelectScan::onStart() {
 //      this->ctx()->operatorActor()->quit();
 
         ctx()->notifyComplete();
-          auto endTime = std::chrono::system_clock::now();
-          auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
-          outfile << elapsedTime.count() << ",";
       }
   }
   outfile.close();
+    auto endTime = std::chrono::system_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
+    outfile << elapsedTime.count() << ",";
 }
 
 S3SelectScan::S3SelectScan(std::string name,
