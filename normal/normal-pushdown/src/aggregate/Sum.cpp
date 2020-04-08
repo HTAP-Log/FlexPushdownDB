@@ -4,6 +4,7 @@
 
 #include <sstream>
 #include <utility>
+#include <fstream>
 
 #include "normal/pushdown/aggregate/Sum.h"
 #include "normal/pushdown/Globals.h"
@@ -17,6 +18,7 @@ Sum::Sum(std::string columnName, std::string inputColumnName) :
 void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::TupleSet> tuples) {
 
   //SPDLOG_DEBUG("Data:\n{}", tuples->toString());
+
 
   std::string sumString = tuples->visit([&](std::string accum, arrow::RecordBatch &batch) -> std::string {
 
@@ -78,6 +80,7 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
   std::string currentSum = this->result()->get(columnName(), "0");
   double newSum = std::stod(sumString) + std::stod(currentSum);
   this->result()->put(columnName(), std::to_string(newSum));
+
 }
 
 const std::string &Sum::inputColumnName() const {

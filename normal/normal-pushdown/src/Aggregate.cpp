@@ -34,14 +34,25 @@ void Aggregate::onStart() {
 }
 
 void Aggregate::onReceive(const normal::core::message::Envelope &message) {
-  if (message.message().type() == "StartMessage") {
-    this->onStart();
+    std::ofstream outfile;
+
+    outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+    auto startTime = std::chrono::system_clock::now();
+    auto endTime = std::chrono::system_clock::now();
+    if (message.message().type() == "StartMessage") {
+        auto startTime = std::chrono::system_clock::now();
+        this->onStart();
   } else if (message.message().type() == "TupleMessage") {
     auto tupleMessage = dynamic_cast<const normal::core::message::TupleMessage &>(message.message());
     this->onTuple(tupleMessage);
   } else if (message.message().type() == "CompleteMessage") {
     auto completeMessage = dynamic_cast<const normal::core::message::CompleteMessage &>(message.message());
     this->onComplete(completeMessage);
+      auto endTime = std::chrono::system_clock::now();
+      auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+
+      outfile << elapsedTime.count() << ",";
+      outfile.close();
   } else {
     throw;
   }
