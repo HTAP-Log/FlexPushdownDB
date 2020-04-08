@@ -40,7 +40,7 @@ void Aggregate::onReceive(const normal::core::message::Envelope &message) {
     auto startTime = std::chrono::system_clock::now();
     auto endTime = std::chrono::system_clock::now();
     if (message.message().type() == "StartMessage") {
-        auto startTime = std::chrono::system_clock::now();
+        startTime = std::chrono::system_clock::now();
         this->onStart();
   } else if (message.message().type() == "TupleMessage") {
     auto tupleMessage = dynamic_cast<const normal::core::message::TupleMessage &>(message.message());
@@ -48,7 +48,7 @@ void Aggregate::onReceive(const normal::core::message::Envelope &message) {
   } else if (message.message().type() == "CompleteMessage") {
     auto completeMessage = dynamic_cast<const normal::core::message::CompleteMessage &>(message.message());
     this->onComplete(completeMessage);
-      auto endTime = std::chrono::system_clock::now();
+      endTime = std::chrono::system_clock::now();
       auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 
       outfile << elapsedTime.count() << ",";
