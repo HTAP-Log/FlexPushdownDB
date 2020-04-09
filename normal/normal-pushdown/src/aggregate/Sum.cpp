@@ -17,7 +17,7 @@ Sum::Sum(std::string columnName, std::string inputColumnName) :
 
 void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::TupleSet> tuples) {
 
-  //SPDLOG_DEBUG("Data:\n{}", tuples->toString());
+  SPDLOG_DEBUG("Data:\n{}", tuples->toString());
 
 
   std::string sumString = tuples->visit([&](std::string accum, arrow::RecordBatch &batch) -> std::string {

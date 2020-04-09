@@ -24,7 +24,7 @@ Aggregate::Aggregate(std::string name,
       result_(std::make_shared<aggregate::AggregationResult>()) {}
 
 void Aggregate::onStart() {
-  //SPDLOG_DEBUG("Starting");
+  SPDLOG_DEBUG("Starting");
 
   this->result_->reset();
 
@@ -34,13 +34,7 @@ void Aggregate::onStart() {
 }
 
 void Aggregate::onReceive(const normal::core::message::Envelope &message) {
-    std::ofstream outfile;
-
-    outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
-    auto startTime = std::chrono::system_clock::now();
-    auto endTime = std::chrono::system_clock::now();
     if (message.message().type() == "StartMessage") {
-        startTime = std::chrono::system_clock::now();
         this->onStart();
   } else if (message.message().type() == "TupleMessage") {
     auto tupleMessage = dynamic_cast<const normal::core::message::TupleMessage &>(message.message());
@@ -48,11 +42,6 @@ void Aggregate::onReceive(const normal::core::message::Envelope &message) {
   } else if (message.message().type() == "CompleteMessage") {
     auto completeMessage = dynamic_cast<const normal::core::message::CompleteMessage &>(message.message());
     this->onComplete(completeMessage);
-      endTime = std::chrono::system_clock::now();
-      auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-
-      outfile << elapsedTime.count() << ",";
-      outfile.close();
   } else {
     throw;
   }
@@ -60,11 +49,11 @@ void Aggregate::onReceive(const normal::core::message::Envelope &message) {
 
 void Aggregate::onComplete(const normal::core::message::CompleteMessage &) {
 
-  //SPDLOG_DEBUG("Producer complete");
+  SPDLOG_DEBUG("Producer complete");
 
   if (this->ctx()->operatorMap().allComplete(core::OperatorRelationshipType::Producer)) {
 
-    //SPDLOG_DEBUG("All producers complete, completing");
+    SPDLOG_DEBUG("All producers complete, completing");
 
     // Create output schema
     std::shared_ptr<arrow::Schema> schema;
@@ -75,7 +64,7 @@ void Aggregate::onComplete(const normal::core::message::CompleteMessage &) {
     }
     schema = arrow::schema(fields);
 
-    //SPDLOG_DEBUG("Aggregation output schema: {}\n", schema->ToString());
+    SPDLOG_DEBUG("Aggregation output schema: {}\n", schema->ToString());
 
     arrow::MemoryPool *pool = arrow::default_memory_pool();
 
@@ -98,7 +87,7 @@ void Aggregate::onComplete(const normal::core::message::CompleteMessage &) {
 
     const std::shared_ptr<core::TupleSet> &aggregatedTuples = core::TupleSet::make(table);
 
-    //SPDLOG_DEBUG("Completing  |  Aggregation result: \n{}", aggregatedTuples->toString());
+    SPDLOG_DEBUG("Completing  |  Aggregation result: \n{}", aggregatedTuples->toString());
 
     std::shared_ptr<normal::core::message::Message>
         tupleMessage = std::make_shared<normal::core::message::TupleMessage>(aggregatedTuples, this->name());
@@ -114,7 +103,7 @@ void Aggregate::onComplete(const normal::core::message::CompleteMessage &) {
 }
 
 void Aggregate::onTuple(const core::message::TupleMessage &message) {
-  //SPDLOG_DEBUG("Received tuple message");
+  SPDLOG_DEBUG("Received tuple message");
   compute(message.tuples());
 }
 
