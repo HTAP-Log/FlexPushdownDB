@@ -37,7 +37,7 @@ TEST_CASE ("CacheTest"
     for (int i = 0; i < 60; ++i) {
         colIndexList[i] = rand() % 8;
     }
-    for (int k = 8; k < 9; ++k) {
+    for (int k = 0; k < 9; ++k) {
 
     normal::pushdown::AWSClient client;
     client.init();
