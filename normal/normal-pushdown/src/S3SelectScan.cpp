@@ -77,7 +77,7 @@ bool S3SelectScan::checkCache() {
 }
 
 void S3SelectScan::onStart() {
-    auto startTime = std::chrono::system_clock::now();
+    //    auto startTime = std::chrono::system_clock::now();
   //get tbl and col info
   std::string tblName = m_tbl;
 
@@ -254,10 +254,10 @@ void S3SelectScan::onStart() {
       }
   }
 
-    auto endTime = std::chrono::system_clock::now();
-    auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-
-    outfile << elapsedTime.count() << ",";
+//    auto endTime = std::chrono::system_clock::now();
+//    auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+//
+//    outfile << elapsedTime.count() << ",";
     outfile.close();
 }
 
