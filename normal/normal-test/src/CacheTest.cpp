@@ -290,7 +290,7 @@ TEST_CASE ("CacheTest"
 //        colIndexList[8] = 1;
         std::ofstream outfile;
 
-        outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+
         mgr->boot();
         //cache every time
         auto start = std::chrono::system_clock::now();
@@ -300,7 +300,9 @@ TEST_CASE ("CacheTest"
             std::string colName = colList[colIndex];
             cols.clear();
             cols.emplace_back(colName);
+            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << colName << ",";
+            outfile.close();
             std::string query = "select " + colName + " from S3Object";
             s3selectScan1->setCols(cols);
             s3selectScan1->setQuery(query);
@@ -324,8 +326,9 @@ TEST_CASE ("CacheTest"
 
             auto endTime = std::chrono::system_clock::now();
             auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-
+            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << elapsedTime.count() << std::endl;
+            outfile.close();
         }
         auto end = std::chrono::system_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
@@ -388,7 +391,9 @@ TEST_CASE ("CacheTest"
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
+            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << colName << ",";
+            outfile.close();
             cols.clear();
             cols.emplace_back(colName);
             std::string query = "select SUM(CAST(" + colName + " AS FLOAT)) from S3Object";
@@ -419,15 +424,16 @@ TEST_CASE ("CacheTest"
 
             auto endTime = std::chrono::system_clock::now();
             auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-
+            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << elapsedTime.count() << std::endl;
+            outfile.close();
         }
         mgr2->stop();
         end = std::chrono::system_clock::now();
         elapsed =
                 std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
         std::cout << elapsed.count() << '\n';
-        outfile.close();
+        //outfile.close();
         client.shutdown();
     }
 }
