@@ -93,6 +93,7 @@ void S3SelectScan::onStart() {
   outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
   if (pushdown){
       outfile << "miss,";
+      outfile.close();
       Aws::String bucketName = Aws::String(s3Bucket_);
 
       SelectObjectContentRequest selectObjectContentRequest;
@@ -126,7 +127,7 @@ void S3SelectScan::onStart() {
           tupleSet->printSchema();
           std::shared_ptr<normal::core::message::Message> message = std::make_shared<normal::core::message::TupleMessage>(tupleSet, this->name());;
           ctx()->tell(message);
-          SPDLOG_DEBUG("transmit!!");
+          //SPDLOG_DEBUG("transmit!!");
       }
       );
       handler.SetStatsEventCallback([&](const StatsEvent &statsEvent) {
@@ -161,6 +162,7 @@ void S3SelectScan::onStart() {
 
       if (m_cache->m_cacheData.empty() || m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
           outfile << "miss,";
+          outfile.close();
           Aws::String bucketName = Aws::String(s3Bucket_);
 
           SelectObjectContentRequest selectObjectContentRequest;
@@ -241,7 +243,7 @@ void S3SelectScan::onStart() {
 
       } else {
           outfile << "hit,";
-
+          outfile.close();
           std::shared_ptr<normal::core::TupleSet> tupleSet = m_cache->m_cacheData[cacheID];
           std::shared_ptr<normal::core::message::Message> message = std::make_shared<normal::core::message::TupleMessage>(tupleSet, this->name());
           ctx()->tell(message);
@@ -258,7 +260,7 @@ void S3SelectScan::onStart() {
 //    auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
 //
 //    outfile << elapsedTime.count() << ",";
-    outfile.close();
+
 }
 
 S3SelectScan::S3SelectScan(std::string name,
