@@ -4,31 +4,31 @@
 
 #include <sstream>
 #include <utility>
-#include <fstream>
+#include <normal/core/expression/Expressions.h>
+#include <normal/core/arrow/ScalarHelperImpl.h>
+#include <normal/core/arrow/ScalarHelperBuilder.h>
 
 #include "normal/pushdown/aggregate/Sum.h"
 #include "normal/pushdown/Globals.h"
+#include "arrow/api.h"
+#include "arrow/scalar.h"
 
 namespace normal::pushdown::aggregate {
 
-Sum::Sum(std::string columnName, std::string inputColumnName) :
+Sum::Sum(std::string columnName, std::shared_ptr<normal::core::expression::Expression> expression) :
     AggregationFunction(std::move(columnName)),
-    inputColumnName_(std::move(inputColumnName)) {}
+    expression_(std::move(expression)) {}
 
 void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::TupleSet> tuples) {
 
   SPDLOG_DEBUG("Data:\n{}", tuples->toString());
 
+  auto resultType = this->expression_->resultType(tuples->table()->schema());
 
   std::string sumString = tuples->visit([&](std::string accum, arrow::RecordBatch &batch) -> std::string {
 
-    auto fieldIndex = batch.schema()->GetFieldIndex(this->inputColumnName());
-
-    if (fieldIndex < 0) {
-      throw std::runtime_error("Field '" + this->inputColumnName() + "' not found");
-    }
-
-    std::shared_ptr<arrow::Array> array = batch.column(fieldIndex);
+    auto arrayVector = Expressions::evaluate({this->expression_}, batch);
+    auto array = arrayVector->at(0);
 
     double sum = 0;
     if (accum.empty()) {
@@ -36,6 +36,8 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
     } else {
       sum = std::stod(accum);
     }
+
+    // FIXME: Dont think this if/then else against arrow types is necessary
 
     std::shared_ptr<arrow::DataType> colType = array->type();
     if (colType->Equals(arrow::Int32Type())) {
@@ -64,12 +66,14 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
     } else if (colType->Equals(arrow::DoubleType())) {
       std::shared_ptr<arrow::DoubleArray>
           typedArray = std::static_pointer_cast<arrow::DoubleArray>(array);
+
       for (int i = 0; i < batch.num_rows(); ++i) {
         double val = typedArray->Value(i);
         sum += val;
       }
-    } else {
-      abort();
+    }
+    else {
+      throw std::runtime_error("Unrecognized type " + colType->name());
     }
 
     return std::to_string(sum);
@@ -77,14 +81,31 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
 
 
   // FIXME: Too much casting :(
-  std::string currentSum = this->result()->get(columnName(), "0");
-  double newSum = std::stod(sumString) + std::stod(currentSum);
-  this->result()->put(columnName(), std::to_string(newSum));
+  auto currentSum = this->result()->get(columnName(), arrow::MakeScalar(0.0));
 
+  auto currentSumScalar = ScalarHelperBuilder::make(currentSum);
+
+  SPDLOG_DEBUG("Current Total Sum {}", currentSumScalar.value()->toString());
+
+  auto batchSum = arrow::MakeScalar(sumString)->CastTo(arrow::float64()).ValueOrDie();
+
+  auto batchSumScalar = ScalarHelperBuilder::make(batchSum);
+
+  SPDLOG_DEBUG("Batch Sum {}", batchSumScalar.value()->toString());
+
+  auto currentSum2 = currentSumScalar.value();
+  auto batchSum2 = batchSumScalar.value();
+
+  currentSum2->operator+=(batchSum2);
+
+//  auto newSum = std::stod(sumString) + std::stod(currentSum->CastTo(arrow::float64()).ValueOrDie()->ToString());
+  auto newSum = currentSum2->asScalar();
+
+  this->result()->put(columnName(), newSum);
 }
 
-const std::string &Sum::inputColumnName() const {
-  return inputColumnName_;
+std::shared_ptr<arrow::DataType> Sum::returnType() {
+  return expression_->getReturnType();
 }
 
 }

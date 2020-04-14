@@ -14,12 +14,13 @@
 #include "normal/core/message/Message.h"
 #include <normal/pushdown/aggregate/AggregationResult.h>
 #include "normal/pushdown/Globals.h"
+#include "arrow/scalar.h"
 
 namespace normal::pushdown {
 
 Aggregate::Aggregate(std::string name,
                      std::shared_ptr<std::vector<std::shared_ptr<aggregate::AggregationFunction>>> functions)
-    : Operator(std::move(name)),
+    : Operator(std::move(name), "Aggregate"),
       functions_(std::move(functions)),
       result_(std::make_shared<aggregate::AggregationResult>()) {}
 
@@ -59,27 +60,34 @@ void Aggregate::onComplete(const normal::core::message::CompleteMessage &) {
     std::shared_ptr<arrow::Schema> schema;
     std::vector<std::shared_ptr<arrow::Field>> fields;
     for (const auto &expression: *functions_) {
-      std::shared_ptr<arrow::Field> field = arrow::field(expression->columnName(), arrow::utf8());
+      std::shared_ptr<arrow::Field> field = arrow::field(expression->columnName(), expression->returnType());
       fields.emplace_back(field);
     }
     schema = arrow::schema(fields);
 
     SPDLOG_DEBUG("Aggregation output schema: {}\n", schema->ToString());
 
-    arrow::MemoryPool *pool = arrow::default_memory_pool();
+//    arrow::MemoryPool *pool = arrow::default_memory_pool();
 
     // Create output tuples
     std::vector<std::shared_ptr<arrow::Array>> columns;
     for (const auto &expression: *functions_) {
-      arrow::StringBuilder colBuilder(pool);
-      auto res = colBuilder.Append(this->result_->get(expression->columnName()));
-      if(!res.ok())
-        abort();
-      std::shared_ptr<arrow::StringArray> col;
-      res = colBuilder.Finish(&col);
-      if(!res.ok())
-        abort();
-      columns.emplace_back(col);
+
+      if(expression->returnType() == arrow::float64()){
+        auto scalar = std::static_pointer_cast<arrow::DoubleScalar>(this->result_->get(expression->columnName()));
+        auto colArgh = makeArgh<arrow::DoubleType>(scalar);
+        columns.emplace_back(colArgh.value());
+      }
+
+//      arrow::StringBuilder colBuilder(pool);
+//      auto res = colBuilder.Append(this->result_->get(expression->columnName())->ToString());
+//      if(!res.ok())
+//        abort();
+//      std::shared_ptr<arrow::StringArray> col;
+//      res = colBuilder.Finish(&col);
+//      if(!res.ok())
+//        abort();
+//      columns.emplace_back(col);
     }
 
     std::shared_ptr<arrow::Table> table;

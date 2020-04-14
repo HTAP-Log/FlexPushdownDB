@@ -1,6 +1,18 @@
 project(normal-test VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
-setDefaults()
+function(link_target target)
+    target_include_directories(${target} PRIVATE include)
+
+    target_link_libraries(${target} PRIVATE normal-core)
+    target_link_libraries(${target} PRIVATE normal-pushdown)
+    target_link_libraries(${target} PRIVATE normal-sql)
+    target_link_libraries(${target} PRIVATE spdlog::spdlog)
+    target_link_libraries(${target} PRIVATE doctest::doctest)
+    target_link_libraries(${target} PRIVATE antlr4_static)
+    target_link_libraries(${target} PRIVATE arrow_static)
+    target_link_libraries(${target} PRIVATE gandiva_static)
+    target_link_libraries(${target} PRIVATE LLVM-filesystem)
+endfunction()
 
 
 #-----------------------------------------------------------------------------------------------------------------------
@@ -13,19 +25,50 @@ add_executable(normal-test
         src/FileScanTest.cpp
         src/S3SelectScanTest.cpp
         src/CacheTest.cpp
-        src/MultiQueryTest.cpp)
+        src/MultiQueryTest.cpp
+        src/SQLTest.cpp
+        src/TupleTest.cpp src/TestUtil.cpp src/TestUtil.h)
 
-target_compile_features(normal-test PRIVATE cxx_std_17)
-target_compile_options(normal-test PRIVATE -Wall -Wextra -pedantic)
-set_target_properties(normal-test PROPERTIES LINKER_LANGUAGE CXX)
+link_target(normal-test)
 
-target_include_directories(normal-test PRIVATE include)
 
-target_link_libraries(normal-test PUBLIC normal-core)
-target_link_libraries(normal-test PUBLIC normal-pushdown)
-target_link_libraries(normal-test PUBLIC normal-sql)
-target_link_libraries(normal-test PRIVATE spdlog::spdlog)
-target_link_libraries(normal-test PRIVATE doctest::doctest)
+add_executable(normal-test-file
+        src/Globals.h
+        src/MainTest.cpp
+        src/FileScanTest.cpp)
+
+link_target(normal-test-file)
+
+
+add_executable(normal-test-s3
+        src/Globals.h
+        src/MainTest.cpp
+        src/S3SelectScanTest.cpp)
+
+link_target(normal-test-s3)
+
+
+add_executable(normal-test-cache
+        src/Globals.h
+        src/MainTest.cpp
+        src/CacheTest.cpp)
+
+link_target(normal-test-cache)
+
+
+add_executable(normal-test-sql
+        src/Globals.h
+        src/MainTest.cpp
+        src/SQLTest.cpp)
+
+link_target(normal-test-sql)
+
+add_executable(normal-test-tuple
+        src/Globals.h
+        src/MainTest.cpp
+        src/TupleTest.cpp)
+
+link_target(normal-test-tuple)
 
 # Test data
 configure_file(data/data-file-simple/test.csv ${CMAKE_CURRENT_BINARY_DIR}/data/data-file-simple/test.csv COPYONLY)

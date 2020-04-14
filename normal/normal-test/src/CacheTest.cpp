@@ -16,7 +16,13 @@
 #include <normal/pushdown/Aggregate.h>
 #include <normal/pushdown/AWSClient.h>
 #include <normal/pushdown/aggregate/Sum.h>
+#include <normal/core/expression/Cast.h>
+#include <normal/core/expression/Column.h>
+#include <normal/core/type/Float64Type.h>
 #include "Globals.h"
+
+using namespace normal::core::type;
+using namespace normal::core::expression;
 
 /**
  * TODO: Throwing errors when issuing AWS requests, reported as a CRC error but suspect an auth issue. Skip for now.
@@ -109,42 +115,42 @@ TEST_CASE ("CacheTest"
                                                                           client.defaultS3Client(),
                                                                           k);
 
-    auto sumExpr1 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr1 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
     auto expressions1 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions1->push_back(sumExpr1);
 
-    auto sumExpr2 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr2 = std::make_shared<normal::pushdown::aggregate::Sum>("sum",cast(col("f0"),float64Type()));
     auto expressions2 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions2->push_back(sumExpr2);
 
-    auto sumExpr3 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr3 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
     auto expressions3 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions3->push_back(sumExpr3);
 
-    auto sumExpr4 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr4 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
     auto expressions4 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions4->push_back(sumExpr4);
 
-    auto sumExpr5 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr5 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
     auto expressions5 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions5->push_back(sumExpr5);
 
-    auto sumExpr6 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr6 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
     auto expressions6 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions6->push_back(sumExpr6);
 
-    auto sumExpr7 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr7 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
     auto expressions7 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions7->push_back(sumExpr7);
 
-    auto sumExpr8 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+    auto sumExpr8 = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
     auto expressions8 =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
     expressions8->push_back(sumExpr8);
@@ -158,7 +164,7 @@ TEST_CASE ("CacheTest"
     auto aggregate7 = std::make_shared<normal::pushdown::Aggregate>("aggregate7", expressions7);
     auto aggregate8 = std::make_shared<normal::pushdown::Aggregate>("aggregate8", expressions8);
 
-    auto reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "sum");
+    auto reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", col("sum"));
     auto
             reduceAggregateExpressions =
             std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
@@ -328,7 +334,7 @@ TEST_CASE ("CacheTest"
         //push down every time
         start = std::chrono::system_clock::now();
 
-        reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f0");
+        reduceSumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f0"),float64Type()));
 
         reduceAggregateExpressions =
                 std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();

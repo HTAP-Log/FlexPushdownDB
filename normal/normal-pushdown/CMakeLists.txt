@@ -1,9 +1,6 @@
 project("normal-pushdown" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 
-setDefaults()
-
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Target
 #-----------------------------------------------------------------------------------------------------------------------
@@ -23,10 +20,6 @@ add_library(normal-pushdown STATIC
         src/AWSClient.cpp include/normal/pushdown/AWSClient.h
         )
 
-target_compile_features(normal-pushdown PRIVATE cxx_std_17)
-target_compile_options(normal-pushdown PRIVATE -Wall -Wextra -pedantic)
-set_target_properties(normal-pushdown PROPERTIES LINKER_LANGUAGE CXX)
-
 target_include_directories(normal-pushdown PUBLIC include)
 
 target_link_libraries(normal-pushdown PUBLIC normal-core)
@@ -34,7 +27,7 @@ target_link_libraries(normal-pushdown PRIVATE spdlog::spdlog)
 target_link_libraries(normal-pushdown PUBLIC aws-cpp-sdk-core)
 target_link_libraries(normal-pushdown PUBLIC aws-cpp-sdk-s3)
 target_link_libraries(normal-pushdown PUBLIC arrow_static)
-target_link_libraries(normal-pushdown PUBLIC arrow_dataset_static)
+target_link_libraries(normal-pushdown PUBLIC gandiva_static)
 target_link_libraries(normal-pushdown PUBLIC pthread)
 
 

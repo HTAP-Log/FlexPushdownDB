@@ -19,6 +19,8 @@ ExternalProject_Add(${DOCTEST_BASE}
         PREFIX ${DOCTEST_PREFIX}
         GIT_REPOSITORY ${DOCTEST_GIT_URL}
         GIT_TAG ${DOCTEST_VERSION}
+        GIT_PROGRESS ON
+        GIT_SHALLOW ON
         CMAKE_ARGS
         -DCMAKE_C_COMPILER:STRING=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER:STRING=${CMAKE_CXX_COMPILER}
@@ -29,5 +31,5 @@ ExternalProject_Add(${DOCTEST_BASE}
         )
 
 add_library(doctest::doctest INTERFACE IMPORTED)
-set_target_properties(doctest::doctest PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${DOCTEST_INCLUDE_DIR})
-add_dependencies(doctest::doctest doctest_ep)
+target_include_directories(doctest::doctest INTERFACE ${DOCTEST_INCLUDE_DIR})
+add_dependencies(doctest::doctest ${DOCTEST_BASE})

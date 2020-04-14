@@ -1,9 +1,6 @@
 project("normal-core" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 
-setDefaults()
-
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Target
 #-----------------------------------------------------------------------------------------------------------------------
@@ -27,25 +24,42 @@ add_library(normal-core STATIC
         src/OperatorDirectoryEntry.cpp include/normal/core/OperatorDirectoryEntry.h
         src/OperatorRelationshipType.cpp include/normal/core/OperatorRelationshipType.h
         src/LocalOperatorDirectory.cpp include/normal/core/LocalOperatorDirectory.h
-        src/LocalOperatorDirectoryEntry.cpp include/normal/core/LocalOperatorDirectoryEntry.h)
-
-
-target_compile_features(normal-core PRIVATE cxx_std_17)
-target_compile_options(normal-core PRIVATE -Wall -Wextra -pedantic)
-set_target_properties(normal-core PROPERTIES LINKER_LANGUAGE CXX)
+        src/LocalOperatorDirectoryEntry.cpp include/normal/core/LocalOperatorDirectoryEntry.h
+        include/normal/core/expression/Expression.h
+        include/normal/core/expression/Add.h
+        include/normal/core/expression/Literal.h
+        include/normal/core/expression/Multiply.h
+        include/normal/core/expression/Subtract.h
+        include/normal/core/expression/Divide.h
+        include/normal/core/expression/Column.h
+        src/arrow/Arrays.cpp include/normal/core/arrow/Arrays.h
+        include/normal/core/expression/Cast.h
+        include/normal/core/type/Type.h
+        include/normal/core/type/DecimalType.h
+        src/type/Types.cpp include/normal/core/type/Types.h
+        include/normal/core/type/Float64Type.h
+        src/expression/Expressions.cpp
+        include/normal/core/expression/Expressions.h
+        include/normal/core/arrow/ArrayHelper.h
+        include/normal/core/arrow/TableHelper.h include/normal/core/arrow/ScalarHelperImpl.h include/normal/core/arrow/ScalarHelperBuilder.h include/normal/core/arrow/ScalarHelper.h)
 
 
 target_include_directories(normal-core PUBLIC include)
 
+target_link_libraries(normal-core PRIVATE LLVM-filesystem)
 target_link_libraries(normal-core PRIVATE spdlog::spdlog)
 target_link_libraries(normal-core PUBLIC caf::libcaf_core_shared)
 target_link_libraries(normal-core PUBLIC caf::libcaf_io_shared)
 target_link_libraries(normal-core PUBLIC arrow_static)
-target_link_libraries(normal-core PUBLIC arrow_dataset_static)
+target_link_libraries(normal-core PUBLIC gandiva_static)
+target_link_libraries(normal-core PUBLIC graphviz_gvc_shared)
+target_link_libraries(normal-core PUBLIC graphviz_dot_layout_shared)
+target_link_libraries(normal-core PUBLIC graphviz_neato_layout_shared)
+target_link_libraries(normal-core PUBLIC expected)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Diagnostics
 #-----------------------------------------------------------------------------------------------------------------------
 
-#showTargetProps(normal-core)
+showTargetProps(normal-core)

@@ -35,10 +35,13 @@ public:
   OperatorManager();
 
   void put(const std::shared_ptr<Operator> &op);
+  std::shared_ptr<Operator> getOperator(const std::string &);
   void boot();
   void start();
   void stop();
   void join();
+
+  void write_graph(const std::string& file);
 
 };
 

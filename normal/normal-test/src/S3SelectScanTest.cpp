@@ -16,18 +16,21 @@
 #include <normal/pushdown/Aggregate.h>
 #include <normal/pushdown/AWSClient.h>
 #include <normal/pushdown/aggregate/Sum.h>
+#include <normal/core/expression/Column.h>
+#include <normal/core/type/Float64Type.h>
+#include <normal/core/expression/Cast.h>
+#include <normal/core/type/DecimalType.h>
 #include "Globals.h"
+#include "TestUtil.h"
 
-TEST_CASE ("S3SelectScan -> Sum -> Collate" * doctest::skip(true)) {
+using namespace normal::core::type;
+using namespace normal::core::expression;
+
+TEST_CASE ("S3SelectScan -> Sum -> Collate"
+* doctest::skip(false)) {
 
   normal::pushdown::AWSClient client;
   client.init();
-
-  char buff[FILENAME_MAX];
-  getcwd(buff, FILENAME_MAX);
-  std::string current_working_dir(buff);
-
-  SPDLOG_DEBUG("Current working dir: {}", current_working_dir);
 
   auto mgr = std::make_shared<normal::core::OperatorManager>();
 
@@ -42,7 +45,7 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate" * doctest::skip(true)) {
                                                                        client.defaultS3Client(),
                                                                        4);
 
-  auto sumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", "f5");
+  auto sumExpr = std::make_shared<normal::pushdown::aggregate::Sum>("sum", cast(col("f5"), float64Type()));
   auto expressions2 =
       std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
   expressions2->push_back(sumExpr);
@@ -60,6 +63,8 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate" * doctest::skip(true)) {
   mgr->put(aggregate);
   mgr->put(collate);
 
+  TestUtil::writeLogicalExecutionPlan(*mgr);
+
   mgr->boot();
 
   mgr->start();
@@ -67,11 +72,11 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate" * doctest::skip(true)) {
 
   auto tuples = collate->tuples();
 
-  auto val = std::stod(tuples->getValue("sum", 0));
+  auto val = tuples->value<arrow::DoubleType>("sum", 0);
 
       CHECK(tuples->numRows() == 1);
       CHECK(tuples->numColumns() == 1);
-      CHECK(val == 4400247.21);
+      CHECK(val.value() == 4400247.21);
 
   mgr->stop();
 

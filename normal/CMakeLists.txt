@@ -1,15 +1,20 @@
 cmake_minimum_required(VERSION 3.15)
 project("normal" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
-#SET(CMAKE_C_COMPILER /usr/bin/gcc)
-#SET(CMAKE_CXX_COMPILER /usr/bin/g++)
-
-set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-#set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE "/usr/bin/iwyu;")
-
 include(CMakeUtils)
+
+setDefaults()
+
+# Gandiva requires LLVM 7 and anything linking to it must use the same version
+if ((NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang") OR (NOT CMAKE_CXX_COMPILER_VERSION MATCHES "7.*"))
+    message(FATAL_ERROR "Illegal compiler - '${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}'.
+     Gandiva requires Clang version 7")
+endif()
+
+
+include(Configure_LLVM)
 
 
 
@@ -25,6 +30,8 @@ include(External_caf)
 include(External_arrow)
 include(External_AWSCPPSDK)
 include(External_ANTLR)
+include(External_graphviz)
+include(External_expected)
 
 
 #-----------------------------------------------------------------------------------------------------------------------
