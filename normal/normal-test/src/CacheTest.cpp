@@ -37,7 +37,13 @@ TEST_CASE ("CacheTest"
     for (int i = 0; i < 60; ++i) {
         colIndexList[i] = rand() % 8;
     }
-    for (int k = 0; k < 9; ++k) {
+    colIndexList[0] = 7;
+    colIndexList[1] = 7;
+    colIndexList[2] = 7;
+    colIndexList[3] = 7;
+    colIndexList[4] = 7;
+    colIndexList[5] = 7;
+    for (int k = 8; k < 9; ++k) {
 
     normal::pushdown::AWSClient client;
     client.init();
@@ -294,7 +300,7 @@ TEST_CASE ("CacheTest"
         mgr->boot();
         //cache every time
         auto start = std::chrono::system_clock::now();
-        for (int i = 0; i < 60; ++i) {
+        for (int i = 0; i < 5; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
@@ -387,7 +393,7 @@ TEST_CASE ("CacheTest"
         mgr2->put(collate2);
 
         mgr2->boot();
-        for (int i = 0; i < 60; ++i) {
+        for (int i = 0; i < 5; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
