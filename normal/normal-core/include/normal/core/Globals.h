@@ -18,7 +18,7 @@ namespace normal::core {
 /**
  * Default number of elements to process per record batch
  */
-const auto DEFAULT_CHUNK_SIZE = 10000;
+const auto DEFAULT_CHUNK_SIZE = 15000;
 
 }
 
