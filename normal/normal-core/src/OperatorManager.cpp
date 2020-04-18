@@ -89,23 +89,23 @@ void OperatorManager::join() {
         SPDLOG_DEBUG("Message received  |  actor: 'OperatorManager', messageKind: '{}', from: '{}'",
                      msg.message().type(), msg.message().sender());
 
-        if ( msg.message().sender()=="s3SelectScan1") {
-            endTime = std::chrono::system_clock::now();
-            auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-            std::ofstream outfile;
-            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
-            outfile << "scanTime, " << elapsedTime.count() << ",";
-            outfile.close();
-            startTime = std::chrono::system_clock::now();
-        }
-        if ( msg.message().sender()=="aggregate1"){
-            endTime = std::chrono::system_clock::now();
-            auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-            std::ofstream outfile;
-            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
-            outfile << "aggregationTime, " << elapsedTime.count() << ",";
-            outfile.close();
-        }
+//        if ( msg.message().sender()=="s3SelectScan1") {
+//            endTime = std::chrono::system_clock::now();
+//            auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+//            std::ofstream outfile;
+//            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+//            outfile << "scanTime, " << elapsedTime.count() << ",";
+//            outfile.close();
+//            startTime = std::chrono::system_clock::now();
+//        }
+//        if ( msg.message().sender()=="aggregate1"){
+//            endTime = std::chrono::system_clock::now();
+//            auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
+//            std::ofstream outfile;
+//            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+//            outfile << "aggregationTime, " << elapsedTime.count() << ",";
+//            outfile.close();
+//        }
         this->operatorDirectory_.setComplete(msg.message().sender());
 
         allComplete = this->operatorDirectory_.allComplete();

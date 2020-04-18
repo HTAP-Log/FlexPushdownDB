@@ -88,12 +88,12 @@ void S3SelectScan::onStart() {
   if (m_col.at(0)=="NA"){
       pushdown = true;
   }
-  std::ofstream outfile;
+  //std::ofstream outfile;
 
-  outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+  //outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
   if (pushdown){
-      outfile << "miss,";
-      outfile.close();
+      //outfile << "miss,";
+      //outfile.close();
       Aws::String bucketName = Aws::String(s3Bucket_);
 
       SelectObjectContentRequest selectObjectContentRequest;
@@ -161,8 +161,8 @@ void S3SelectScan::onStart() {
       //no found
 
       if (m_cache->m_cacheData.empty() || m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
-          outfile << "miss,";
-          outfile.close();
+          //outfile << "miss,";
+          //outfile.close();
           Aws::String bucketName = Aws::String(s3Bucket_);
 
           SelectObjectContentRequest selectObjectContentRequest;
@@ -242,8 +242,8 @@ void S3SelectScan::onStart() {
           auto selectObjectContentOutcome = this->s3Client_->SelectObjectContent(selectObjectContentRequest);
 
       } else {
-          outfile << "hit,";
-          outfile.close();
+          //outfile << "hit,";
+          //outfile.close();
           std::shared_ptr<normal::core::TupleSet> tupleSet = m_cache->m_cacheData[cacheID];
           std::shared_ptr<normal::core::message::Message> message = std::make_shared<normal::core::message::TupleMessage>(tupleSet, this->name());
           ctx()->tell(message);

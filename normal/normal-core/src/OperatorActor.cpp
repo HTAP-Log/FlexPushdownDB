@@ -44,6 +44,13 @@ caf::behavior behaviour(OperatorActor *self) {
 
 		auto finish = std::chrono::steady_clock::now();
 		auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
+//		if (msg.message().sender()=="s3SelectScan1"  ){
+//            SPDLOG_DEBUG("Message received  |  recipient: '{}', sender: '{}', type: '{}'",
+//                         self->operator_()->name(),
+//                         msg.message().sender(),
+//                         msg.message().type());
+//		    std::cout << elapsedTime << std::endl;
+//		}
 		self->incrementProcessingTime(elapsedTime);
       }
   };

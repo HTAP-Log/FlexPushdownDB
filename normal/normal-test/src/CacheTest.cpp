@@ -294,7 +294,7 @@ TEST_CASE ("CacheTest"
         std::ofstream outfile;
 
 
-        mgr->boot();
+
         //cache every time
         auto start = std::chrono::system_clock::now();
         for (int i = 0; i < 5; ++i) {
@@ -324,20 +324,22 @@ TEST_CASE ("CacheTest"
             s3selectScan8->setCols(cols);
             s3selectScan8->setQuery(query);
             auto startTime = std::chrono::system_clock::now();
+            mgr->boot();
             mgr->start();
             mgr->join();
-            std::cout << normal::test::TestUtil::showMetrics(*mgr);
+            mgr->stop();
             auto endTime = std::chrono::system_clock::now();
             auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
             outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << elapsedTime.count() << std::endl;
             outfile << normal::test::TestUtil::showMetrics(*mgr) << std::endl;
             outfile.close();
+            std::cout<< "yes" << std::endl;
         }
         auto end = std::chrono::system_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
         std::cout << elapsed.count() << '\n';
-        mgr->stop();
+
         //push down every time
         start = std::chrono::system_clock::now();
 
