@@ -9,12 +9,7 @@
 #include <normal/core/expression/Cast.h>
 #include <normal/core/expression/Column.h>
 #include <normal/core/TupleSet.h>
-#include <normal/core/type/Type.h>
 #include <normal/core/type/DecimalType.h>
-
-#include "gandiva/arrow.h"
-
-#include "Globals.h"
 
 using namespace normal::core::type;
 using namespace normal::core::expression;

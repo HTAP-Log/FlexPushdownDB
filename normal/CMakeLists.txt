@@ -17,7 +17,6 @@ endif()
 include(Configure_LLVM)
 
 
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Dependencies
 #-----------------------------------------------------------------------------------------------------------------------
@@ -38,10 +37,12 @@ include(External_expected)
 # Modules
 #-----------------------------------------------------------------------------------------------------------------------
 
-add_subdirectory("normal-core")
-add_subdirectory("normal-pushdown")
-add_subdirectory("normal-sql")
-add_subdirectory("normal-test")
+add_subdirectory(normal-core)
+add_subdirectory(normal-connector)
+add_subdirectory(normal-plan)
+add_subdirectory(normal-pushdown)
+add_subdirectory(normal-sql)
+add_subdirectory(normal-test)
 
 # set @rpaths for libraries to link against
 

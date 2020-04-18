@@ -61,7 +61,7 @@ public:
   evaluate(const std::vector<std::shared_ptr<normal::core::expression::Expression>>&);
 
   /**
-   * Returns an element from the tupleset given and column name and row.
+   * Returns an element from the tupleset given and column name and row number.
    *
    * @tparam ARROW_TYPE
    * @tparam C_TYPE
@@ -74,17 +74,54 @@ public:
     return TableHelper::value<ARROW_TYPE, C_TYPE>(columnName, row, *table_);
   }
 
-  template <typename ARROW_TYPE>
-  ARROW_TYPE visit2(const std::function<ARROW_TYPE(ARROW_TYPE, arrow::RecordBatch &)> &fn) {
+  /**
+   * Returns an element from the tupleset given and column number and row number.
+   *
+   * @tparam ARROW_TYPE
+   * @tparam C_TYPE
+   * @param columnName
+   * @param row
+   * @return
+   */
+  template<typename ARROW_TYPE, typename C_TYPE = typename ARROW_TYPE::c_type>
+  tl::expected<C_TYPE, std::string> value(int column, int row){
+	return TableHelper::value<ARROW_TYPE, C_TYPE>(column, row, *table_);
+  }
+
+  /**
+   * Returns a column from the tupleset as a vector given a column name
+   *
+   * @tparam ARROW_TYPE
+   * @tparam C_TYPE
+   * @param columnName
+   * @param row
+   * @return
+   */
+  template<typename ARROW_TYPE, typename C_TYPE = typename ARROW_TYPE::c_type>
+  tl::expected<std::shared_ptr<std::vector<C_TYPE>>, std::string> vector(const std::string &columnName){
+	return TableHelper::vector<ARROW_TYPE, C_TYPE>(*table_->GetColumnByName(columnName));
+  }
+
+  /**
+   * Templated visitor, visits record batches from the internal arrow table and applies the given
+   * function to each batch. Returns the result of the function.
+   *
+   * @tparam T
+   * @param fn
+   * @return
+   */
+  template <typename T>
+  T visit2(const std::function<T(arrow::RecordBatch &)> &fn) {
 
     arrow::Status arrowStatus;
 
     std::shared_ptr<arrow::RecordBatch> batch;
     arrow::TableBatchReader reader(*table_);
+
     reader.set_chunksize(DEFAULT_CHUNK_SIZE);
     arrowStatus = reader.ReadNext(&batch);
 
-    std::string result;
+    T result;
     while (arrowStatus.ok() && batch) {
       result = fn(result, *batch);
       arrowStatus = reader.ReadNext(&batch);
