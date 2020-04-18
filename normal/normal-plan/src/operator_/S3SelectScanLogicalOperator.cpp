@@ -24,15 +24,16 @@ std::shared_ptr<normal::core::Operator> S3SelectScanLogicalOperator::toOperator(
 	auto s3Partition = std::static_pointer_cast<S3SelectPartition>(partition);
 
 	// FIXME: Still unsure what to do with m_col? col could be an expression or an aggregate, or something else?
-
+      std::vector<std::string> cols;
+      cols.emplace_back("A");
 	auto scanOp = std::make_shared<normal::pushdown::S3SelectScan>(
 		s3Partition->getBucket() + "/" + s3Partition->getObject(),
 		s3Partition->getBucket(),
 		s3Partition->getObject(),
 		"select * from S3Object",
 		s3Partition->getObject(),
-		"A",
-		this->awsClient_->defaultS3Client());
+        cols,
+		this->awsClient_->defaultS3Client(),8);
 
 	operators->push_back(scanOp);
   }
@@ -49,14 +50,16 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
 
 	// FIXME: Still unsure what to do with m_col? col could be an expression or an aggregate, or something else?
 
+      std::vector<std::string> cols;
+      cols.emplace_back("A");
 	auto scanOp = std::make_shared<normal::pushdown::S3SelectScan>(
 		s3Partition->getBucket() + "/" + s3Partition->getObject(),
 		s3Partition->getBucket(),
 		s3Partition->getObject(),
 		"select * from S3Object",
 		s3Partition->getObject(),
-		"A",
-		this->awsClient_->defaultS3Client());
+		cols,
+		this->awsClient_->defaultS3Client(),8);
 
 	operators->push_back(scanOp);
   }

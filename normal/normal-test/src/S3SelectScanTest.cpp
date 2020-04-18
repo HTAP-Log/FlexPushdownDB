@@ -59,7 +59,7 @@ TEST_CASE ("S3SelectScan -> Sum -> Collate"
   mgr->put(aggregate);
   mgr->put(collate);
 
-  normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
+//  normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
 
   mgr->boot();
 

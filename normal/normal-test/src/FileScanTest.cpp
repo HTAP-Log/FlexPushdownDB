@@ -46,7 +46,7 @@ TEST_CASE ("filescan-sum-collate"
   mgr->put(aggregate);
   mgr->put(collate);
 
-  normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
+  //normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
 
   mgr->boot();
 
@@ -87,7 +87,7 @@ TEST_CASE ("filescan-project-collate"
   mgr->put(project);
   mgr->put(collate);
 
-  normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
+//  normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
 
   mgr->boot();
 
@@ -178,7 +178,7 @@ TEST_CASE ("filescan-sum-collate-parallel"
   mgr->put(reduceAggregate);
   mgr->put(collate);
 
-  normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
+//  normal::test::TestUtil::writeLogicalExecutionPlan(*mgr);
 
   mgr->boot();
 

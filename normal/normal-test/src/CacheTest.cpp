@@ -17,7 +17,7 @@
 #include <normal/pushdown/aggregate/Sum.h>
 #include <normal/core/expression/Cast.h>
 #include <normal/core/expression/Column.h>
-
+#include <normal/test/TestUtil.h>
 using namespace normal::core::type;
 using namespace normal::core::expression;
 
@@ -326,11 +326,12 @@ TEST_CASE ("CacheTest"
             auto startTime = std::chrono::system_clock::now();
             mgr->start();
             mgr->join();
-
+            std::cout << normal::test::TestUtil::showMetrics(*mgr);
             auto endTime = std::chrono::system_clock::now();
             auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
             outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << elapsedTime.count() << std::endl;
+            outfile << normal::test::TestUtil::showMetrics(*mgr) << std::endl;
             outfile.close();
         }
         auto end = std::chrono::system_clock::now();
