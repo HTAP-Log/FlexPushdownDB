@@ -297,7 +297,7 @@ TEST_CASE ("CacheTest"
 
         //cache every time
         auto start = std::chrono::system_clock::now();
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < 2; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
@@ -392,7 +392,7 @@ TEST_CASE ("CacheTest"
         mgr2->put(reduceAggregate);
         mgr2->put(collate2);
 
-        mgr2->boot();
+
         for (int i = 0; i < 5; ++i) {
 
             int colIndex = colIndexList[i];
@@ -420,9 +420,10 @@ TEST_CASE ("CacheTest"
             s3selectScan8->setCols({"NA"});
             s3selectScan8->setQuery(query);
             auto startTime = std::chrono::system_clock::now();
+            mgr2->boot();
             mgr2->start();
             mgr2->join();
-
+            mgr2->stop();
 //            tuples = collate2->tuples();
 //
 //            val = std::stod(tuples->getValue("sum", 0));
@@ -434,7 +435,7 @@ TEST_CASE ("CacheTest"
             outfile << elapsedTime.count() << std::endl;
             outfile.close();
         }
-        mgr2->stop();
+
         end = std::chrono::system_clock::now();
         elapsed =
                 std::chrono::duration_cast<std::chrono::duration<double>>(end - start);

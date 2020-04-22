@@ -215,6 +215,7 @@ void S3SelectScan::onStart() {
                   std::cout<<cacheID<<std::endl;
               }
           });
+
           handler.SetStatsEventCallback([&](const StatsEvent &statsEvent) {
               SPDLOG_DEBUG("Bytes scanned: {} ", statsEvent.GetDetails().GetBytesScanned());
               SPDLOG_DEBUG("Bytes processed: {}", statsEvent.GetDetails().GetBytesProcessed());
@@ -227,7 +228,8 @@ void S3SelectScan::onStart() {
 //              ctx()->tell(message);
 //
 //              this->ctx()->operatorActor()->quit();
-              ctx()->notifyComplete();
+                ctx()->notifyComplete();
+
           });
           handler.SetOnErrorCallback([&](const AWSError<S3Errors> &errors) {
               SPDLOG_DEBUG("Error: {}", errors.GetMessage());

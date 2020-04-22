@@ -39,18 +39,25 @@ caf::behavior behaviour(OperatorActor *self) {
           auto completeMessage = dynamic_cast<const message::CompleteMessage &>(msg.message());
           self->operator_()->ctx()->operatorMap().setComplete(msg.message().sender());
         }
+          if (self->operator_()->name()=="aggregate1"  ){
+              SPDLOG_DEBUG("Message received  |  recipient: '{}', sender: '{}', type: '{}'",
+                           self->operator_()->name(),
+                           msg.message().sender(),
+                           msg.message().type());
+              start = std::chrono::steady_clock::now();
+          }
 
-        self->operator_()->onReceive(msg);
+          self->operator_()->onReceive(msg);
+        auto finish = std::chrono::steady_clock::now();
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
 
-		auto finish = std::chrono::steady_clock::now();
-		auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
-//		if (msg.message().sender()=="s3SelectScan1"  ){
-//            SPDLOG_DEBUG("Message received  |  recipient: '{}', sender: '{}', type: '{}'",
-//                         self->operator_()->name(),
-//                         msg.message().sender(),
-//                         msg.message().type());
-//		    std::cout << elapsedTime << std::endl;
-//		}
+		if (self->operator_()->name()=="aggregate1"  ){
+            SPDLOG_DEBUG("Message received  |  recipient: '{}', sender: '{}', type: '{}'",
+                         self->operator_()->name(),
+                         msg.message().sender(),
+                         msg.message().type());
+		    std::cout << elapsedTime << std::endl;
+		}
 		self->incrementProcessingTime(elapsedTime);
       }
   };

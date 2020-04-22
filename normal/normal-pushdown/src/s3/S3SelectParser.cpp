@@ -46,7 +46,7 @@ std::shared_ptr<normal::core::TupleSet> S3SelectParser::parseCompletePayload(
   for (int i = 0; i < numFields; ++i) {
     std::stringstream ss;
     ss << "f" << i;
-    column_types[ss.str()] = arrow::utf8();
+    column_types[ss.str()] = arrow::float64();
   }
 
   convert_options.column_types = column_types;

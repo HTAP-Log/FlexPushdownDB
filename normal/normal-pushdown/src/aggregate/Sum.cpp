@@ -26,12 +26,20 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
   SPDLOG_DEBUG("Data:\n{}", tuples->toString());
 
   auto resultType = this->expression_->resultType(tuples->table()->schema());
-
+  auto start = std::chrono::steady_clock::now();
   std::shared_ptr<arrow::Scalar> batchSum = tuples->visit([&](auto accum, auto &batch) -> auto{
 
-    auto arrayVector = Expressions::evaluate({this->expression_}, batch);
-    auto array = arrayVector->at(0);
-
+//    auto arrayVector = Expressions::evaluate({this->expression_}, batch);
+//    auto array = arrayVector->at(0);
+    auto array = batch.column(0);
+      auto finish1 = std::chrono::steady_clock::now();
+      auto elapsedTime1 = std::chrono::duration_cast<std::chrono::nanoseconds>(finish1 - start).count();
+    if (array->type()->Equals(arrow::StringType())){
+        auto arrayVector = Expressions::evaluate({this->expression_}, batch);
+        auto array = arrayVector->at(0);
+    }
+      auto finish2 = std::chrono::steady_clock::now();
+      auto elapsedTime2 = std::chrono::duration_cast<std::chrono::nanoseconds>(finish2 - finish1).count();
     // Initialise accumulator
     if(accum == nullptr) {
       if (resultType->id() == arrow::float64()->id()) {
@@ -46,7 +54,8 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
     }
 
     // FIXME: Dont think this if/then else against arrow types is necessary
-
+      auto finish3 = std::chrono::steady_clock::now();
+      auto elapsedTime3 = std::chrono::duration_cast<std::chrono::nanoseconds>(finish3 - finish2).count();
     auto colType = array->type();
     if (colType->Equals(arrow::Int32Type())) {
       auto typedArray = std::static_pointer_cast<arrow::Int32Array>(array);
@@ -65,13 +74,17 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
     } else if (colType->Equals(arrow::StringType())) {
       throw std::runtime_error("Can't sum strings, cast first");
     } else if (colType->Equals(arrow::DoubleType())) {
+
       auto typedArray = std::static_pointer_cast<arrow::DoubleArray>(array);
       auto typedAccum = std::static_pointer_cast<arrow::DoubleScalar>(accum);
-
+        auto finish4 = std::chrono::steady_clock::now();
+        auto elapsedTime4 = std::chrono::duration_cast<std::chrono::nanoseconds>(finish4 - finish3).count();
       for (int i = 0; i < batch.num_rows(); ++i) {
         double val = typedArray->Value(i);
         typedAccum->value += val;
       }
+        auto finish5 = std::chrono::steady_clock::now();
+        auto elapsedTime5 = std::chrono::duration_cast<std::chrono::nanoseconds>(finish5 - finish4).count();
     }
     else {
       throw std::runtime_error("Unrecognized type " + colType->name());
@@ -94,7 +107,8 @@ void normal::pushdown::aggregate::Sum::apply(std::shared_ptr<normal::core::Tuple
 }
 
 std::shared_ptr<arrow::DataType> Sum::returnType() {
-  return expression_->getReturnType();
+  return arrow::float64();
+  // return expression_->getReturnType();
 }
 
 void Sum::finalize() {

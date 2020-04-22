@@ -68,6 +68,7 @@ std::shared_ptr<TupleSet> TupleSet::concatenate(const std::shared_ptr<TupleSet> 
   auto resTupleSet = make(*res);
   return resTupleSet;
 }
+
 void TupleSet::addColumn(const std::string &name, int position, std::vector<std::string> data) {
   arrow::Status arrowStatus;
 
