@@ -34,13 +34,13 @@ TEST_CASE ("CacheTest"
     for (int i = 0; i < 60; ++i) {
         colIndexList[i] = rand() % 8;
     }
-    colIndexList[0] = 1;
-    colIndexList[1] = 1;
-    colIndexList[2] = 1;
-    colIndexList[3] = 1;
-    colIndexList[4] = 1;
-    colIndexList[5] = 1;
-    for (int k = 8; k < 9; ++k) {
+//    colIndexList[0] = 1;
+//    colIndexList[1] = 1;
+//    colIndexList[2] = 1;
+//    colIndexList[3] = 1;
+//    colIndexList[4] = 1;
+//    colIndexList[5] = 1;
+    for (int k = 0; k < 9; ++k) {
 
     normal::pushdown::AWSClient client;
     client.init();
@@ -297,7 +297,7 @@ TEST_CASE ("CacheTest"
 
         //cache every time
         auto start = std::chrono::system_clock::now();
-        for (int i = 0; i < 2; ++i) {
+        for (int i = 0; i < 60; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
@@ -332,7 +332,7 @@ TEST_CASE ("CacheTest"
             auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
             outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << elapsedTime.count() << std::endl;
-            outfile << normal::test::TestUtil::showMetrics(*mgr) << std::endl;
+            //outfile << normal::test::TestUtil::showMetrics(*mgr) << std::endl;
             outfile.close();
             std::cout<< "yes" << std::endl;
         }
@@ -393,7 +393,7 @@ TEST_CASE ("CacheTest"
         mgr2->put(collate2);
 
 
-        for (int i = 0; i < 5; ++i) {
+        for (int i = 0; i < 60; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
