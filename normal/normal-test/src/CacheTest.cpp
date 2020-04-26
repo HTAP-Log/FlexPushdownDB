@@ -34,13 +34,33 @@ TEST_CASE ("CacheTest"
     for (int i = 0; i < 60; ++i) {
         colIndexList[i] = rand() % 8;
     }
-//    colIndexList[0] = 1;
-//    colIndexList[1] = 1;
-//    colIndexList[2] = 1;
-//    colIndexList[3] = 1;
-//    colIndexList[4] = 1;
-//    colIndexList[5] = 1;
-    for (int k = 0; k < 9; ++k) {
+
+
+
+    colIndexList[0] = 0;
+    colIndexList[1] = 0;
+    colIndexList[2] = 0;
+    colIndexList[3] = 1;
+    colIndexList[4] = 4;
+    colIndexList[5] = 2;
+    colIndexList[6] = 1;
+    colIndexList[7] = 2;
+    colIndexList[8] = 1;
+    colIndexList[9] = 1;
+    colIndexList[10] = 1;
+    colIndexList[11] = 7;
+    colIndexList[12] = 3;
+    colIndexList[13] = 4;
+    colIndexList[14] = 7;
+    colIndexList[15] = 7;
+    colIndexList[16] = 4;
+    colIndexList[17] = 5;
+    colIndexList[18] = 6;
+    colIndexList[19] = 7;
+    colIndexList[20] = 0;
+
+
+    for (int k = 8; k < 9; ++k) {
 
     normal::pushdown::AWSClient client;
     client.init();

@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <queue>
-
+#include <stack>
 #include "normal/core/Operator.h"
 #include "normal/core/TupleSet.h"
 

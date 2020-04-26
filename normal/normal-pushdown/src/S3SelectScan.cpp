@@ -199,13 +199,7 @@ void S3SelectScan::onStart() {
 
               //fifo
               if (cacheSize_ >0) {
-                  if (m_cache->m_cacheQueue.size() >= cacheSize_) {
-                      std::string front = m_cache->m_cacheQueue.front();
-                      m_cache->m_cacheQueue.pop();
-                      m_cache->m_cacheData.erase(front);
-                      //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
-                      //std::cout<<cacheID<<std::endl;
-                  }
+
                   //lifo
 //          if (m_cache->m_cacheQueue.size()>=cacheSize_){
 //              std::string top = m_cache->m_cacheStack.top();
@@ -221,6 +215,13 @@ void S3SelectScan::onStart() {
                   } else {
                       m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
                                                                                           m_cache->m_cacheData[cacheID]);
+                  }
+                  if (m_cache->m_cacheQueue.size() >= cacheSize_+1) {
+                      std::string front = m_cache->m_cacheQueue.front();
+                      m_cache->m_cacheQueue.pop();
+                      m_cache->m_cacheData.erase(front);
+                      //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
+                      //std::cout<<cacheID<<std::endl;
                   }
               }
               //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
