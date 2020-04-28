@@ -90,7 +90,7 @@ void S3SelectScan::onStart() {
   }
   std::ofstream outfile;
 
-  outfile.open("testRes-LRU-60.csv", std::ios_base::app); // append instead of overwrite
+  outfile.open("testRes-MRU-60.csv", std::ios_base::app); // append instead of overwrite
   if (pushdown){
       outfile << "miss,";
       outfile.close();
@@ -240,42 +240,42 @@ void S3SelectScan::onStart() {
 //                      //std::cout<<cacheID<<std::endl;
 //                  }
 //
-                  //LRU
-                  //add to cache
-                  if (m_cache->m_cacheData.empty() ||
-                      m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
-                      m_cache->m_cacheData[cacheID] = tupleSet;
-                      m_cache->m_cacheDQ.push_front(cacheID);
-
-                  } else {
-                      m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
-                                                                                          m_cache->m_cacheData[cacheID]);
-                  }
-                  if (m_cache->m_cacheDQ.size() >= cacheSize_+1) {
-                      std::string back = m_cache->m_cacheDQ.back();
-                      m_cache->m_cacheDQ.pop_back();
-                      m_cache->m_cacheData.erase(back);
-                  }
-//
-//                  //MRU
+//                  //LRU
 //                  //add to cache
 //                  if (m_cache->m_cacheData.empty() ||
 //                      m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
 //                      m_cache->m_cacheData[cacheID] = tupleSet;
-//                      m_cache->m_cacheDQ.push_back(cacheID);
+//                      m_cache->m_cacheDQ.push_front(cacheID);
 //
 //                  } else {
 //                      m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
 //                                                                                          m_cache->m_cacheData[cacheID]);
 //                  }
 //                  if (m_cache->m_cacheDQ.size() >= cacheSize_+1) {
-//                      std::string back1 = m_cache->m_cacheDQ.back();
+//                      std::string back = m_cache->m_cacheDQ.back();
 //                      m_cache->m_cacheDQ.pop_back();
-//                      std::string back2 = m_cache->m_cacheDQ.back();
-//                      m_cache->m_cacheDQ.pop_back();
-//                      m_cache->m_cacheDQ.push_back(back1);
-//                      m_cache->m_cacheData.erase(back2);
+//                      m_cache->m_cacheData.erase(back);
 //                  }
+//
+                  //MRU
+                  //add to cache
+                  if (m_cache->m_cacheData.empty() ||
+                      m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
+                      m_cache->m_cacheData[cacheID] = tupleSet;
+                      m_cache->m_cacheDQ.push_back(cacheID);
+
+                  } else {
+                      m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
+                                                                                          m_cache->m_cacheData[cacheID]);
+                  }
+                  if (m_cache->m_cacheDQ.size() >= cacheSize_+1) {
+                      std::string back1 = m_cache->m_cacheDQ.back();
+                      m_cache->m_cacheDQ.pop_back();
+                      std::string back2 = m_cache->m_cacheDQ.back();
+                      m_cache->m_cacheDQ.pop_back();
+                      m_cache->m_cacheDQ.push_back(back1);
+                      m_cache->m_cacheData.erase(back2);
+                  }
 
 
 
@@ -321,12 +321,12 @@ void S3SelectScan::onStart() {
 //        ctx()->tell(message);
 //      this->ctx()->operatorActor()->quit();
 
-        //LRU
-        m_cache->m_cacheDQ.remove(cacheID);
-        m_cache->m_cacheDQ.push_front(cacheID);
-//        //MRU
+//        //LRU
 //        m_cache->m_cacheDQ.remove(cacheID);
-//        m_cache->m_cacheDQ.push_back(cacheID);
+//        m_cache->m_cacheDQ.push_front(cacheID);
+        //MRU
+        m_cache->m_cacheDQ.remove(cacheID);
+        m_cache->m_cacheDQ.push_back(cacheID);
 
         ctx()->notifyComplete();
 
