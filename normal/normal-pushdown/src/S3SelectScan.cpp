@@ -90,7 +90,7 @@ void S3SelectScan::onStart() {
   }
   std::ofstream outfile;
 
-  outfile.open("testRes-LIFO-60.csv", std::ios_base::app); // append instead of overwrite
+  outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
   if (pushdown){
       outfile << "miss,";
       outfile.close();
@@ -200,45 +200,45 @@ void S3SelectScan::onStart() {
 
               if (cacheSize_ >0) {
 
-//                  //fifo
-//                  //add to cache
-//                  if (m_cache->m_cacheData.empty() ||
-//                      m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
-//                      m_cache->m_cacheData[cacheID] = tupleSet;
-//                      m_cache->m_cacheQueue.push(cacheID);
-//
-//                  } else {
-//                      m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
-//                                                                                          m_cache->m_cacheData[cacheID]);
-//                  }
-//                  if (m_cache->m_cacheQueue.size() >= cacheSize_+1) {
-//                      std::string front = m_cache->m_cacheQueue.front();
-//                      m_cache->m_cacheQueue.pop();
-//                      m_cache->m_cacheData.erase(front);
-//                      //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
-//                      //std::cout<<cacheID<<std::endl;
-//                  }
-                  //lifo
+                  //fifo
                   //add to cache
                   if (m_cache->m_cacheData.empty() ||
                       m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
                       m_cache->m_cacheData[cacheID] = tupleSet;
-                      m_cache->m_cacheStack.push(cacheID);
+                      m_cache->m_cacheQueue.push(cacheID);
 
                   } else {
                       m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
                                                                                           m_cache->m_cacheData[cacheID]);
                   }
-                  if (m_cache->m_cacheStack.size() >= cacheSize_+1) {
-                      std::string top1 = m_cache->m_cacheStack.top();
-                      m_cache->m_cacheStack.pop();
-                      std::string top2 = m_cache->m_cacheStack.top();
-                      m_cache->m_cacheStack.pop();
-                      m_cache->m_cacheStack.push(top1);
-                      m_cache->m_cacheData.erase(top2);
+                  if (m_cache->m_cacheQueue.size() >= cacheSize_+1) {
+                      std::string front = m_cache->m_cacheQueue.front();
+                      m_cache->m_cacheQueue.pop();
+                      m_cache->m_cacheData.erase(front);
                       //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
                       //std::cout<<cacheID<<std::endl;
                   }
+                  //lifo
+                  //add to cache
+//                  if (m_cache->m_cacheData.empty() ||
+//                      m_cache->m_cacheData.find(cacheID) == m_cache->m_cacheData.end()) {
+//                      m_cache->m_cacheData[cacheID] = tupleSet;
+//                      m_cache->m_cacheStack.push(cacheID);
+//
+//                  } else {
+//                      m_cache->m_cacheData[cacheID] = normal::core::TupleSet::concatenate(tupleSet,
+//                                                                                          m_cache->m_cacheData[cacheID]);
+//                  }
+//                  if (m_cache->m_cacheStack.size() >= cacheSize_+1) {
+//                      std::string top1 = m_cache->m_cacheStack.top();
+//                      m_cache->m_cacheStack.pop();
+//                      std::string top2 = m_cache->m_cacheStack.top();
+//                      m_cache->m_cacheStack.pop();
+//                      m_cache->m_cacheStack.push(top1);
+//                      m_cache->m_cacheData.erase(top2);
+//                      //std::cout<<m_cache->m_cacheQueue.size()<<std::endl;
+//                      //std::cout<<cacheID<<std::endl;
+//                  }
 //
 //                  //LRU
 //                  //add to cache
