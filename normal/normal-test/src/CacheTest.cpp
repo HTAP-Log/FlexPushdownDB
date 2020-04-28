@@ -30,9 +30,12 @@ TEST_CASE ("CacheTest"
                              "L_LINENUMBER", "L_TAX"};
     int colIndexList[60];
     srand(time(NULL));
-
+    std::ofstream outfile;
     for (int i = 0; i < 60; ++i) {
         colIndexList[i] = rand() % 8;
+        outfile.open("columns.csv", std::ios_base::app); // append instead of overwrite
+        outfile << colIndexList[i] << std::endl;
+        outfile.close();
     }
 
 
@@ -311,7 +314,7 @@ TEST_CASE ("CacheTest"
 //        colIndexList[6] = 2;
 //        colIndexList[7] = 4;
 //        colIndexList[8] = 1;
-        std::ofstream outfile;
+
 
 
 
