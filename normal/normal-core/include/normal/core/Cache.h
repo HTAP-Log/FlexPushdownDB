@@ -24,6 +24,7 @@ public:
   std::unordered_map<std::string, std::shared_ptr<normal::core::TupleSet>> m_cacheData;
   std::queue<std::string> m_cacheQueue; //fifo
   std::stack<std::string> m_cacheStack; //lifo
+  std::list<std::string> m_cacheDQ; //MRU && LRU
   ~Cache() = default;
 };
 
