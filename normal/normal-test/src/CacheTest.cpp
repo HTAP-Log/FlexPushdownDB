@@ -337,7 +337,7 @@ TEST_CASE ("CacheTest"
             std::string colName = colList[colIndex];
             cols.clear();
             cols.emplace_back(colName);
-            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+            outfile.open("testRes-LRU-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << colName << ",";
             outfile.close();
             std::string query = "select " + colName + " from S3Object";
@@ -364,7 +364,7 @@ TEST_CASE ("CacheTest"
             mgr->stop();
             auto endTime = std::chrono::system_clock::now();
             auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-            outfile.open("testRes-FIFO-60.csv", std::ios_base::app); // append instead of overwrite
+            outfile.open("testRes-LRU-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << elapsedTime.count() << std::endl;
             //outfile << normal::test::TestUtil::showMetrics(*mgr) << std::endl;
             outfile.close();
