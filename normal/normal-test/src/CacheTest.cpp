@@ -74,7 +74,7 @@ TEST_CASE ("CacheTest"
 //    colIndexList[20] = 0;
 
 
-    for (int k = 0; k < 9; ++k) {
+    for (int k = 8; k < 9; ++k) {
 
     normal::pushdown::AWSClient client;
     client.init();
