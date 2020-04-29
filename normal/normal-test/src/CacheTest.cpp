@@ -39,24 +39,24 @@ TEST_CASE ("CacheTest"
     }
 
 
-    FILE *fp;
-    fp = fopen("columns.csv", "r");
-    int f1;
-    int countLine = 0;
-    while (fscanf(fp, "%d\n", &f1) == 1) {
-        printf("%d\n", f1);
-        colIndexList[countLine] = f1;
-        countLine++;
-    }
+//    FILE *fp;
+//    fp = fopen("columns.csv", "r");
+//    int f1;
+//    int countLine = 0;
+//    while (fscanf(fp, "%d\n", &f1) == 1) {
+//        printf("%d\n", f1);
+//        colIndexList[countLine] = f1;
+//        countLine++;
+//    }
 
 
 
-//    colIndexList[0] = 0;
-//    colIndexList[1] = 0;
-//    colIndexList[2] = 0;
-//    colIndexList[3] = 1;
-//    colIndexList[4] = 4;
-//    colIndexList[5] = 2;
+    colIndexList[0] = 0;
+    colIndexList[1] = 0;
+    colIndexList[2] = 0;
+    colIndexList[3] = 0;
+    colIndexList[4] = 0;
+    colIndexList[5] = 0;
 //    colIndexList[6] = 1;
 //    colIndexList[7] = 2;
 //    colIndexList[8] = 1;
@@ -331,16 +331,16 @@ TEST_CASE ("CacheTest"
 
         //cache every time
         auto start = std::chrono::system_clock::now();
-        for (int i = 0; i < 60; ++i) {
+        for (int i = 0; i < 10; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];
             cols.clear();
             cols.emplace_back(colName);
-            outfile.open("testRes-MRU-60.csv", std::ios_base::app); // append instead of overwrite
+            outfile.open("testRes-fullpull-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << colName << ",";
             outfile.close();
-            std::string query = "select " + colName + " from S3Object";
+            std::string query = "select l_quantity, l_extendedprice, l_discount, L_ORDERKEY, L_PARTKEY, L_SUPPKEY, L_LINENUMBER, L_TAX from S3Object";
             s3selectScan1->setCols(cols);
             s3selectScan1->setQuery(query);
             s3selectScan2->setCols(cols);
@@ -364,7 +364,7 @@ TEST_CASE ("CacheTest"
             mgr->stop();
             auto endTime = std::chrono::system_clock::now();
             auto elapsedTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime);
-            outfile.open("testRes-MRU-60.csv", std::ios_base::app); // append instead of overwrite
+            outfile.open("testRes-fullpull-60.csv", std::ios_base::app); // append instead of overwrite
             outfile << elapsedTime.count() << std::endl;
             //outfile << normal::test::TestUtil::showMetrics(*mgr) << std::endl;
             outfile.close();
@@ -427,7 +427,7 @@ TEST_CASE ("CacheTest"
         mgr2->put(collate2);
 
 
-        for (int i = 0; i < 60; ++i) {
+        for (int i = 0; i < 0; ++i) {
 
             int colIndex = colIndexList[i];
             std::string colName = colList[colIndex];

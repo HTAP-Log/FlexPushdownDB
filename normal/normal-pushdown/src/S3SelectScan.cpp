@@ -90,7 +90,7 @@ void S3SelectScan::onStart() {
   }
   std::ofstream outfile;
 
-  outfile.open("testRes-MRU-60.csv", std::ios_base::app); // append instead of overwrite
+  outfile.open("testRes-fullpull-60.csv", std::ios_base::app); // append instead of overwrite
   if (pushdown){
       outfile << "miss,";
       outfile.close();
