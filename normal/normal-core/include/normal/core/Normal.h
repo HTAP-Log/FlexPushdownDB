@@ -14,6 +14,8 @@ using namespace normal::core::graph;
 
 namespace normal::core {
 
+constexpr bool EnableV2 = true;
+
 /**
  * Placeholder for an eventual API
  */
@@ -27,8 +29,17 @@ public:
 
   std::shared_ptr<OperatorGraph> createQuery();
   const std::shared_ptr<OperatorManager> &getOperatorManager() const;
+
+  tl::expected<std::shared_ptr<TupleSet2>, std::string> execute(const std::shared_ptr<OperatorGraph>& g);
+
 private:
   std::shared_ptr<OperatorManager> operatorManager_;
+
+  caf::actor_system_config actorSystemConfig_;
+  std::unique_ptr<::caf::actor_system> actorSystem_;
+
+  std::unique_ptr<::caf::scoped_actor> clientActor_;
+  SystemActor systemActor_;
 
 };
 

@@ -5,7 +5,7 @@
 #ifndef NORMAL_NORMAL_CORE_SRC_ACTORS_H
 #define NORMAL_NORMAL_CORE_SRC_ACTORS_H
 
-#include <caf/actor.hpp>
+#include <caf/all.hpp>
 
 namespace normal::core {
 
@@ -19,6 +19,8 @@ public:
   static std::shared_ptr<caf::actor> toActorHandleShared(const std::shared_ptr<caf::scoped_actor> &a);
 
 };
+
+void setDefaultHandlers(::caf::scheduled_actor &self);
 
 }
 
