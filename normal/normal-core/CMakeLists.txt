@@ -66,7 +66,10 @@ target_link_libraries(normal-core PUBLIC normal-cache)
 add_executable(normal-core-test
         test/Globals.h
         test/MainTest.cpp
-        test/CacheTest.cpp test/ActorTest.cpp)
+        test/CacheTest.cpp
+        test/ActorTest.cpp
+        test/SimpleOperator.cpp test/SimpleOperator.h
+        test/ErrorOperator.cpp test/ErrorOperator.h)
 
 
 target_include_directories(normal-core-test PRIVATE include)

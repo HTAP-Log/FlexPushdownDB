@@ -10,6 +10,8 @@
 #include <normal/core/QueryActor.h>
 #include <normal/core/Actors.h>
 #include <normal/core/Normal.h>
+#include "SimpleOperator.h"
+#include "ErrorOperator.h"
 
 using namespace caf;
 using namespace normal::core;
@@ -64,13 +66,35 @@ TEST_CASE ("actor-spawn2" * doctest::skip(false)) {
 //  actorSystem->await_all_actors_done();
 }
 
-TEST_CASE ("normal-lifecycle" * doctest::skip(false)) {
+TEST_CASE ("actor-lifecycle" * doctest::skip(false)) {
   auto n = Normal::start();
 
-  std::shared_ptr<OperatorGraph> q;
+  auto q = n->createQuery();
+  q->put(std::make_shared<SimpleOperator>("simple-1"));
+  q->put(std::make_shared<SimpleOperator>("simple-2"));
+  q->put(std::make_shared<SimpleOperator>("simple-3"));
+
   auto r = n->execute(q);
 
   SPDLOG_DEBUG("Result:\n{}", r.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
+
+  n->stop();
+}
+
+TEST_CASE ("actor-error" * doctest::skip(false)) {
+  auto n = Normal::start();
+
+  auto q = n->createQuery();
+  q->put(std::make_shared<SimpleOperator>("simple-1"));
+  q->put(std::make_shared<SimpleOperator>("simple-2"));
+  q->put(std::make_shared<ErrorOperator>("error-3"));
+
+  auto r = n->execute(q);
+
+  if(r.has_value())
+  	SPDLOG_DEBUG("Result:\n{}", r.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
+  else
+	SPDLOG_DEBUG("Error: {}", r.error());
 
   n->stop();
 }

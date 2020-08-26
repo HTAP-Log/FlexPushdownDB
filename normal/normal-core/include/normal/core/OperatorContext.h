@@ -27,7 +27,8 @@ private:
   OperatorActor* operatorActor_;
   LocalOperatorDirectory operatorMap_;
   caf::actor rootActor_;
-
+public:
+  void setRootActor(const ::caf::actor &RootActor);
 public:
   OperatorContext(std::shared_ptr<Operator> op, caf::actor& rootActor);
 

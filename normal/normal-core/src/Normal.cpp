@@ -23,6 +23,9 @@ std::shared_ptr<Normal> Normal::start() {
 	n->clientActor_ = std::make_unique<caf::scoped_actor>(*n->actorSystem_);
 
 	n->systemActor_ = n->actorSystem_->spawn(systemBehaviour);
+
+	n->operatorManager_ = std::make_shared<OperatorManager>();
+
   } else {
 	n->operatorManager_ = std::make_shared<OperatorManager>();
 	n->operatorManager_->boot();
@@ -70,16 +73,36 @@ tl::expected<std::shared_ptr<TupleSet2>, std::string> Normal::execute(const std:
 	return tl::make_unexpected(expectedQueryActor.error());
   auto queryActor = expectedQueryActor.value();
 
+  (*clientActor_)->link_to(queryActor);
+//  queryActor->add_link(clientActor_->ptr());
+
   tl::expected<std::shared_ptr<TupleSet2>, std::string> expectedTupleSet;
 
-  (*clientActor_)->request(queryActor, ::caf::infinite, ExecuteAtom::value, g)
-	  .receive([&](const std::shared_ptr<TupleSet2> &tupleSet) {
-				 expectedTupleSet = tupleSet;
-			   },
-			   [&](const error &err) {
-				 expectedTupleSet = tl::make_unexpected(to_string(err));
-			   }
-	  );;
+//  (*clientActor_)->request(queryActor, ::caf::infinite, ExecuteAtom::value, g)
+//	  .receive([&](const std::shared_ptr<TupleSet2> &tupleSet) {
+//				 expectedTupleSet = tupleSet;
+//			   },
+//			   [&](const error &err) {
+//				 expectedTupleSet = tl::make_unexpected(to_string(err));
+//			   }
+//	  );
+
+  (*clientActor_)->send(queryActor, ExecuteAtom::value, g);
+
+  (*clientActor_)->receive(
+	  [&](const std::shared_ptr<TupleSet2> &tupleSet) {
+		expectedTupleSet = tupleSet;
+	  },
+	  [&](const error &err) {
+		expectedTupleSet = tl::make_unexpected(to_string(err));
+	  },
+	  [&](const down_msg &m) {
+		expectedTupleSet = tl::make_unexpected(to_string(m.reason));
+	  },
+	  [&](const exit_msg &m) {
+		expectedTupleSet = tl::make_unexpected(to_string(m.reason));
+	  }
+  );
 
   return expectedTupleSet;
 }

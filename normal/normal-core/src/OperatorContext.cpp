@@ -116,5 +116,8 @@ void OperatorContext::notifyComplete() {
 
   operatorActor->quit();
 }
+void OperatorContext::setRootActor(const caf::actor &RootActor) {
+  rootActor_ = RootActor;
+}
 
 } // namespace

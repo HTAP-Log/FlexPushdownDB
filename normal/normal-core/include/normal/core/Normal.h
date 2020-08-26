@@ -9,6 +9,7 @@
 
 #include <normal/core/OperatorManager.h>
 #include <normal/core/graph/OperatorGraph.h>
+#include <normal/core/SystemActor.h>
 
 using namespace normal::core::graph;
 

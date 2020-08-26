@@ -23,19 +23,25 @@ void setDefaultHandlers(::caf::scheduled_actor &self) {
   SPDLOG_DEBUG("Actor Spawn  |  actor: {} ('{}')", self.id(), self.name());
 
   self.set_error_handler([&](const ::caf::error &e) {
-	SPDLOG_DEBUG("Actor Error  |  actor: {} ('{}'), reason: {}, source: {}", self.id(),
+	SPDLOG_ERROR("Actor Error  |  actor: {} ('{}'), error: {}", self.id(),
 				 self.name(), to_string(e));
   });
 
   self.set_down_handler([&](const ::caf::down_msg &m) {
-	SPDLOG_DEBUG("Actor Down  |  actor: {} ('{}'), reason: {}, source: {}", self.id(),
-				 self.name(), to_string(m.reason), m.source.id());
+	SPDLOG_WARN("Actor Down  |  receiver: {} ('{}'), down actor: {}, down reason: {}", self.id(),
+				 self.name(), to_string(m.source), to_string(m.reason));
   });
 
   self.set_exit_handler([&](const ::caf::exit_msg &m) {
-	SPDLOG_DEBUG("Actor Exit  |  actor: {} ('{}'), reason: {}, source: {}", self.id(),
-				 self.name(), to_string(m.reason), m.source.id());
+	SPDLOG_DEBUG("Actor Exit  |  receiver: {} ('{}'), exit sender: {}, exit reason: {}", self.id(),
+				 self.name(), to_string(m.source), to_string(m.reason));
 	self.quit(m.reason);
+  });
+
+  self.set_default_handler([&](::caf::scheduled_actor* a, ::caf::message_view& m) {
+	SPDLOG_WARN("Actor Unexpected Message  |  actor: {} ('{}'), message: {}", self.id(),
+				 self.name(), to_string(m.copy_content_to_message()));
+	return m.move_content_to_message();
   });
 
   self.set_exception_handler([&](std::exception_ptr &e) -> ::caf::error {

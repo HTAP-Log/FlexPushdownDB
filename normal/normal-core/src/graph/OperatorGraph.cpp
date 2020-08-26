@@ -316,3 +316,6 @@ std::string graph::OperatorGraph::showMetrics() {
 const long &graph::OperatorGraph::getId() const {
   return id_;
 }
+OperatorDirectory &graph::OperatorGraph::getOperatorDirectory() {
+  return operatorDirectory_;
+}
