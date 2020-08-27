@@ -46,6 +46,10 @@ std::shared_ptr<OperatorContext> Operator::ctx() {
   return opContext_.lock();
 }
 
+std::weak_ptr<OperatorContext> Operator::safeCtx() {
+  return opContext_;
+}
+
 void Operator::create(const std::shared_ptr<OperatorContext>& ctx) {
   assert (ctx);
 

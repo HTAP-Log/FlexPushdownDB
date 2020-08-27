@@ -4,54 +4,79 @@
 
 #include "SystemActor.h"
 
-using namespace normal::core;
+namespace {
 
-SystemActor::behavior_type normal::core::systemBehaviour(SystemActor::stateful_pointer <SystemActorState> self) {
+void exitQueryExecutors(SystemActorType self, const error &reason);
+void exitSegmentCache(SystemActorType self, const error &reason);
+QueryExecutorActor onMakeQuery(SystemActorType self);
+void onActorDown(SystemActorType self, const down_msg &m);
+
+void exitQueryExecutors(SystemActorType self, const error &reason) {
+  for (const auto &queryActor: self->state.queryExecutorActorsMap) {
+	self->send_exit(queryActor.second.actor, reason);
+  }
+}
+void exitSegmentCache(SystemActorType self, const error &reason) {
+  self->send_exit(self->state.segmentCacheActor, reason);
+}
+QueryExecutorActor onMakeQuery(const SystemActorType self) {
+  SPDLOG_DEBUG("[Actor {} ('{}')]  Make Query  |  source: {}",
+			   self->id(), self->name(), to_string(self->current_sender()));
+
+  auto id = ++(self->state.lastQueryId);
+  auto name = fmt::format("query-executor-{}", id);
+  auto actor = self->spawn(queryExecutorBehaviour, name);
+
+  self->state.queryExecutorActorsMap.emplace(actor.address(), QueryActorMetaData{id, name, actor});
+  self->monitor(actor);
+
+  return actor;
+}
+
+void onActorDown(const SystemActorType self, const down_msg &m) {
+
+  auto it = self->state.queryExecutorActorsMap.find(m.source);
+  if (it != self->state.queryExecutorActorsMap.end()) {
+	if (m.reason != sec::none) {
+	  SPDLOG_WARN("[Actor {} ('{}')]  Abnormal Query Executor Down  |  source: {} ('{}'), reason: {}", self->id(),
+				  self->name(), to_string(m.source), it->second.name, to_string(m.reason));
+	} else {
+	  SPDLOG_DEBUG("[Actor {} ('{}')]  Query Executor Down  |  source: {} ('{}'), reason: {}", self->id(),
+				   self->name(), to_string(m.source), it->second.name, to_string(m.reason));
+	}
+	self->state.queryExecutorActorsMap.erase(m.source);
+  } else {
+	auto msg = fmt::format("[Actor {} ('{}')]  Unexpected Actor Down  |  source: {}, reason: {}", self->id(),
+						   self->name(), to_string(m.source), to_string(m.reason));
+	SPDLOG_ERROR(msg);
+	exitQueryExecutors(self, m.reason);
+	exitSegmentCache(self, m.reason);
+	self->quit(::caf::make_error(sec::runtime_error, msg));
+  }
+}
+
+}
+
+namespace normal::core {
+
+SystemActor::behavior_type systemBehaviour(SystemActorType self) {
+
+  SPDLOG_DEBUG("[Actor {} ('{}')]  System Actor Spawn", self->id(), self->name());
 
   setDefaultHandlers(*self);
 
-  self->set_exit_handler([=](const exit_msg &m) {
-	SPDLOG_DEBUG("Actor Exit  |  actor: {} ('{}'), reason: {}, source: {}", self->id(),
-				 self->name(), to_string(m.reason), m.source.id());
-
-	for (const auto &queryActor: self->state.queryActors) {
-	  self->send_exit(queryActor, m.reason);
-	}
-
-	self->send_exit(self->state.segmentCacheActor, m.reason);
-	self->quit(m.reason);
-  });
-
   self->set_down_handler([=](const down_msg &m) {
-	SPDLOG_DEBUG("Actor Down  |  actor: {} ('{}'), reason: {}, source: {}", self->id(),
-				 self->name(), to_string(m.reason), m.source.id());
-
-	// If its a query, remove it from the list
-
-	// If its something else, abort
-
+	onActorDown(self, m);
   });
 
   self->state.segmentCacheActor = self->spawn(segmentCacheBehaviour);
+  self->link_to(self->state.segmentCacheActor);
 
   return {
-	  [=](StartAtom) {
-		SPDLOG_DEBUG("Start");
-	  },
-	  [=](StopAtom) {
-		SPDLOG_DEBUG("Stop");
-	  },
 	  [=](MakeQueryAtom) {
-		SPDLOG_ERROR("MakeQuery  |  actor: {} ('{}'), sender: {}", self->id(), self->name(), self->current_sender()->id());
-
-		auto queryId = ++(self->state.lastQueryId);
-		auto queryActorName = fmt::format("query-{}", queryId);
-
-		auto queryActor = self->state.queryActors.emplace_back(self->spawn(queryBehaviour, queryActorName));
-
-		self->monitor(queryActor);
-
-		return queryActor;
+		return onMakeQuery(self);
 	  }
   };
+}
+
 }

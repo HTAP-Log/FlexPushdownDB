@@ -6,7 +6,7 @@
 
 using namespace normal::core::cache;
 
-SegmentCacheActor2Actor::behavior_type normal::core::cache::segmentCacheBehaviour(SegmentCacheActor2Actor::stateful_pointer<SegmentCacheActor2State> self) {
+SegmentCacheActor2::behavior_type normal::core::cache::segmentCacheBehaviour(SegmentCacheActor2::stateful_pointer<SegmentCacheActor2State> self) {
 
   setDefaultHandlers(*self);
 

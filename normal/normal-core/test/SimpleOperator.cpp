@@ -16,7 +16,7 @@ void SimpleOperator::onReceive(const Envelope &msg) {
 
   SPDLOG_DEBUG("Received Message  |  message type: '{}'", typeid(mRef).name());
 
-  ctx()->notifyComplete();
+  if(auto ctx = safeCtx().lock()) ctx->notifyComplete();
 }
 
 

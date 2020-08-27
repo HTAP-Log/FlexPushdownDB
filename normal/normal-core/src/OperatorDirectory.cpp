@@ -61,5 +61,8 @@ tl::expected<OperatorDirectoryEntry, std::string> OperatorDirectory::get(const s
 void OperatorDirectory::clear() {
   entries_.clear();
 }
+const std::unordered_map<std::string, OperatorDirectoryEntry> &OperatorDirectory::getEntries() const {
+  return entries_;
+}
 
 }

@@ -4,6 +4,7 @@
 
 #include "normal/core/Normal.h"
 
+#include <normal/core/Actors.h>
 #include <normal/core/SystemActor.h>
 #include "normal/core/Globals.h"
 
@@ -37,7 +38,6 @@ std::shared_ptr<Normal> Normal::start() {
 
 void Normal::stop() {
   if (EnableV2) {
-
 	(*clientActor_)->send_exit(systemActor_, exit_reason::user_shutdown);
 
 	clientActor_.reset();
@@ -56,55 +56,21 @@ const std::shared_ptr<OperatorManager> &Normal::getOperatorManager() const {
   return operatorManager_;
 }
 
-tl::expected<std::shared_ptr<TupleSet2>, std::string> Normal::execute(const std::shared_ptr<OperatorGraph> &g) {
+tl::expected<std::shared_ptr<TupleSet2>, std::string> Normal::execute(const std::shared_ptr<OperatorGraph> &g) const {
+  return makeQueryExecutor().and_then([&](const auto &e) { return executeQuery(e, g); });
+}
 
-  tl::expected<QueryActor, std::string> expectedQueryActor;
+tl::expected<QueryExecutorActor, std::string> Normal::makeQueryExecutor() const {
+  return request<QueryExecutorActor>(*clientActor_, systemActor_, MakeQueryAtom::value);
+}
 
-  (*clientActor_)->request(systemActor_, ::caf::infinite, MakeQueryAtom::value)
-	  .receive([&](const QueryActor &queryActor) {
-				 expectedQueryActor = queryActor;
-			   },
-			   [&](const error &err) {
-				 expectedQueryActor = tl::make_unexpected(to_string(err));
-			   }
-	  );
-
-  if (!expectedQueryActor.has_value())
-	return tl::make_unexpected(expectedQueryActor.error());
-  auto queryActor = expectedQueryActor.value();
-
-  (*clientActor_)->link_to(queryActor);
-//  queryActor->add_link(clientActor_->ptr());
-
-  tl::expected<std::shared_ptr<TupleSet2>, std::string> expectedTupleSet;
-
-//  (*clientActor_)->request(queryActor, ::caf::infinite, ExecuteAtom::value, g)
-//	  .receive([&](const std::shared_ptr<TupleSet2> &tupleSet) {
-//				 expectedTupleSet = tupleSet;
-//			   },
-//			   [&](const error &err) {
-//				 expectedTupleSet = tl::make_unexpected(to_string(err));
-//			   }
-//	  );
-
-  (*clientActor_)->send(queryActor, ExecuteAtom::value, g);
-
-  (*clientActor_)->receive(
-	  [&](const std::shared_ptr<TupleSet2> &tupleSet) {
-		expectedTupleSet = tupleSet;
-	  },
-	  [&](const error &err) {
-		expectedTupleSet = tl::make_unexpected(to_string(err));
-	  },
-	  [&](const down_msg &m) {
-		expectedTupleSet = tl::make_unexpected(to_string(m.reason));
-	  },
-	  [&](const exit_msg &m) {
-		expectedTupleSet = tl::make_unexpected(to_string(m.reason));
-	  }
-  );
-
-  return expectedTupleSet;
+tl::expected<std::shared_ptr<TupleSet2>, std::string>
+Normal::executeQuery(const QueryExecutorActor &queryExecutor,
+					 const std::shared_ptr<OperatorGraph> &operatorGraph) const {
+  return request<std::shared_ptr<TupleSet2>>(*clientActor_,
+											 queryExecutor,
+											 ExecuteAtom::value,
+											 operatorGraph);
 }
 
 }

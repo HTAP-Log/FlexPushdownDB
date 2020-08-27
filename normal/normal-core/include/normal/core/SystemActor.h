@@ -10,7 +10,7 @@
 #include <normal/core/Actors.h>
 #include <normal/core/cache/SegmentCacheActor2.h>
 #include <normal/core/graph/OperatorGraph.h>
-#include "QueryActor.h"
+#include "QueryExecutorActor.h"
 
 using namespace caf;
 using namespace normal::core::cache;
@@ -18,25 +18,29 @@ using namespace normal::core::graph;
 
 namespace normal::core {
 
-using StartAtom = atom_constant<atom("start")>;
-using StopAtom = atom_constant<atom("stop")>;
 using MakeQueryAtom = atom_constant<atom("make-query")>;
 
-using SystemActor = ::caf::typed_actor<reacts_to<StartAtom>,
-									   reacts_to<StopAtom>,
-									   replies_to<MakeQueryAtom>::with<QueryActor>>;
+using SystemActor = ::caf::typed_actor<replies_to<MakeQueryAtom>::with<QueryExecutorActor>>;
+
+struct QueryActorMetaData {
+  size_t queryId;
+  std::string name;
+  QueryExecutorActor actor;
+};
 
 struct SystemActorState {
 
   std::string name = "system";
 
-  SegmentCacheActor2Actor segmentCacheActor;
+  SegmentCacheActor2 segmentCacheActor;
 
   size_t lastQueryId = 0;
-  std::vector<QueryActor> queryActors;
+  std::unordered_map<::caf::actor_addr, QueryActorMetaData> queryExecutorActorsMap;
 };
 
-SystemActor::behavior_type systemBehaviour(SystemActor::stateful_pointer <SystemActorState> self);
+using SystemActorType = SystemActor::stateful_pointer<SystemActorState>;
+
+SystemActor::behavior_type systemBehaviour(SystemActorType self);
 
 }
 

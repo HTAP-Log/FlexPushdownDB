@@ -54,6 +54,7 @@ public:
 
   void destroyActor();
 
+  std::weak_ptr<OperatorContext> safeCtx();
 };
 
 } // namespace

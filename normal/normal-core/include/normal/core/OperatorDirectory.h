@@ -30,7 +30,7 @@ public:
   std::string showString() const;
   void setIncomplete();
   void clear();
-
+  const std::unordered_map<std::string, OperatorDirectoryEntry> &getEntries() const;
 };
 
 }

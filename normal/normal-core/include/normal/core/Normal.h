@@ -31,7 +31,7 @@ public:
   std::shared_ptr<OperatorGraph> createQuery();
   const std::shared_ptr<OperatorManager> &getOperatorManager() const;
 
-  tl::expected<std::shared_ptr<TupleSet2>, std::string> execute(const std::shared_ptr<OperatorGraph>& g);
+  tl::expected<std::shared_ptr<TupleSet2>, std::string> execute(const std::shared_ptr<OperatorGraph>& g) const;
 
 private:
   std::shared_ptr<OperatorManager> operatorManager_;
@@ -42,6 +42,9 @@ private:
   std::unique_ptr<::caf::scoped_actor> clientActor_;
   SystemActor systemActor_;
 
+  tl::expected<QueryExecutorActor, std::string> makeQueryExecutor() const;
+  tl::expected<std::shared_ptr<TupleSet2>, std::string> executeQuery(const QueryExecutorActor &queryExecutor,
+																	 const std::shared_ptr<OperatorGraph> &operatorGraph) const;
 };
 
 }

@@ -39,7 +39,7 @@ add_library(normal-core STATIC
         src/graph/OperatorGraph.cpp include/normal/core/graph/OperatorGraph.h
         include/normal/core/cache/SegmentCacheActor2.cpp include/normal/core/cache/SegmentCacheActor2.h
         include/normal/core/SystemActor.cpp include/normal/core/SystemActor.h
-        include/normal/core/QueryActor.cpp include/normal/core/QueryActor.h)
+        include/normal/core/QueryExecutorActor.cpp include/normal/core/QueryExecutorActor.h)
 
 
 target_include_directories(normal-core PUBLIC include)
