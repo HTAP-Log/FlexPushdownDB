@@ -37,6 +37,7 @@ private:
   std::shared_ptr<caf::scoped_actor> rootActor_;
   OperatorDirectory operatorDirectory_;
   std::shared_ptr<SegmentCacheActor> segmentCacheActor_;
+  std::shared_ptr<CachingPolicy> cachingPolicy_;
 
   std::chrono::steady_clock::time_point startTime_;
   std::chrono::steady_clock::time_point stopTime_;
@@ -46,6 +47,8 @@ private:
 
 public:
   OperatorManager();
+  OperatorManager(const std::shared_ptr<CachingPolicy>& cachingPolicy);
+
   virtual ~OperatorManager();
   void put(const std::shared_ptr<Operator> &op);
   std::shared_ptr<Operator> getOperator(const std::string &);
@@ -62,11 +65,13 @@ public:
   tl::expected<void, std::string> send(std::shared_ptr<message::Message> message, const std::string &recipientId);
   std::shared_ptr<normal::core::message::Message> receive();
 
-  void write_graph(const std::string &file);
+//  void write_graph(const std::string &file);
 
   tl::expected<long, std::string> getElapsedTime();
 
   std::string showMetrics();
+  std::string showCacheMetrics();
+  void clearCacheMetrics();
 
 };
 

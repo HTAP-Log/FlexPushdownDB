@@ -31,7 +31,7 @@ void Shuffle::onReceive(const Envelope &msg) {
 	this->onComplete(completeMessage);
   } else {
 	// FIXME: Propagate error properly
-	throw std::runtime_error("Unrecognized message type " + msg.message().type());
+	throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}" + msg.message().type(), name()));
   }
 }
 
@@ -46,29 +46,47 @@ void Shuffle::onStart() {
 
 void Shuffle::onComplete(const CompleteMessage &) {
   if (ctx()->operatorMap().allComplete(OperatorRelationshipType::Producer)) {
-	ctx()->notifyComplete();
+//    while (!(tupleArrived_ && onTupleNum_ == 0)) {
+//      std::this_thread::yield();
+//    }
+//    SPDLOG_INFO("Shuffle complete: {}", name());
+	  ctx()->notifyComplete();
   }
 }
 
 void Shuffle::onTuple(const TupleMessage &message) {
+//  shuffleLock.lock();
+//  onTupleNum_++;
+//  tupleArrived_ = true;
+////  SPDLOG_INFO("Shuffle onTuple: {}", name());
+//  shuffleLock.unlock();
 
   // Get the tuple set
   auto &&tupleSet = TupleSet2::create(message.tuples());
+  std::vector<std::shared_ptr<TupleSet2>> shuffledTupleSets;
+  auto startTime = std::chrono::steady_clock::now();
+
+  // Check empty
   if(tupleSet->numRows() == 0){
-	return;
+    for (size_t s = 0; s < consumers_.size(); ++s) {
+      shuffledTupleSets.emplace_back(TupleSet2::make(tupleSet->schema().value()));
+    }
   }
 
-  // Check there are consumers
-  if(consumers_.empty()){
-	return;
+  else {
+    // Shuffle the tuple set
+    auto expectedShuffledTupleSets = ShuffleKernel2::shuffle(columnName_, consumers_.size(), *tupleSet);
+    if (!expectedShuffledTupleSets.has_value()) {
+      throw std::runtime_error(fmt::format("{}, {}", expectedShuffledTupleSets.error(), name()));
+    }
+    shuffledTupleSets = expectedShuffledTupleSets.value();
   }
 
-  // Shuffle the tuple set
-  auto expectedShuffledTupleSets = ShuffleKernel2::shuffle(columnName_, consumers_.size(), *tupleSet);
-  if(!expectedShuffledTupleSets.has_value()){
-    throw std::runtime_error(expectedShuffledTupleSets.error());
-  }
-  auto shuffledTupleSets = expectedShuffledTupleSets.value();
+  auto endTime = std::chrono::steady_clock::now();
+//  SPDLOG_INFO("Shuffle time: {}, size: {}, name: {}",
+//        std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count(),
+//        tupleSet->numRows(),
+//        name());
 
   // Send the shuffled tuple sets to consumers
   size_t partitionIndex = 0;
@@ -78,4 +96,8 @@ void Shuffle::onTuple(const TupleMessage &message) {
 	ctx()->send(tupleMessage, consumers_[partitionIndex]);
 	++partitionIndex;
   }
+
+//  shuffleLock.lock();
+//  onTupleNum_--;
+//  shuffleLock.unlock();
 }

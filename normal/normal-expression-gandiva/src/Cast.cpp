@@ -27,7 +27,7 @@ Cast::Cast(std::shared_ptr<Expression> expr, std::shared_ptr<normal::core::type:
 	// Not supported directly by Gandiva, need to cast string to decimal and then that to float64
 
 	auto castDecimalFunctionName = "castDECIMAL";
-	auto castDecimalReturnType = arrow::decimal(36, 2); // FIXME: Need to check if this is sufficient to cast to double
+	auto castDecimalReturnType = arrow::decimal(30, 8); // FIXME: Need to check if this is sufficient to cast to double
 	auto castToDecimalFunction = ::gandiva::TreeExprBuilder::MakeFunction(castDecimalFunctionName,
 																		  {paramGandivaExpression},
 																		  castDecimalReturnType);
@@ -99,6 +99,10 @@ void Cast::compile(std::shared_ptr<arrow::Schema> schema) {
 
 std::string Cast::alias() {
   return expr_->alias();
+}
+
+std::shared_ptr<std::vector<std::string> > Cast::involvedColumnNames() {
+  return expr_->involvedColumnNames();
 }
 
 std::shared_ptr<Expression> normal::expression::gandiva::cast(std::shared_ptr<Expression> expr,

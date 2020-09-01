@@ -31,7 +31,7 @@ public:
 	return std::make_shared<ArrayAppenderWrapper>(expectedSize);
   }
 
-  void appendValue(const std::shared_ptr<::arrow::Array> &array, int64_t i) override {
+  void appendValue(const std::shared_ptr<::arrow::Array> &array, int64_t i) override{
 	buffer_.emplace_back(std::static_pointer_cast<ArrowArrayType>(array)->Value(i));
   }
 
@@ -50,7 +50,7 @@ public:
 
 	buffer_.shrink_to_fit();
 
-	status = strangeProblem(builder_, buffer_);
+  status = strangeProblem(builder_, buffer_);
 	if (!status.ok()) {
 	  return tl::make_unexpected(status.message());
 	}
@@ -74,21 +74,6 @@ private:
 template<>
 void ArrayAppenderWrapper<std::string, ::arrow::StringType>::appendValue(const std::shared_ptr<::arrow::Array> &array, int64_t i);
 
-template<>
-inline ::arrow::Status ArrayAppenderWrapper<int, ::arrow::Int32Type>::strangeProblem(const std::shared_ptr<::arrow::Int32Builder> &builder, const std::vector<int> &buffer){
-  return builder->AppendValues(buffer);
-}
-
-template<>
-inline ::arrow::Status ArrayAppenderWrapper<long, ::arrow::Int64Type>::strangeProblem(const std::shared_ptr<::arrow::Int64Builder> &builder, const std::vector<long> &buffer){
-  return builder->AppendValues(buffer);
-}
-
-template<>
-inline ::arrow::Status ArrayAppenderWrapper<std::string, ::arrow::StringType>::strangeProblem(const std::shared_ptr<::arrow::StringBuilder> &builder, const std::vector<std::string> &buffer){
-  return builder->AppendValues(buffer);
-}
-
 class ArrayAppenderBuilder {
 public:
   static tl::expected<std::shared_ptr<ArrayAppender>, std::string>
@@ -96,10 +81,12 @@ public:
 	if (type->id() == ::arrow::StringType::type_id) {
 	  return ArrayAppenderWrapper<std::string, ::arrow::StringType>::make(expectedSize);
 	}  else if (type->id() == ::arrow::Int32Type::type_id) {
-	  return ArrayAppenderWrapper<int, ::arrow::Int32Type>::make(expectedSize);
-	}else if (type->id() == ::arrow::Int64Type::type_id) {
-	  return ArrayAppenderWrapper<long, ::arrow::Int64Type>::make(expectedSize);
-	} else {
+	  return ArrayAppenderWrapper<::arrow::Int32Type::c_type, ::arrow::Int32Type>::make(expectedSize);
+	} else if (type->id() == ::arrow::Int64Type::type_id) {
+	  return ArrayAppenderWrapper<::arrow::Int64Type::c_type, ::arrow::Int64Type>::make(expectedSize);
+	} else if (type->id() == ::arrow::DoubleType::type_id) {
+    return ArrayAppenderWrapper<::arrow::DoubleType::c_type, ::arrow::DoubleType>::make(expectedSize);
+  } else {
 	  return tl::make_unexpected(
 		  fmt::format("ArrayAppender not implemented for type '{}'", type->name()));
 	}

@@ -6,14 +6,14 @@ project(normal-expression-gandiva VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 #-----------------------------------------------------------------------------------------------------------------------
 
 add_library(normal-expression-gandiva STATIC
-        src/Globals.h
+        include/normal/expression/gandiva/Globals.h
         src/Expression.cpp include/normal/expression/gandiva/Expression.h
         src/Column.cpp include/normal/expression/gandiva/Column.h
         src/Cast.cpp include/normal/expression/gandiva/Cast.h
         src/Projector.cpp include/normal/expression/gandiva/Projector.h
         src/Add.cpp include/normal/expression/gandiva/Add.h
         src/Divide.cpp include/normal/expression/gandiva/Divide.h
-        src/Literal.cpp include/normal/expression/gandiva/Literal.h
+        src/NumericLiteral.cpp include/normal/expression/gandiva/NumericLiteral.h
         src/Multiply.cpp include/normal/expression/gandiva/Multiply.h
         src/Subtract.cpp include/normal/expression/gandiva/Subtract.h
         src/LessThan.cpp include/normal/expression/gandiva/LessThan.h
@@ -21,7 +21,11 @@ add_library(normal-expression-gandiva STATIC
         src/EqualTo.cpp include/normal/expression/gandiva/EqualTo.h
         src/LessThanOrEqualTo.cpp include/normal/expression/gandiva/LessThanOrEqualTo.h
         src/GreaterThanOrEqualTo.cpp include/normal/expression/gandiva/GreaterThanOrEqualTo.h
+        src/GreaterThan.cpp include/normal/expression/gandiva/GreaterThan.h
         src/And.cpp include/normal/expression/gandiva/And.h
+        src/Or.cpp include/normal/expression/gandiva/Or.h
+        src/StringLiteral.cpp include/normal/expression/gandiva/StringLiteral.h
+        src/BinaryExpression.cpp include/normal/expression/gandiva/BinaryExpression.h
         src/Globals.cpp)
 
 target_include_directories(normal-expression-gandiva PUBLIC include)

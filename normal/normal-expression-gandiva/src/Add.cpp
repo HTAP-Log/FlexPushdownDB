@@ -8,24 +8,19 @@
 using namespace normal::expression::gandiva;
 
 Add::Add(std::shared_ptr<Expression> left, std::shared_ptr<Expression> right)
-	: left_(std::move(left)), right_(std::move(right)) {
+	: BinaryExpression(left, right) {
 }
 
 void Add::compile(std::shared_ptr<arrow::Schema> schema) {
   left_->compile(schema);
   right_->compile(schema);
 
-  auto leftGandivaExpression = left_->getGandivaExpression();
-  auto rightGandivaExpression = right_->getGandivaExpression();
-
+  // FIXME: Verify both left and right are compatible types
   returnType_ = left_->getReturnType();
 
-  auto addExpression = ::gandiva::TreeExprBuilder::MakeFunction(
-	  "add",
-	  {leftGandivaExpression, rightGandivaExpression},
-	  returnType_);
+  auto function = "add";
+  gandivaExpression_ = ::gandiva::TreeExprBuilder::MakeFunction(function, {left_->getGandivaExpression(), right_->getGandivaExpression()}, returnType_);
 
-  gandivaExpression_ = addExpression;
 }
 
 std::string Add::alias() {

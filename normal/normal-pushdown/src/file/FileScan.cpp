@@ -137,11 +137,17 @@ void FileScan::readAndSendTuples(const std::vector<std::string> &columnNames){
   /*
    * FIXME: Should support reading the file in pieces
    */
-  auto expectedReadTupleSet = kernel_->scan(columnNames);
-  auto readTupleSet = expectedReadTupleSet.value();
 
-  // Store the read columns in the cache
-  requestStoreSegmentsInCache(readTupleSet);
+  std::shared_ptr<TupleSet2> readTupleSet;
+  if (columnNames.empty()) {
+    readTupleSet = TupleSet2::make2();
+  } else {
+    auto expectedReadTupleSet = kernel_->scan(columnNames);
+    readTupleSet = expectedReadTupleSet.value();
+
+    // Store the read columns in the cache
+    requestStoreSegmentsInCache(readTupleSet);
+  }
 
   std::shared_ptr<normal::core::message::Message> message = std::make_shared<TupleMessage>(readTupleSet->toTupleSetV1(), this->name());
   ctx()->tell(message);

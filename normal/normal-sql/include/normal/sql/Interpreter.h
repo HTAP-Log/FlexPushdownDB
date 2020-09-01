@@ -11,7 +11,9 @@
 
 #include <normal/connector/Catalogue.h>
 #include <normal/core/OperatorManager.h>
+#include <normal/core/graph/OperatorGraph.h>
 #include <normal/plan/LogicalPlan.h>
+#include <normal/plan/mode/Mode.h>
 
 namespace normal::sql {
 
@@ -19,18 +21,33 @@ class Interpreter{
 
 public:
   Interpreter();
+  Interpreter(const std::shared_ptr<normal::plan::operator_::mode::Mode> &mode,
+              const std::shared_ptr<CachingPolicy>& cachingPolicy);
   [[nodiscard]] const std::shared_ptr<core::OperatorManager> &getOperatorManager() const;
+  [[nodiscard]] std::shared_ptr<core::graph::OperatorGraph> &getOperatorGraph();
   void parse(const std::string& sql);
   void put(const std::shared_ptr<connector::Catalogue> &catalogue);
+  const std::shared_ptr<plan::LogicalPlan> &getLogicalPlan() const;
+  void clearOperatorGraph();
+  void boot();
+  void stop();
+  void saveMetrics();
+  std::string showMetrics();
+  const std::shared_ptr<CachingPolicy> &getCachingPolicy() const;
 
 private:
   std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<connector::Catalogue>>> catalogues_;
   std::shared_ptr<plan::LogicalPlan> logicalPlan_;
-public:
-  const std::shared_ptr<plan::LogicalPlan> &getLogicalPlan() const;
-private:
   std::shared_ptr<core::OperatorManager> operatorManager_;
+  std::shared_ptr<core::graph::OperatorGraph> operatorGraph_;
+  std::shared_ptr<normal::plan::operator_::mode::Mode> mode_;
+  std::shared_ptr<CachingPolicy> cachingPolicy_;
 
+  /*
+   * About result metrics
+   */
+  std::vector<double> executionTimes;
+  std::vector<std::pair<size_t, size_t>> bytesTransferred;
 };
 
 }

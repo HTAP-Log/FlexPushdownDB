@@ -38,7 +38,7 @@ void HashJoinProbe::onReceive(const normal::core::message::Envelope &msg) {
 	this->onComplete(completeMessage);
   } else {
 	// FIXME: Propagate error properly
-	throw std::runtime_error("Unrecognized message type " + msg.message().type());
+	throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}", msg.message().type(), name()));
   }
 }
 
@@ -47,6 +47,7 @@ void HashJoinProbe::onStart() {
 }
 
 void HashJoinProbe::onTuple(const normal::core::message::TupleMessage &msg) {
+//  SPDLOG_INFO("On tuple: {}", name());
   // Add the tuples to the internal buffer
   bufferTuples(msg);
 }
@@ -55,7 +56,7 @@ void HashJoinProbe::bufferTuples(const normal::core::message::TupleMessage &msg)
 
   auto tupleSet = TupleSet2::create(msg.tuples());
   auto result = kernel_.putProbeTupleSet(tupleSet);
-  if(!result) throw std::runtime_error(result.error());
+  if(!result) throw std::runtime_error(fmt::format("{}, {}", result.error(), name()));
 //  SPDLOG_DEBUG("Buffering tupleSet  |  operator: '{}', tupleSet:\n{}", this->name(), tupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented, 10000)));
 //  if (!tuples_) {
 //	// Initialise tuples buffer with message contents
@@ -70,6 +71,7 @@ void HashJoinProbe::bufferTuples(const normal::core::message::TupleMessage &msg)
 void HashJoinProbe::onComplete(const normal::core::message::CompleteMessage &) {
   if (ctx()->operatorMap().allComplete(normal::core::OperatorRelationshipType::Producer)) {
 	joinAndSendTuples();
+//    SPDLOG_INFO("Join probe complete: {}", name());
 	ctx()->notifyComplete();
   }
 }
@@ -80,7 +82,7 @@ void HashJoinProbe::joinAndSendTuples() {
 	sendTuples(expectedJoinedTuples.value());
   } else {
 	// FIXME: Propagate error properly
-	throw std::runtime_error(expectedJoinedTuples.error());
+	throw std::runtime_error(fmt::format("{}, {}", expectedJoinedTuples.error(), name()));
   }
 }
 
@@ -89,7 +91,7 @@ tl::expected<std::shared_ptr<normal::tuple::TupleSet2>, std::string> HashJoinPro
 }
 
 void HashJoinProbe::sendTuples(const std::shared_ptr<normal::tuple::TupleSet2> &joined) {
-
+//  SPDLOG_INFO("Join result: \n{}", joined->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
   auto v1TupleSet = joined->toTupleSetV1();
 
   std::shared_ptr<core::message::Message>
@@ -104,5 +106,5 @@ void HashJoinProbe::onHashTable(const TupleSetIndexMessage &msg) {
 
 void HashJoinProbe::bufferHashTable(const TupleSetIndexMessage &msg) {
   auto result = kernel_.putBuildTupleSetIndex(msg.getTupleSetIndex());
-  if(!result) throw std::runtime_error(result.error());
+  if(!result) throw std::runtime_error(fmt::format("{}, {}", result.error(), name()));
 }

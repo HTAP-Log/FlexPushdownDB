@@ -10,6 +10,7 @@
 #include <normal/core/message/CompleteMessage.h>
 #include <normal/expression/gandiva/Projector.h>
 #include <normal/expression/gandiva/Expression.h>
+#include <normal/expression/gandiva/Column.h>
 
 #include "normal/pushdown/Globals.h"
 
@@ -25,7 +26,7 @@ Project::Project(const std::string &Name,
 void Project::onStart() {
   SPDLOG_DEBUG("Starting operator  |  name: '{}'", this->name());
   // FIXME: Either set tuples to size 0 or use an optional
-  tuples_ = nullptr;
+//  tuples_ = nullptr;
 }
 
 void Project::onReceive(const normal::core::message::Envelope &message) {
@@ -45,21 +46,35 @@ void Project::onReceive(const normal::core::message::Envelope &message) {
 
 void Project::projectAndSendTuples() {
   if(tuples_) {
-	auto projectedTuples = projector_.value()->evaluate(*tuples_);
-	sendTuples(projectedTuples);
 
-	// FIXME: Either set tuples to size 0 or use an optional
-	tuples_ = nullptr;
+    std::vector<std::shared_ptr<arrow::Field>> fields;
+    std::vector<std::shared_ptr<arrow::ChunkedArray>> arrowColumns;
+    for (auto const &expression: expressions_) {
+      auto columnName = std::static_pointer_cast<normal::expression::gandiva::Column>(expression)->getColumnName();
+      auto arrowColumn = tuples_->table()->GetColumnByName(columnName);
+      arrowColumns.emplace_back(arrowColumn);
+      fields.emplace_back(std::make_shared<arrow::Field>(columnName, arrowColumn->type()));
+    }
+    auto projectedTuples = TupleSet::make(std::make_shared<arrow::Schema>(fields), arrowColumns);
+
+    sendTuples(projectedTuples);
+
+    // FIXME: Either set tuples to size 0 or use an optional
+    tuples_ = nullptr;
   }
 }
 
 void Project::onTuple(const core::message::TupleMessage &message) {
+//  projectLock.lock();
+//  onTupleNum_++;
+//  tupleArrived_ = true;
+//  projectLock.unlock();
 
   // Set the input schema if not yet set
   cacheInputSchema(message);
 
   // Build and set the expression projector if not yet set
-  buildAndCacheProjector();
+//  buildAndCacheProjector();
 
   // Add the tuples to the internal buffer
   bufferTuples(message);
@@ -68,6 +83,10 @@ void Project::onTuple(const core::message::TupleMessage &message) {
   if (tuples_->numRows() > DefaultBufferSize) {
     projectAndSendTuples();
   }
+
+//  projectLock.lock();
+//  onTupleNum_--;
+//  projectLock.unlock();
 }
 
 void Project::buildAndCacheProjector() {
@@ -84,16 +103,9 @@ void Project::cacheInputSchema(const core::message::TupleMessage &message) {
 }
 
 void Project::sendTuples(std::shared_ptr<TupleSet> &projected) {
-  // Send the tuples in batches
-  for(int i=0;i<projected->numRows();i+= DefaultBufferSize){
-    int64_t length =  std::min<int64_t>(projected->table()->num_rows() - i, DefaultBufferSize);
-    auto batch = projected->table()->Slice(i, length);
-    auto batchTupleSet = TupleSet::make(batch);
-
 	std::shared_ptr<core::message::Message>
-		tupleMessage = std::make_shared<core::message::TupleMessage>(batchTupleSet, name());
+		tupleMessage = std::make_shared<core::message::TupleMessage>(projected, name());
 	ctx()->tell(tupleMessage);
-  }
 }
 
 void Project::bufferTuples(const core::message::TupleMessage &message) {
@@ -114,12 +126,20 @@ void Project::bufferTuples(const core::message::TupleMessage &message) {
 }
 
 void Project::onComplete(const normal::core::message::CompleteMessage &) {
+//  if (complete_) {
+//    return;
+//  }
 
-  // Project and send any remaining tuples
-  projectAndSendTuples();
 
   if(ctx()->operatorMap().allComplete(OperatorRelationshipType::Producer)){
-	ctx()->notifyComplete();
+//    while (!(tupleArrived_ && onTupleNum_ == 0)) {
+//      std::this_thread::yield();
+//    }
+
+    // Project and send any remaining tuples
+    projectAndSendTuples();
+	  ctx()->notifyComplete();
+//	  complete_ = true;
   }
 }
 

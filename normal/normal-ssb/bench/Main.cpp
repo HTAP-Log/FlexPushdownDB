@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
   doctest::Context context;
 
   context.applyCommandLine(argc, argv);
+  context.addFilter("test-case", "ssb-benchmark-query01");
   int rc = context.run();
 
   if (context.shouldExit()) // important - query flags (and --exit) rely on the user doing this

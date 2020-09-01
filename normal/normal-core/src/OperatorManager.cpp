@@ -11,7 +11,7 @@
 
 #include <caf/all.hpp>
 #include <caf/io/all.hpp>
-#include <graphviz/gvc.h>
+//#include <graphviz/gvc.h>
 
 #include <normal/core/Actors.h>
 #include "normal/core/Globals.h"
@@ -95,38 +95,51 @@ OperatorManager::OperatorManager() : queryCounter_(0), running_(false){
   rootActor_ = std::make_shared<caf::scoped_actor>(*actorSystem);
 }
 
+OperatorManager::OperatorManager(const std::shared_ptr<CachingPolicy>& cachingPolicy) :
+  cachingPolicy_(cachingPolicy),
+  queryCounter_(0) {
+//  actorSystemConfig.load<caf::io::middleman>();
+  actorSystem = std::make_unique<caf::actor_system>(actorSystemConfig);
+  rootActor_ = std::make_shared<caf::scoped_actor>(*actorSystem);
+}
+
+
 /**
  * TODO: Remove this, it no longer applies. Individual queries are now joined.
  */
 void OperatorManager::join() {
 
-//  SPDLOG_DEBUG("Waiting for all operators to complete");
-//
-//  auto handle_err = [&](const caf::error &err) {
-//    aout(*rootActor_) << "AUT (actor under test) failed: "
-//                      << (*rootActor_)->system().render(err) << std::endl;
-//  };
-//
-//  bool allComplete = false;
-//  (*rootActor_)->receive_while([&] { return !allComplete; })(
-//      [&](const normal::core::message::Envelope &msg) {
-//        SPDLOG_DEBUG("Message received  |  actor: 'OperatorManager', messageKind: '{}', from: '{}'",
-//                     msg.message().type(), msg.message().sender());
-//
-//        this->operatorDirectory_.setComplete(msg.message().sender());
-//
-//        allComplete = this->operatorDirectory_.allComplete();
-//
-////        SPDLOG_DEBUG(fmt::format("Operator directory:\n{}", this->operatorDirectory_.showString()));
-////        SPDLOG_DEBUG(fmt::format("All operators complete: {}", allComplete));
-//      },
-//      handle_err);
+  SPDLOG_DEBUG("Waiting for all operators to complete");
+
+  auto handle_err = [&](const caf::error &err) {
+    aout(*rootActor_) << "AUT (actor under test) failed: "
+                      << (*rootActor_)->system().render(err) << std::endl;
+  };
+
+  bool allComplete = false;
+  (*rootActor_)->receive_while([&] { return !allComplete; })(
+      [&](const normal::core::message::Envelope &msg) {
+        SPDLOG_DEBUG("Message received  |  actor: 'OperatorManager', messageKind: '{}', from: '{}'",
+                     msg.message().type(), msg.message().sender());
+
+        this->operatorDirectory_.setComplete(msg.message().sender());
+
+        allComplete = this->operatorDirectory_.allComplete();
+
+//        SPDLOG_DEBUG(fmt::format("Operator directory:\n{}", this->operatorDirectory_.showString()));
+//        SPDLOG_DEBUG(fmt::format("All operators complete: {}", allComplete));
+      },
+      handle_err);
 }
 
 void OperatorManager::boot() {
 
   // Create the system actors
-  segmentCacheActor_ = std::make_shared<SegmentCacheActor>("SegmentCache");
+  if (cachingPolicy_) {
+    segmentCacheActor_ = std::make_shared<SegmentCacheActor>("SegmentCache", cachingPolicy_);
+  } else {
+    segmentCacheActor_ = std::make_shared<SegmentCacheActor>("SegmentCache");
+  }
   put(segmentCacheActor_);
 
   // Create the operators
@@ -144,127 +157,127 @@ void OperatorManager::boot() {
     op->actorHandle(actorHandle);
   }
 
-//  // Tell the actors about the system actors
-//  for (const auto &element: m_operatorMap) {
-//
-//	auto ctx = element.second;
-//	auto op = ctx->op();
-//
-//	auto rootActorEntry = LocalOperatorDirectoryEntry("root",
-//											 std::optional(rootActor_->ptr()),
-//											 OperatorRelationshipType::None,
-//											 false);
-//
-//	ctx->operatorMap().insert(rootActorEntry);
-//
-//	auto segmentCacheActorEntry = LocalOperatorDirectoryEntry(segmentCacheActor_->name(),
-//															  std::optional(segmentCacheActor_->actorHandle()),
-//											 OperatorRelationshipType::None,
-//											 false);
-//
-//	ctx->operatorMap().insert(segmentCacheActorEntry);
-//  }
-//
-//  // Tell the system actors about the other actors
-//  for (const auto &element: m_operatorMap) {
-//
-//	auto ctx = element.second;
-//	auto op = ctx->op();
-//
-//	auto entry = LocalOperatorDirectoryEntry(op->name(),
-//											 op->actorHandle(),
-//											 OperatorRelationshipType::None,
-//											 false);
-//
-//	segmentCacheActor_->ctx()->operatorMap().insert(entry);
-//  }
-//
-//  // Tell the actors who their producers are
-//  for (const auto &element: m_operatorMap) {
-//    auto ctx = element.second;
-//    auto op = ctx->op();
-//    for (const auto &producerEntry: op->producers()) {
-//      auto producer = producerEntry.second;
-//      auto entry = LocalOperatorDirectoryEntry(producer->name(),
-//                                               producer->actorHandle(),
-//                                               OperatorRelationshipType::Producer,
-//                                               false);
-//      ctx->operatorMap().insert(entry);
-//    }
-//  }
-//
-//  // Tell the actors who their consumers are
-//  for (const auto &element: m_operatorMap) {
-//    auto ctx = element.second;
-//    auto op = ctx->op();
-//    for (const auto &consumerEntry: op->consumers()) {
-//      auto consumer = consumerEntry.second;
-//      auto entry = LocalOperatorDirectoryEntry(consumer->name(),
-//                                               consumer->actorHandle(),
-//                                               OperatorRelationshipType::Consumer,
-//                                               false);
-//      ctx->operatorMap().insert(entry);
-//    }
-//  }
-}
+  // Tell the actors about the system actors
+  for (const auto &element: m_operatorMap) {
 
-void OperatorManager::write_graph(const std::string &file) {
+	auto ctx = element.second;
+	auto op = ctx->op();
 
-  auto gvc = gvContext();
+	auto rootActorEntry = LocalOperatorDirectoryEntry("root",
+											 std::optional(rootActor_->ptr()),
+											 OperatorRelationshipType::None,
+											 false);
 
-  auto graph = agopen(const_cast<char *>(std::string("Execution Plan").c_str()), Agstrictdirected, 0);
+	ctx->operatorMap().insert(rootActorEntry);
 
-  // Init attributes
-  agattr(graph, AGNODE, const_cast<char *>("fixedsize"), const_cast<char *>("false"));
-  agattr(graph, AGNODE, const_cast<char *>("shape"), const_cast<char *>("ellipse"));
-  agattr(graph, AGNODE, const_cast<char *>("label"), const_cast<char *>("<not set>"));
-  agattr(graph, AGNODE, const_cast<char *>("fontname"), const_cast<char *>("Arial"));
-  agattr(graph, AGNODE, const_cast<char *>("fontsize"), const_cast<char *>("8"));
+	auto segmentCacheActorEntry = LocalOperatorDirectoryEntry(segmentCacheActor_->name(),
+															  std::optional(segmentCacheActor_->actorHandle()),
+											 OperatorRelationshipType::None,
+											 false);
 
-  // Add all the nodes
-  for (const auto &op: this->m_operatorMap) {
-    std::string nodeName = op.second->op()->name();
-    auto node = agnode(graph, const_cast<char *>(nodeName.c_str()), true);
-
-    agset(node, const_cast<char *>("shape"), const_cast<char *>("plaintext"));
-
-    std::string nodeLabel = "<table border='1' cellborder='0' cellpadding='5'>"
-                            "<tr><td align='left'><b>" + op.second->op()->getType() + "</b></td></tr>"
-                            "<tr><td align='left'>" + op.second->op()->name() + "</td></tr>"
-                            "</table>";
-    char *htmlNodeLabel = agstrdup_html(graph, const_cast<char *>(nodeLabel.c_str()));
-    agset(node, const_cast<char *>("label"), htmlNodeLabel);
-    agstrfree(graph, htmlNodeLabel);
+	ctx->operatorMap().insert(segmentCacheActorEntry);
   }
 
-  // Add all the edges
-  for (const auto &op: this->m_operatorMap) {
-    auto opNode = agfindnode(graph, (char *) (op.second->op()->name().c_str()));
-    for (const auto &c: op.second->op()->consumers()) {
-      auto consumerOpNode = agfindnode(graph, (char *) (c.second.lock()->name().c_str()));
-      agedge(graph, opNode, consumerOpNode, const_cast<char *>(std::string("Edge").c_str()), true);
+  // Tell the system actors about the other actors
+  for (const auto &element: m_operatorMap) {
+
+	auto ctx = element.second;
+	auto op = ctx->op();
+
+	auto entry = LocalOperatorDirectoryEntry(op->name(),
+											 op->actorHandle(),
+											 OperatorRelationshipType::None,
+											 false);
+
+	segmentCacheActor_->ctx()->operatorMap().insert(entry);
+  }
+
+  // Tell the actors who their producers are
+  for (const auto &element: m_operatorMap) {
+    auto ctx = element.second;
+    auto op = ctx->op();
+    for (const auto &producerEntry: op->producers()) {
+      auto producer = producerEntry.second;
+      auto entry = LocalOperatorDirectoryEntry(producer.lock()->name(),
+                                               producer.lock()->actorHandle(),
+                                               OperatorRelationshipType::Producer,
+                                               false);
+      ctx->operatorMap().insert(entry);
     }
   }
 
-  const std::experimental::filesystem::path &path = std::experimental::filesystem::path(file);
-  if (!std::experimental::filesystem::exists(path.parent_path())) {
-    throw std::runtime_error("Could not open file '" + file + "' for writing. Parent directory does not exist");
-  } else {
-    FILE *outFile = fopen(file.c_str(), "w");
-    if (outFile == nullptr) {
-      throw std::runtime_error("Could not open file '" + file + "' for writing. Errno: " + std::to_string(errno));
+  // Tell the actors who their consumers are
+  for (const auto &element: m_operatorMap) {
+    auto ctx = element.second;
+    auto op = ctx->op();
+    for (const auto &consumerEntry: op->consumers()) {
+      auto consumer = consumerEntry.second;
+      auto entry = LocalOperatorDirectoryEntry(consumer.lock()->name(),
+                                               consumer.lock()->actorHandle(),
+                                               OperatorRelationshipType::Consumer,
+                                               false);
+      ctx->operatorMap().insert(entry);
     }
-
-    gvLayout(gvc, graph, "dot");
-    gvRender(gvc, graph, "svg", outFile);
-
-    fclose(outFile);
-
-    gvFreeLayout(gvc, graph);
-    agclose(graph);
-    gvFreeContext(gvc);
   }
 }
+
+//void OperatorManager::write_graph(const std::string &file) {
+//
+//  auto gvc = gvContext();
+//
+//  auto graph = agopen(const_cast<char *>(std::string("Execution Plan").c_str()), Agstrictdirected, 0);
+//
+//  // Init attributes
+//  agattr(graph, AGNODE, const_cast<char *>("fixedsize"), const_cast<char *>("false"));
+//  agattr(graph, AGNODE, const_cast<char *>("shape"), const_cast<char *>("ellipse"));
+//  agattr(graph, AGNODE, const_cast<char *>("label"), const_cast<char *>("<not set>"));
+//  agattr(graph, AGNODE, const_cast<char *>("fontname"), const_cast<char *>("Arial"));
+//  agattr(graph, AGNODE, const_cast<char *>("fontsize"), const_cast<char *>("8"));
+//
+//  // Add all the nodes
+//  for (const auto &op: this->m_operatorMap) {
+//    std::string nodeName = op.second->op()->name();
+//    auto node = agnode(graph, const_cast<char *>(nodeName.c_str()), true);
+//
+//    agset(node, const_cast<char *>("shape"), const_cast<char *>("plaintext"));
+//
+//    std::string nodeLabel = "<table border='1' cellborder='0' cellpadding='5'>"
+//                            "<tr><td align='left'><b>" + op.second->op()->getType() + "</b></td></tr>"
+//                            "<tr><td align='left'>" + op.second->op()->name() + "</td></tr>"
+//                            "</table>";
+//    char *htmlNodeLabel = agstrdup_html(graph, const_cast<char *>(nodeLabel.c_str()));
+//    agset(node, const_cast<char *>("label"), htmlNodeLabel);
+//    agstrfree(graph, htmlNodeLabel);
+//  }
+//
+//  // Add all the edges
+//  for (const auto &op: this->m_operatorMap) {
+//    auto opNode = agfindnode(graph, (char *) (op.second->op()->name().c_str()));
+//    for (const auto &c: op.second->op()->consumers()) {
+//      auto consumerOpNode = agfindnode(graph, (char *) (c.second->name().c_str()));
+//      agedge(graph, opNode, consumerOpNode, const_cast<char *>(std::string("Edge").c_str()), true);
+//    }
+//  }
+//
+//  const std::experimental::filesystem::path &path = std::experimental::filesystem::path(file);
+//  if (!std::experimental::filesystem::exists(path.parent_path())) {
+//    throw std::runtime_error("Could not open file '" + file + "' for writing. Parent directory does not exist");
+//  } else {
+//    FILE *outFile = fopen(file.c_str(), "w");
+//    if (outFile == nullptr) {
+//      throw std::runtime_error("Could not open file '" + file + "' for writing. Errno: " + std::to_string(errno));
+//    }
+//
+//    gvLayout(gvc, graph, "dot");
+//    gvRender(gvc, graph, "svg", outFile);
+//
+//    fclose(outFile);
+//
+//    gvFreeLayout(gvc, graph);
+//    agclose(graph);
+//    gvFreeContext(gvc);
+//  }
+//}
 
 std::shared_ptr<Operator> OperatorManager::getOperator(const std::string &name) {
   return this->m_operatorMap.find(name)->second->op();
@@ -383,6 +396,30 @@ std::string OperatorManager::showMetrics() {
   return ss.str();
 }
 
+std::string OperatorManager::showCacheMetrics() {
+  int hitNum = segmentCacheActor_->getState()->cache->hitNum();
+  int missNum = segmentCacheActor_->getState()->cache->missNum();
+  double hitRate = (hitNum + missNum == 0) ? 0.0 : (double) hitNum / (double) (hitNum + missNum);
+
+  std::stringstream ss;
+  ss << std::endl;
+
+  ss << std::left << std::setw(60) << "Hit num:";
+  ss << std::left << std::setw(40) << hitNum;
+  ss << std::endl;
+
+  ss << std::left << std::setw(60) << "Miss num:";
+  ss << std::left << std::setw(40) << missNum;
+  ss << std::endl;
+
+  ss << std::left << std::setw(60) << "Hit rate:";
+  ss << std::left << std::setw(40) << hitRate;
+  ss << std::endl;
+  ss << std::endl;
+
+  return ss.str();
+}
+
 const std::shared_ptr<caf::actor_system> &OperatorManager::getActorSystem() const {
   return actorSystem;
 }
@@ -398,6 +435,10 @@ long OperatorManager::nextQueryId() {
 OperatorManager::~OperatorManager() {
 	if(running_)
 	  stop();
+}
+
+void OperatorManager::clearCacheMetrics() {
+  segmentCacheActor_->getState()->cache->clearMetrics();
 }
 
 }

@@ -34,6 +34,7 @@ add_library(normal-tuple STATIC
         src/TupleSetIndexWrapper.cpp include/normal/tuple/TupleSetIndexWrapper.h
         src/TupleSetIndexFinder.cpp include/normal/tuple/TupleSetIndexFinder.h
         src/TupleSetIndexFinderWrapper.cpp include/normal/tuple/TupleSetIndexFinderWrapper.h
+        src/TupleSetIndexFinderWrapper.cpp include/normal/tuple/TupleSetIndexFinderWrapper.h
         src/Converter.cpp include/normal/tuple/Converter.h
         src/ParquetReader.cpp include/normal/tuple/ParquetReader.h
         src/Util.cpp include/normal/tuple/Util.h
@@ -60,7 +61,8 @@ target_link_libraries(normal-tuple PUBLIC parquet_static)
 add_executable(normal-tuple-test
         test/Globals.h
         test/MainTest.cpp
-        test/TupleTest.cpp test/CSVTest.cpp test/ParquetTest.cpp)
+        test/TupleTest.cpp
+        test/CSVTest.cpp test/ParquetTest.cpp)
 
 
 target_include_directories(normal-tuple-test PRIVATE include)

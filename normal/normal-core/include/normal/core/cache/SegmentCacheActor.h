@@ -29,12 +29,15 @@ class SegmentCacheActor : public normal::core::Operator {
 public:
 
   explicit SegmentCacheActor(const std::string &Name);
+  explicit SegmentCacheActor(const std::string &Name, const std::shared_ptr<CachingPolicy>& cachingPolicy);
 
   void onReceive(const message::Envelope &message) override;
 
   void load(const LoadRequestMessage &msg);
   void store(const StoreRequestMessage &msg);
   void evict(const EvictRequestMessage &msg);
+
+  const std::shared_ptr<SegmentCacheActorState> &getState() const;
 
 private:
   std::shared_ptr<SegmentCacheActorState> state_;

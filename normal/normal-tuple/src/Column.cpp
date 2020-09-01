@@ -3,6 +3,7 @@
 //
 
 #include <fmt/format.h>
+#include <iostream>
 #include "normal/tuple/Column.h"
 
 using namespace normal::tuple;
@@ -144,4 +145,14 @@ std::vector<std::shared_ptr<::arrow::ChunkedArray>> Column::columnVectorToArrowC
 
 void Column::setName(const std::string &Name) {
   name_ = Name;
+}
+
+size_t Column::size() {
+  size_t size = 0;
+  for (auto const &chunk: array_->chunks()) {
+    for (auto const &buffer: chunk->data()->buffers) {
+      size += buffer->size();
+    }
+  }
+  return size;
 }

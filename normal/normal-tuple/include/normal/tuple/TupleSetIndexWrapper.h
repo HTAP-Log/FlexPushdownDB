@@ -64,6 +64,20 @@ public:
 	}
 	auto recordBatch = *recordBatchResult;
 
+//  /**
+//   * compute the size of batch
+//   */
+//  size_t size = 0;
+//  for (int col_id = 0; col_id < recordBatch->num_columns(); col_id++) {
+//    auto array = recordBatch->column(col_id);
+//    for (auto const &buffer: array->data()->buffers) {
+//      size += buffer->size();
+//    }
+//  }
+//  /**
+//   * end
+//   */
+
 	size_t tableRow = rowIndexOffset;
 	while (recordBatch) {
 
@@ -119,7 +133,7 @@ public:
 	  return tl::make_unexpected(expectedValueRowIndexMap.error());
 	auto valueRowIndexMap = expectedValueRowIndexMap.value();
 
-	valueRowMap_.merge(valueRowIndexMap);
+	valueRowMap_.insert(valueRowIndexMap.begin(), valueRowIndexMap.end());
 
 	auto result = ::arrow::ConcatenateTables({table_, table});
 	if (!result.ok())
@@ -243,7 +257,7 @@ public:
 	  return TupleSetIndexWrapper<long, ::arrow::Int64Type>::make(table, columnIndex);
 	} else {
 	  return tl::make_unexpected(
-		  fmt::format("TupleSetIndex not implemented for type '{}'", column->type()->id()));
+		  fmt::format("TupleSetIndex not implemented for type '{}'", column->type()->ToString()));
 	}
   }
 };

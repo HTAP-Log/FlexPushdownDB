@@ -24,6 +24,12 @@ public:
   void expression(const std::shared_ptr<expression::gandiva::Expression> &expression);
 
   virtual std::shared_ptr<pushdown::aggregate::AggregationFunction> toExecutorFunction() = 0;
+  virtual std::shared_ptr<pushdown::aggregate::AggregationFunction> toExecutorReduceFunction() = 0;
+
+  void setName(const std::string &name);
+
+protected:
+  std::string name_;
 
 private:
   std::string type_;

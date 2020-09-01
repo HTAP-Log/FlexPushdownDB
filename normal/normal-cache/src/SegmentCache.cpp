@@ -22,13 +22,14 @@ std::shared_ptr<SegmentCache> SegmentCache::make(const std::shared_ptr<CachingPo
 }
 
 void SegmentCache::store(const std::shared_ptr<SegmentKey> &key, const std::shared_ptr<SegmentData> &data) {
+  auto removableKeys = cachingPolicy_->onStore(key);
 
-  auto removableKey = cachingPolicy_->onStore(key);
-  if(removableKey.has_value()) {
-	map_.erase(removableKey.value());
+  if (removableKeys.has_value()) {
+    for (auto const &removableKey: *removableKeys.value()) {
+      map_.erase(removableKey);
+    }
+    map_.emplace(key, data);
   }
-
-  map_.emplace(key, data);
 }
 
 tl::expected<std::shared_ptr<SegmentData>,
@@ -38,10 +39,12 @@ tl::expected<std::shared_ptr<SegmentData>,
 
   auto mapIterator = map_.find(key);
   if (mapIterator == map_.end()) {
-	return tl::unexpected(fmt::format("Segment for key '{}' not found", key->toString()));
+    missNum_++;
+	  return tl::unexpected(fmt::format("Segment for key '{}' not found", key->toString()));
   } else {
-	auto cacheEntry = mapIterator->second;
-	return mapIterator->second;
+    hitNum_++;
+    auto cacheEntry = mapIterator->second;
+    return mapIterator->second;
   }
 }
 
@@ -63,4 +66,22 @@ unsigned long SegmentCache::remove(const std::function<bool(const SegmentKey &)>
 
 size_t SegmentCache::getSize() const {
   return map_.size();
+}
+
+std::shared_ptr<std::vector<std::shared_ptr<SegmentKey>>>
+SegmentCache::toCache(std::shared_ptr<std::vector<std::shared_ptr<SegmentKey>>> segmentKeys) {
+  return cachingPolicy_->onToCache(segmentKeys);
+}
+
+int SegmentCache::hitNum() const {
+  return hitNum_;
+}
+
+int SegmentCache::missNum() const {
+  return missNum_;
+}
+
+void SegmentCache::clearMetrics() {
+  hitNum_ = 0;
+  missNum_ = 0;
 }

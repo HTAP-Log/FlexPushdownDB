@@ -3,12 +3,17 @@
 //
 
 #include "normal/core/cache/SegmentCacheActor.h"
+#include <normal/cache/Globals.h>
 
 using namespace normal::core::cache;
 
 SegmentCacheActor::SegmentCacheActor(const std::string &Name) :
 	Operator(Name, "SegmentCache"),
-	state_(std::make_shared<SegmentCacheActorState>()) {}
+	state_(make()) {}
+
+SegmentCacheActor::SegmentCacheActor(const std::string &Name, const std::shared_ptr<CachingPolicy>& cachingPolicy) :
+        Operator(Name, "SegmentCache"),
+        state_(make(cachingPolicy)) {}
 
 void SegmentCacheActor::onReceive(const Envelope &message) {
   if (message.message().type() == "StoreRequestMessage") {
@@ -32,39 +37,52 @@ void SegmentCacheActor::onReceive(const Envelope &message) {
 void SegmentCacheActor::load(const LoadRequestMessage &msg) {
 
   std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>, SegmentKeyPointerHash, SegmentKeyPointerPredicate> segments;
+//  std::vector<std::shared_ptr<SegmentKey>> segmentKeysToCache;
+  auto missSegmentKeys = std::make_shared<std::vector<std::shared_ptr<SegmentKey>>>();
 
 //  SPDLOG_DEBUG("Handling load request. loadRequestMessage: {}", msg.toString());
 
   for(const auto &segmentKey: msg.getSegmentKeys()) {
 
-	auto cacheData = state_->cache->load(segmentKey);
+    auto cacheData = state_->cache->load(segmentKey);
 
-	if (cacheData.has_value()) {
-//	  SPDLOG_DEBUG("Cache hit  |  segmentKey: {}", segmentKey->toString());
-	  segments.insert(std::pair(segmentKey, cacheData.value()));
+    if (cacheData.has_value()) {
+      SPDLOG_DEBUG("Cache hit  |  segmentKey: {}", segmentKey->toString());
+      segments.insert(std::pair(segmentKey, cacheData.value()));
 
-	} else {
-//	  SPDLOG_DEBUG("Cache miss  |  segmentKey: {}", segmentKey->toString());
-	}
+    } else {
+      SPDLOG_DEBUG("Cache miss  |  segmentKey: {}", segmentKey->toString());
+      missSegmentKeys->emplace_back(segmentKey);
+    }
   }
 
-  auto responseMessage = LoadResponseMessage::make(segments,
-											  name());
+  /*
+   * Decision making should be locked
+   */
+  normal::cache::replacementGlobalLock.lock();
+  auto segmentKeysToCache = state_->cache->toCache(missSegmentKeys);
+  normal::cache::replacementGlobalLock.unlock();
+
+  auto responseMessage = LoadResponseMessage::make(segments, name(), *segmentKeysToCache);
 
   ctx()->send(responseMessage, msg.sender())
-	  .map_error([](auto err) { throw std::runtime_error(err); });
+	  .map_error([](auto err) { throw std::runtime_error(fmt::format("{}, SegmentCacheActor", err)); });
 }
 
 void SegmentCacheActor::store(const StoreRequestMessage &msg) {
 //  SPDLOG_DEBUG("Store  |  storeMessage: {}", msg.toString());
   for(const auto &segmentEntry: msg.getSegments()){
     auto segmentKey = segmentEntry.first;
-	auto segmentData = segmentEntry.second;
-	state_->cache->store(segmentKey, segmentData);
+    auto segmentData = segmentEntry.second;
+    state_->cache->store(segmentKey, segmentData);
   }
 }
 
 void SegmentCacheActor::evict(const EvictRequestMessage &msg) {
   SPDLOG_DEBUG("Evict  |  evictMessage: {}", msg.toString());
   throw std::runtime_error("Cache eviction not implemented");
+}
+
+const std::shared_ptr<SegmentCacheActorState> &SegmentCacheActor::getState() const {
+  return state_;
 }

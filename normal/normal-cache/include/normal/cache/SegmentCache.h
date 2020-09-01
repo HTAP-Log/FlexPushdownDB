@@ -26,12 +26,19 @@ public:
   tl::expected<std::shared_ptr<SegmentData>, std::string> load(const std::shared_ptr<SegmentKey>& key);
   unsigned long remove(const std::shared_ptr<SegmentKey>& key);
   unsigned long remove(const std::function<bool(const SegmentKey& entry)>& predicate);
+  std::shared_ptr<std::vector<std::shared_ptr<SegmentKey>>> toCache(std::shared_ptr<std::vector<std::shared_ptr<SegmentKey>>> segmentKeys);
 
   size_t getSize() const;
+
+  int hitNum() const;
+  int missNum() const;
+  void clearMetrics();
 
 private:
   std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>, SegmentKeyPointerHash, SegmentKeyPointerPredicate> map_;
 	std::shared_ptr<CachingPolicy> cachingPolicy_;
+	int hitNum_ = 0;
+	int missNum_ = 0;
 };
 
 }

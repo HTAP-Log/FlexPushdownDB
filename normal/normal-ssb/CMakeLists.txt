@@ -9,17 +9,20 @@ add_library(normal-ssb
         include/normal/ssb/Globals.h
         src/TestUtil.cpp include/normal/ssb/TestUtil.h
         src/SQLite3.cpp include/normal/ssb/SQLite3.h
+        src/SqlGenerator.cpp include/normal/ssb/SqlGenerator.h
+        src/SSBSchema.cpp include/normal/ssb/SSBSchema.h src/GenerateSqlFile.cpp
+        include/normal/ssb/common/Operators.h src/common/Operators.cpp
         src/query1_1/Operators.cpp include/normal/ssb/query1_1/Operators.h
         src/query1_1/SQL.cpp include/normal/ssb/query1_1/SQL.h
         src/query1_1/S3SelectQueries.cpp include/normal/ssb/query1_1/S3SelectQueries.h
         src/query1_1/LocalFileSystemQueries.cpp include/normal/ssb/query1_1/LocalFileSystemQueries.h
         src/query1_1/LocalFileSystemTests.cpp include/normal/ssb/query1_1/LocalFileSystemTests.h
         src/query1_1/S3SelectTests.cpp include/normal/ssb/query1_1/S3SelectTests.h
+        src/query1_1/S3SelectTests.cpp include/normal/ssb/query1_1/S3SelectTests.h
         src/query2_1/Operators.cpp  include/normal/ssb/query2_1/Operators.h
         src/query2_1/LocalFileSystemTests.cpp include/normal/ssb/query2_1/LocalFileSystemTests.h
         src/query2_1/LocalFileSystemQueries.cpp include/normal/ssb/query2_1/LocalFileSystemQueries.h
-        src/query2_1/SQL.cpp include/normal/ssb/query2_1/SQL.h src/common/Operators.cpp
-        include/normal/ssb/common/Operators.h src/SSBSchema.cpp include/normal/ssb/SSBSchema.h)
+        src/query2_1/SQL.cpp include/normal/ssb/query2_1/SQL.h )
 
 target_include_directories(normal-ssb PUBLIC include)
 
@@ -29,7 +32,7 @@ target_link_libraries(normal-ssb PRIVATE fmt::fmt)
 target_link_libraries(normal-ssb PRIVATE normal-plan)
 target_link_libraries(normal-ssb PRIVATE sqlite3_static)
 target_link_libraries(normal-ssb PRIVATE sqlite3_csv_static)
-target_link_libraries(normal-ssb PUBLIC normal-core)
+target_link_libraries(normal-ssb PUBLIC normal-pushdown)
 target_link_libraries(normal-ssb PUBLIC spdlog::spdlog)
 
 
@@ -63,8 +66,8 @@ add_executable(normal-ssb-test
         test/SSBQuery1_1S3PushDownTestSF0_01.cpp
         test/SSBQuery1_1S3HybridTestSF0_01.cpp
         test/SSBQuery2_1FileTestSF0_01.cpp
-        test/MiscTest.cpp
-        test/SSBTestQuery1_1FileParquetSF0_01.cpp)
+        test/SSBTestQuery1_1FileParquetSF0_01.cpp
+        test/MiscTest.cpp)
 
 target_link_libraries(normal-ssb-test PRIVATE doctest::doctest)
 target_link_libraries(normal-ssb-test PRIVATE normal-ssb)
@@ -115,11 +118,60 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/lineorder.tbl ${CMAKE_C
 configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/part.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf0.01/part.tbl COPYONLY)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/supplier.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf0.01/supplier.tbl COPYONLY)
 
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/customer.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/customer.tbl COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/date.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/date.tbl COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/lineorder.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/lineorder.tbl COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/part.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/part.tbl COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/supplier.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/supplier.tbl COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/customer.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/customer.tbl COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/date.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/date.tbl COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/lineorder.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/lineorder.tbl COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/part.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/part.tbl COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/supplier.tbl ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/supplier.tbl COPYONLY)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Query generator
+#-----------------------------------------------------------------------------------------------------------------------
+
+add_library(normal-ssb-query-generate
+        src/SqlGenerator.cpp include/normal/ssb/SqlGenerator.h)
+
+target_link_libraries(normal-ssb-query-generate PRIVATE doctest::doctest)
+target_link_libraries(normal-ssb-query-generate PRIVATE normal-ssb)
+
+add_executable(normal-ssb-query-generate-file
+        src/GenerateSqlFile.cpp)
+
+target_link_libraries(normal-ssb-query-generate-file PRIVATE normal-ssb-query-generate)
+target_link_libraries(normal-ssb-query-generate-file PRIVATE normal-ssb)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Experiment
+#-----------------------------------------------------------------------------------------------------------------------
+
+add_executable(normal-ssb-experiment
+        experiment/ExperimentMain.cpp
+        experiment/Tests.cpp
+        experiment/ExperimentUtil.cpp   experiment/ExperimentUtil.h
+        experiment/HardcodedPlanTestSinglePartition.cpp
+        experiment/HardcodedPlanTestMultiPartition.cpp
+        experiment/SqliteTest.cpp)
+
+target_link_libraries(normal-ssb-experiment PRIVATE doctest::doctest)
+target_link_libraries(normal-ssb-experiment PRIVATE normal-ssb)
+target_link_libraries(normal-ssb-experiment PRIVATE normal-sql)
+target_link_libraries(normal-ssb-experiment PRIVATE normal-ssb-query-generate)
+
+# Copy ssb query files to runtime directory
+
+set(SSB_query_file_list
+        "original/query1.1.sql" "original/query1.2.sql" "original/query1.3.sql"
+        "original/query2.1.sql" "original/query2.2.sql" "original/query2.3.sql"
+        "original/query3.1.sql" "original/query3.2.sql" "original/query3.3.sql" "original/query3.4.sql"
+        "original/query4.1.sql" "original/query4.2.sql" "original/query4.3.sql"
+        "filterlineorder/query1.1.sql" "filterlineorder/query1.2.sql" "filterlineorder/query1.3.sql"
+        "filterlineorder/query2.1.sql" "filterlineorder/query2.2.sql" "filterlineorder/query2.3.sql"
+        "filterlineorder/query3.1.sql" "filterlineorder/query3.2.sql" "filterlineorder/query3.3.sql" "filterlineorder/query3.4.sql"
+        "filterlineorder/query4.1.sql" "filterlineorder/query4.2.sql" "filterlineorder/query4.3.sql")
+
+FOREACH(SSB_query_file ${SSB_query_file_list})
+    configure_file(${CMAKE_CURRENT_LIST_DIR}/sql/${SSB_query_file} ${CMAKE_CURRENT_BINARY_DIR}/sql/${SSB_query_file} COPYONLY)
+ENDFOREACH(SSB_query_file)
 
 configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/parquet/customer.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf0.01/parquet/customer.snappy.parquet COPYONLY)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/parquet/date.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf0.01/parquet/date.snappy.parquet COPYONLY)
@@ -127,11 +179,11 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/parquet/lineorder.snapp
 configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/parquet/part.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf0.01/parquet/part.snappy.parquet COPYONLY)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf0.01/parquet/supplier.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf0.01/parquet/supplier.snappy.parquet COPYONLY)
 
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/customer.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/customer.snappy.parquet COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/date.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/date.snappy.parquet COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/lineorder.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/lineorder.snappy.parquet COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/part.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/part.snappy.parquet COPYONLY)
-configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/supplier.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/supplier.snappy.parquet COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/customer.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/customer.snappy.parquet COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/date.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/date.snappy.parquet COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/lineorder.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/lineorder.snappy.parquet COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/part.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/part.snappy.parquet COPYONLY)
+#configure_file(${CMAKE_CURRENT_LIST_DIR}/data/ssb-sf1/parquet/supplier.snappy.parquet ${CMAKE_CURRENT_BINARY_DIR}/data/ssb-sf1/parquet/supplier.snappy.parquet COPYONLY)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Diagnostics
