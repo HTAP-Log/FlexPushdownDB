@@ -15,9 +15,13 @@ using namespace normal::core::message;
 namespace {
 
 void onActorExit(QueryExecutorActorType self, const exit_msg &m);
-result<std::shared_ptr<TupleSet2>> onExecute(QueryExecutorActorType self,
-											 const std::shared_ptr<OperatorGraph> &operatorGraph);
+result<tl::expected<std::shared_ptr<TupleSet2>, std::string>> onExecute(QueryExecutorActorType self,
+																		const std::shared_ptr<OperatorGraph> &operatorGraph);
 void onComplete(QueryExecutorActorType self, const Envelope &e);
+
+[[nodiscard]] tl::expected<void, std::string> makePromise(QueryExecutorActorType self);
+void resolvePromise(QueryExecutorActorType self, const std::shared_ptr<TupleSet2> &tupleSet);
+void rejectPromise(QueryExecutorActorType self, const std::string &message);
 
 void boot2(OperatorGraph &g, QueryExecutorActorType self);
 void start(OperatorGraph &g, QueryExecutorActorType self);
@@ -46,17 +50,16 @@ void onActorExit(const QueryExecutorActorType self, const exit_msg &m) {
 	 * error here.
 	 * See bug: https://github.com/actor-framework/actor-framework/issues/1047
 	 */
-	self->state.promise.deliver(m.reason);
-
+	rejectPromise(self, fmt::format("Query execution error  |  reason: '{}'", to_string(m.reason)));
 	self->quit(m.reason);
   } else {
-	SPDLOG_DEBUG("[Actor {} ('{}')]  Operator Exit  |  source: {}, reason: {}", self->id(),
+	SPDLOG_DEBUG("[Actor {} ('{}')]  Normal Operator Exit  |  source: {}, reason: {}", self->id(),
 				 self->name(), to_string(m.source), to_string(m.reason));
   }
 }
 
-result<std::shared_ptr<TupleSet2>> onExecute(QueryExecutorActorType self,
-											 const std::shared_ptr<OperatorGraph> &operatorGraph) {
+result<tl::expected<std::shared_ptr<TupleSet2>, std::string>> onExecute(QueryExecutorActorType self,
+																		const std::shared_ptr<OperatorGraph> &operatorGraph) {
   SPDLOG_DEBUG("[Actor {} ('{}')]  Query Execute  |  source: {}",
 			   self->id(),
 			   self->name(),
@@ -66,10 +69,16 @@ result<std::shared_ptr<TupleSet2>> onExecute(QueryExecutorActorType self,
   self->state.sender = self->current_sender();
   self->state.operatorGraph = operatorGraph;
 
-  self->state.promise = self->make_response_promise<std::shared_ptr<TupleSet2>>();
+  auto expectedPromise = makePromise(self);
+  if (!expectedPromise) {
+	tl::expected<std::shared_ptr<TupleSet2>, std::string>
+		expected{tl::make_unexpected(fmt::format("Query execution error  |  reason: '{}'", expectedPromise.error()))};
+	return self->response(expected);
+  }
 
   boot2(*self->state.operatorGraph.lock(), self);
 
+  // Link to the operator actor so any exits are captured by all linked actors
   for (const auto &op: self->state.operatorGraph.lock()->getOperators()) {
 	self->link_to(op.second->operatorActor());
   }
@@ -77,6 +86,15 @@ result<std::shared_ptr<TupleSet2>> onExecute(QueryExecutorActorType self,
   start(*self->state.operatorGraph.lock(), self);
 
   return self->state.promise;
+}
+
+tl::expected<void, std::string> makePromise(const QueryExecutorActorType self) {
+  if (self->state.promise.pending()) {
+	return tl::make_unexpected("Cannot make promise  |  Promise is already pending");
+  }
+
+  self->state.promise = self->make_response_promise<tl::expected<std::shared_ptr<TupleSet2>, std::string>>();
+  return {};
 }
 
 void onComplete(const QueryExecutorActorType self, const Envelope &e) {
@@ -103,7 +121,8 @@ void onComplete(const QueryExecutorActorType self, const Envelope &e) {
 	  auto tupleSet = TupleSet2::make();
 
 	  self->state.stopTime = std::chrono::steady_clock::now();
-	  self->state.promise.deliver(tupleSet);
+
+	  resolvePromise(self, tupleSet);
 
 	  self->quit(exit_reason::normal);
 	}
@@ -225,6 +244,28 @@ void start(OperatorGraph &g, const QueryExecutorActorType self) {
 
 	self->anon_send(op->actorHandle(), normal::core::message::Envelope(sm));
   }
+}
+
+void resolvePromise(const QueryExecutorActorType self,
+					const std::shared_ptr<TupleSet2> &tupleSet) {
+  if (self->state.promise.pending()) {
+	auto error = caf::make_error(sec::runtime_error, "Cannot resolve promise  |  Promise is not pending");
+	self->call_error_handler(error);
+  }
+
+  tl::expected<std::shared_ptr<TupleSet2>, std::string> expected{tupleSet};
+  self->state.promise.deliver(expected);
+}
+
+void rejectPromise(const QueryExecutorActorType self, const std::string &message) {
+  if (self->state.promise.pending()) {
+	auto error = caf::make_error(sec::runtime_error, "Cannot reject promise  |  Promise is not pending");
+	self->call_error_handler(error);
+  }
+
+  tl::expected<std::shared_ptr<TupleSet2>, std::string>
+	  expected{tl::make_unexpected(message)};
+  self->state.promise.deliver(expected);
 }
 
 }

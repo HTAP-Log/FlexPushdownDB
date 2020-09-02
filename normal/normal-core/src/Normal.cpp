@@ -67,7 +67,7 @@ tl::expected<QueryExecutorActor, std::string> Normal::makeQueryExecutor() const 
 tl::expected<std::shared_ptr<TupleSet2>, std::string>
 Normal::executeQuery(const QueryExecutorActor &queryExecutor,
 					 const std::shared_ptr<OperatorGraph> &operatorGraph) const {
-  return request<std::shared_ptr<TupleSet2>>(*clientActor_,
+  return request<tl::expected<std::shared_ptr<TupleSet2>, std::string>>(*clientActor_,
 											 queryExecutor,
 											 ExecuteAtom::value,
 											 operatorGraph);

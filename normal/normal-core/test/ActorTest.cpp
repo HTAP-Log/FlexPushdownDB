@@ -29,6 +29,7 @@ TEST_CASE ("normal-lifecycle" * doctest::skip(false)) {
 
   auto r = n->execute(q);
 
+	  CHECK(r.has_value());
   SPDLOG_DEBUG("Result:\n{}", r.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
 
   n->stop();
@@ -44,10 +45,8 @@ TEST_CASE ("normal-error" * doctest::skip(false)) {
 
   auto r = n->execute(q);
 
-  if(r.has_value())
-  	SPDLOG_DEBUG("Result:\n{}", r.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
-  else
-	SPDLOG_DEBUG("Error: {}", r.error());
+	  CHECK_FALSE(r.has_value());
+  SPDLOG_DEBUG("Error: {}", r.error());
 
   n->stop();
 }
@@ -55,7 +54,7 @@ TEST_CASE ("normal-error" * doctest::skip(false)) {
 TEST_CASE ("normal-lifecycle-load" * doctest::skip(false)) {
   auto n = Normal::start();
 
-  for(int i=0;i<1000;++i) {
+  for (int i = 0; i < 1000; ++i) {
 	auto q = n->createQuery();
 	q->put(std::make_shared<SimpleOperator>("simple-1"));
 	q->put(std::make_shared<SimpleOperator>("simple-2"));
@@ -63,10 +62,9 @@ TEST_CASE ("normal-lifecycle-load" * doctest::skip(false)) {
 
 	auto r = n->execute(q);
 
-	if (r.has_value())
-	  SPDLOG_DEBUG("Result:\n{}", r.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
-	else
-	  SPDLOG_DEBUG("Error: {}", r.error());
+		CHECK (r.has_value());
+	SPDLOG_DEBUG("Result:\n{}", r.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
+
   }
 
   n->stop();
@@ -75,7 +73,7 @@ TEST_CASE ("normal-lifecycle-load" * doctest::skip(false)) {
 TEST_CASE ("normal-error-load" * doctest::skip(false)) {
   auto n = Normal::start();
 
-  for(int i=0;i<1000;++i) {
+  for (int i = 0; i < 1000; ++i) {
 	auto q = n->createQuery();
 	q->put(std::make_shared<SimpleOperator>("simple-1"));
 	q->put(std::make_shared<SimpleOperator>("simple-2"));
@@ -83,10 +81,8 @@ TEST_CASE ("normal-error-load" * doctest::skip(false)) {
 
 	auto r = n->execute(q);
 
-	if (r.has_value())
-	  SPDLOG_DEBUG("Result:\n{}", r.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
-	else
-	  SPDLOG_DEBUG("Error: {}", r.error());
+		CHECK_FALSE (r.has_value());
+	SPDLOG_DEBUG("Error: {}", r.error());
   }
 
   n->stop();
