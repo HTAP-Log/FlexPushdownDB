@@ -16,16 +16,18 @@ void exitQueryExecutors(SystemActorType self, const error &reason) {
 	self->send_exit(queryActor.second.actor, reason);
   }
 }
+
 void exitSegmentCache(SystemActorType self, const error &reason) {
   self->send_exit(self->state.segmentCacheActor, reason);
 }
+
 QueryExecutorActor onMakeQuery(const SystemActorType self) {
   SPDLOG_DEBUG("[Actor {} ('{}')]  Make Query  |  source: {}",
 			   self->id(), self->name(), to_string(self->current_sender()));
 
-  auto id = ++(self->state.lastQueryId);
+  auto id = (self->state.lastQueryId)++;
   auto name = fmt::format("query-executor-{}", id);
-  auto actor = self->spawn(queryExecutorBehaviour, name);
+  auto actor = self->spawn(queryExecutorBehaviour, id, name, self->state.segmentCacheActor);
 
   self->state.queryExecutorActorsMap.emplace(actor.address(), QueryActorMetaData{id, name, actor});
   self->monitor(actor);

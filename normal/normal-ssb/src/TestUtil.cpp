@@ -86,3 +86,16 @@ std::shared_ptr<TupleSet2> TestUtil::executeExecutionPlan2(const std::shared_ptr
   SPDLOG_DEBUG("Output  |\n{}", tupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
   return tupleSet;
 }
+
+tl::expected<std::shared_ptr<TupleSet2>, std::string>
+TestUtil::executeExecutionPlan3(const std::shared_ptr<Normal> &n, const std::shared_ptr<OperatorGraph> &g) {
+
+  TestUtil::writeExecutionPlan2(*g);
+
+  auto expectedTupleSet = n->execute(g);
+
+  SPDLOG_INFO("Metrics:\n{}", g->showMetrics());
+
+  SPDLOG_DEBUG("Output  |\n{}", expectedTupleSet.value()->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
+  return expectedTupleSet;
+}

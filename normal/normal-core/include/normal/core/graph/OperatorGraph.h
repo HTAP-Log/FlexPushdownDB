@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <chrono>
 
 #include <normal/core/Operator.h>
 #include <normal/core/OperatorContext.h>
@@ -53,6 +54,8 @@ private:
   std::chrono::steady_clock::time_point stopTime_;
 public:
   OperatorDirectory &getOperatorDirectory();
+  void setStartTime(const std::chrono::steady_clock::time_point &StartTime);
+  void setStopTime(const std::chrono::steady_clock::time_point &StopTime);
 };
 
 }

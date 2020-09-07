@@ -23,8 +23,11 @@ void LocalFileSystemTests::dateScan(const std::string &dataDir, FileType fileTyp
 
   std::vector<std::shared_ptr<TupleSet2>> actuals;
   for(int i= 0;i<numIterations;++i) {
-	auto actual = TestUtil::executeExecutionPlan2(LocalFileSystemQueries::dateScan(dataDir, fileType,
+	auto expectedActual = TestUtil::executeExecutionPlan3(n, LocalFileSystemQueries::dateScan(dataDir, fileType,
 																				   numConcurrentUnits, n));
+
+	CHECK(expectedActual);
+	auto actual = expectedActual.value();
 	SPDLOG_INFO("Actual  |  numRows: {}", actual->numRows());
 	actuals.emplace_back(actual);
   }

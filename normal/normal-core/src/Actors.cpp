@@ -21,23 +21,29 @@ std::shared_ptr<caf::actor> Actors::toActorHandleShared(const std::shared_ptr<ca
 void setDefaultHandlers(::caf::scheduled_actor &self) {
 
   self.set_error_handler([&](const ::caf::error &e) {
-	SPDLOG_DEBUG("[Actor {} ('{}')]  Actor Error  |  error: {}", self.id(),
+	SPDLOG_ERROR("[Actor {} ('{}')]  Actor Error  |  error: {}", self.id(),
 				 self.name(), to_string(e));
   });
 
   self.set_down_handler([&](const ::caf::down_msg &m) {
-	SPDLOG_DEBUG("[Actor {} ('{}')]  Actor Down  |  source: {}, reason: {}", self.id(),
-				 self.name(), to_string(m.source), to_string(m.reason));
+	if(m.reason != ::caf::exit_reason::normal) {
+	  SPDLOG_WARN("[Actor {} ('{}')]  Abnormal Actor Down  |  source: {}, reason: {}", self.id(),
+				   self.name(), to_string(m.source), to_string(m.reason));
+	}
+	else{
+	  SPDLOG_DEBUG("[Actor {} ('{}')]  Normal Actor Exit  |  source: {}, reason: {}", self.id(),
+				   self.name(), to_string(m.source), to_string(m.reason));
+	}
   });
 
   self.set_exit_handler([&](const ::caf::exit_msg &m) {
 	if(m.reason != ::caf::exit_reason::normal) {
-	  SPDLOG_WARN("[Actor {} ('{}')]  Actor Exit  |  source: {}, reason: {}", self.id(),
+	  SPDLOG_WARN("[Actor {} ('{}')]  Abnormal Actor Exit  |  source: {}, reason: {}", self.id(),
 				   self.name(), to_string(m.source), to_string(m.reason));
 	  self.quit(m.reason);
 	}
 	else{
-	  SPDLOG_DEBUG("[Actor {} ('{}')]  Actor Exit  |  source: {}, reason: {}", self.id(),
+	  SPDLOG_DEBUG("[Actor {} ('{}')]  Normal Actor Exit  |  source: {}, reason: {}", self.id(),
 				   self.name(), to_string(m.source), to_string(m.reason));
 	}
   });

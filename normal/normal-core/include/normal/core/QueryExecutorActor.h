@@ -11,6 +11,7 @@
 #include <caf/all.hpp>
 
 #include <normal/core/graph/OperatorGraph.h>
+#include <normal/core/cache/SegmentCacheActor2.h>
 
 using namespace caf;
 using namespace normal::core::graph;
@@ -25,11 +26,13 @@ using QueryExecutorActor = ::caf::typed_actor<replies_to<ExecuteAtom, std::share
 											  reacts_to<Envelope>>;
 
 struct QueryExecutorActorState {
+  long id;
   std::string name;
   ::caf::strong_actor_ptr sender;
   std::weak_ptr<OperatorGraph> operatorGraph;
   OperatorDirectory operatorDirectory;
   ::caf::response_promise promise;
+  SegmentCacheActor2 segmentCacheActor;
 
   // TODO: Put these into a queryable data structure.
 
@@ -39,7 +42,10 @@ struct QueryExecutorActorState {
 
 using QueryExecutorActorType = QueryExecutorActor::stateful_pointer<QueryExecutorActorState>;
 
-QueryExecutorActor::behavior_type queryExecutorBehaviour(QueryExecutorActorType self, std::string operatorGraph);
+QueryExecutorActor::behavior_type queryExecutorBehaviour(QueryExecutorActorType self,
+														 long id,
+														 std::string name,
+														 const SegmentCacheActor2& segmentCacheActor);
 
 }
 

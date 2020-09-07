@@ -5,39 +5,14 @@
 #ifndef NORMAL_NORMAL_S3_SRC_COLLATE_H
 #define NORMAL_NORMAL_S3_SRC_COLLATE_H
 
-#include <string>
-#include <memory>                  // for unique_ptr
-
-#include <arrow/api.h>
-#include <normal/pushdown/TupleMessage.h>
-#include <normal/core/message/CompleteMessage.h>
-
-#include "normal/core/Operator.h"
-#include "normal/core/OperatorContext.h"
-#include "normal/tuple/TupleSet.h"
-
-namespace normal::tuple {
-	class TupleSet;
-}
+#include <normal/core/Collect.h>
 
 namespace normal::pushdown {
 
-class Collate : public normal::core::Operator {
-
-private:
-  long queryId_;
-  std::shared_ptr<TupleSet> tuples_;
-  void onStart();
-
-  void onComplete(const normal::core::message::CompleteMessage &message);
-  void onTuple(const normal::core::message::TupleMessage& message);
-  void onReceive(const normal::core::message::Envelope &message) override;
+class Collate : public normal::core::Collect {
 
 public:
-  Collate(std::string name, long queryId);
-  ~Collate() override = default;
-  void show();
-  std::shared_ptr<TupleSet> tuples();
+  Collate(const std::string& name, long queryId);
 
 };
 

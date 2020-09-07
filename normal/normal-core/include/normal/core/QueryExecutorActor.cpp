@@ -3,6 +3,7 @@
 //
 
 #include "QueryExecutorActor.h"
+#include "Collect.h"
 
 #include <caf/all.hpp>
 
@@ -115,12 +116,16 @@ void onComplete(const QueryExecutorActorType self, const Envelope &e) {
 
 	if (self->state.operatorDirectory.allComplete()) {
 
-	  /*
-	   * TODO: Need to capture query output here
-	   */
-	  auto tupleSet = TupleSet2::make();
+	  auto expectedCollate = self->state.operatorGraph.lock()->getOperator(fmt::format("/query-{}/collate", self->state.id));
+	  if(expectedCollate->getType() != "Collate"){
+	    rejectPromise(self, "No collate operator");
+	  }
+	  auto collect = std::static_pointer_cast<normal::core::Collect>(expectedCollate);
+
+	  auto tupleSet = TupleSet2::create(collect->tuples());
 
 	  self->state.stopTime = std::chrono::steady_clock::now();
+	  self->state.operatorGraph.lock()->setStopTime(self->state.stopTime);
 
 	  resolvePromise(self, tupleSet);
 
@@ -172,15 +177,15 @@ void boot2(OperatorGraph &g, const QueryExecutorActorType self) {
 
 	ctx->operatorMap().insert(rootActorEntry);
 
-//	auto segmentCacheActorEntry = LocalOperatorDirectoryEntry(operatorManager_.lock()->getSegmentCacheActor()->name(),
-//															  std::optional(operatorManager_.lock()->getSegmentCacheActor()->actorHandle()),
-//															  OperatorRelationshipType::None,
-//															  false);
-//
-//	ctx->operatorMap().insert(segmentCacheActorEntry);
+	auto segmentCacheActorEntry = LocalOperatorDirectoryEntry("SegmentCache",
+															  std::optional(::caf::actor_cast<actor>(self->state.segmentCacheActor)),
+															  OperatorRelationshipType::None,
+															  false);
+
+	ctx->operatorMap().insert(segmentCacheActorEntry);
   }
-//
-//  // Tell the system actors about the other actors
+
+  // Tell the system actors about the other actors
 //  for (const auto &element: m_operatorMap) {
 //
 //	auto ctx = element.second;
@@ -226,6 +231,7 @@ void boot2(OperatorGraph &g, const QueryExecutorActorType self) {
 void start(OperatorGraph &g, const QueryExecutorActorType self) {
 
   self->state.startTime = std::chrono::steady_clock::now();
+  self->state.operatorGraph.lock()->setStartTime(self->state.startTime);
 
   // Mark all the operators as incomplete
   g.getOperatorDirectory().setIncomplete();
@@ -248,7 +254,7 @@ void start(OperatorGraph &g, const QueryExecutorActorType self) {
 
 void resolvePromise(const QueryExecutorActorType self,
 					const std::shared_ptr<TupleSet2> &tupleSet) {
-  if (self->state.promise.pending()) {
+  if (!self->state.promise.pending()) {
 	auto error = caf::make_error(sec::runtime_error, "Cannot resolve promise  |  Promise is not pending");
 	self->call_error_handler(error);
   }
@@ -272,9 +278,11 @@ void rejectPromise(const QueryExecutorActorType self, const std::string &message
 
 namespace normal::core {
 
-QueryExecutorActor::behavior_type queryExecutorBehaviour(QueryExecutorActorType self, std::string name) {
+QueryExecutorActor::behavior_type queryExecutorBehaviour(QueryExecutorActorType self, long id, std::string name, const SegmentCacheActor2& segmentCacheActor) {
 
+  self->state.id = id;
   self->state.name = std::move(name);
+  self->state.segmentCacheActor = segmentCacheActor;
 
   SPDLOG_DEBUG("[Actor {} ('{}')]  Query Executor Actor Spawn", self->id(), self->name());
 

@@ -349,3 +349,11 @@ std::pair<size_t, size_t> graph::OperatorGraph::getBytesTransferred() {
   }
   return std::pair<size_t, size_t>(processedBytes, returnedBytes);
 }
+
+void OperatorGraph::setStartTime(const std::chrono::steady_clock::time_point &StartTime) {
+  startTime_ = StartTime;
+}
+
+void OperatorGraph::setStopTime(const std::chrono::steady_clock::time_point &StopTime) {
+  stopTime_ = StopTime;
+}

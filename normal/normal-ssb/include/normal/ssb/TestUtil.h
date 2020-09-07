@@ -10,6 +10,7 @@
 #include <normal/core/graph/OperatorGraph.h>
 #include <normal/plan/LogicalPlan.h>
 #include <normal/tuple/TupleSet2.h>
+#include <normal/core/Normal.h>
 
 /*
  * Hack to get the current DocTest test being run. Need to forward declare getCurrentTestName declared in MainTest.
@@ -42,10 +43,13 @@ public:
   static std::shared_ptr<TupleSet2> executeExecutionPlanTest2(const std::shared_ptr<OperatorGraph> &g);
 
   static std::shared_ptr<std::vector<std::vector<std::pair<std::string, std::string>>>>
-  executeSQLite(const std::string &sql, const std::vector<std::string>& dataFiles);
+  executeSQLite(const std::string &sql, const std::vector<std::string> &dataFiles);
 
   static std::shared_ptr<TupleSet2>
   executeExecutionPlan2(const std::shared_ptr<OperatorGraph> &g);
+
+  static tl::expected<std::shared_ptr<TupleSet2>, std::string>
+  executeExecutionPlan3(const std::shared_ptr<Normal> &n, const std::shared_ptr<OperatorGraph> &g);
 };
 
 }

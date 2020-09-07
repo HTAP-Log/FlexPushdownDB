@@ -90,6 +90,18 @@ request(const caf::scoped_actor &src, const Dest &dest, Args... args) {
   return expected;
 }
 
+/**
+ * From CAF 0.17.5
+ *
+ * @tparam Ts
+ */
+/// Convenience function for wrapping the parameter pack `xs...` into a
+/// `result`.
+template <class... Ts>
+caf::result<caf::detail::decay_t<Ts>...> make_result(Ts&&... xs) {
+return {std::forward<Ts>(xs)...};
+}
+
 }
 
 #endif //NORMAL_NORMAL_CORE_SRC_ACTORS_H
