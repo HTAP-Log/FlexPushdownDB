@@ -67,7 +67,8 @@ add_library(normal-pushdown STATIC
         include/normal/pushdown/group/GroupKernel2.cpp include/normal/pushdown/group/GroupKernel2.h
         include/normal/pushdown/group/GroupKey2.h
         include/normal/pushdown/group/AggregateBuilder.cpp include/normal/pushdown/group/AggregateBuilder.h
-        include/normal/pushdown/group/AggregateBuilderWrapper.cpp include/normal/pushdown/group/AggregateBuilderWrapper.h)
+        include/normal/pushdown/group/AggregateBuilderWrapper.cpp include/normal/pushdown/group/AggregateBuilderWrapper.h
+        src/shuffle/ShuffleKernel3.cpp include/normal/pushdown/shuffle/ShuffleKernel3.h)
 
 target_include_directories(normal-pushdown PUBLIC include)
 

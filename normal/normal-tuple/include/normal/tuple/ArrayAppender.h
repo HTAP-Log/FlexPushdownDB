@@ -50,6 +50,13 @@ public:
    */
   virtual tl::expected<std::shared_ptr<arrow::Array>, std::string> finalize() = 0;
 
+  /**
+   * Size of buffer
+   *
+   * @return
+   */
+  virtual size_t size() = 0;
+
 };
 
 }

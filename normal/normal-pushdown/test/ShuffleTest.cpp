@@ -8,16 +8,94 @@
 
 #include <normal/core/OperatorManager.h>
 #include <normal/pushdown/shuffle/ATTIC/Shuffler.h>
+#include <normal/pushdown/shuffle/ShuffleKernel2.h>
+#include <normal/pushdown/shuffle/ShuffleKernel3.h>
+#include <normal/pushdown/shuffle/ATTIC/ShuffleKernel.h>
 
 using namespace normal::tuple;
 using namespace normal::pushdown;
 using namespace normal::pushdown::shuffle;
 
-#define SKIP_SUITE true
+namespace {
 
-TEST_SUITE ("shuffle" * doctest::skip(SKIP_SUITE)) {
+//void run1(const std::shared_ptr<TupleSet2> &tupleSet) {
+//
+//  auto expectedShuffledTupleSets = Shuffler::shuffle("a", 2, tupleSet);
+//	  REQUIRE(expectedShuffledTupleSets.has_value());
+//  auto shuffledTupleSets = expectedShuffledTupleSets.value();
+//
+//  size_t partitionIndex = 0;
+//  for (const auto &shuffledTupleSet: shuffledTupleSets) {
+//	SPDLOG_DEBUG("Output: partitionIndex: {}, \n{}", partitionIndex,
+//				 shuffledTupleSet->showString(TupleSetShowOptions(RowOriented)));
+//	++partitionIndex;
+//  }
+//
+//}
 
-TEST_CASE ("shuffle" * doctest::skip(false || SKIP_SUITE)) {
+//void run2(const std::shared_ptr<TupleSet2> &tupleSet) {
+//
+//  auto expectedShuffledTupleSets = ShuffleKernel::shuffle("a", 2, tupleSet);
+//	  REQUIRE(expectedShuffledTupleSets.has_value());
+//  auto shuffledTupleSets = expectedShuffledTupleSets.value();
+//
+//  size_t partitionIndex = 0;
+//  for (const auto &shuffledTupleSet: shuffledTupleSets) {
+//	SPDLOG_DEBUG("Output: partitionIndex: {}, \n{}", partitionIndex,
+//				 shuffledTupleSet->showString(TupleSetShowOptions(RowOriented)));
+//	++partitionIndex;
+//  }
+//
+//}
+
+void run3(const std::shared_ptr<TupleSet2> &tupleSet) {
+
+  auto expectedShuffledTupleSets = ShuffleKernel2::shuffle("a", 2, *tupleSet);
+	  REQUIRE(expectedShuffledTupleSets.has_value());
+  auto shuffledTupleSets = expectedShuffledTupleSets.value();
+
+  size_t partitionIndex = 0;
+  for (const auto &shuffledTupleSet: shuffledTupleSets) {
+	SPDLOG_DEBUG("Output: partitionIndex: {}, \n{}", partitionIndex,
+				 shuffledTupleSet->showString(TupleSetShowOptions(RowOriented)));
+	++partitionIndex;
+  }
+
+}
+
+void run4(const std::shared_ptr<TupleSet2> &tupleSet) {
+
+  ShuffleKernel3 kernel("a", 2);
+
+  auto expectedShuffledTupleSets = kernel.shuffle(*tupleSet);
+	  REQUIRE(expectedShuffledTupleSets.has_value());
+  const auto &shuffledTupleSets = expectedShuffledTupleSets.value();
+
+  size_t partitionIndex = 0;
+  for (const auto &shuffledTupleSet: shuffledTupleSets) {
+	SPDLOG_DEBUG("Output 1: partitionIndex: {}, \n{}", partitionIndex,
+				 shuffledTupleSet->showString(TupleSetShowOptions(RowOriented)));
+	++partitionIndex;
+  }
+
+  auto expectedFinalisedShuffledTupleSets = kernel.toTupleSets(true);
+	  REQUIRE(expectedFinalisedShuffledTupleSets.has_value());
+  const auto &finalisedShuffledTupleSets = expectedFinalisedShuffledTupleSets.value();
+
+  partitionIndex = 0;
+  for (const auto &finalisedShuffledTupleSet: finalisedShuffledTupleSets) {
+	SPDLOG_DEBUG("Output 2: partitionIndex: {}, \n{}", partitionIndex,
+				 finalisedShuffledTupleSet->showString(TupleSetShowOptions(RowOriented)));
+	++partitionIndex;
+  }
+
+}
+
+}
+
+TEST_SUITE ("shuffle" * doctest::skip(false)) {
+
+TEST_CASE ("shuffle-basic" * doctest::skip(false)) {
 
   auto stringType = arrow::utf8();
 
@@ -38,22 +116,14 @@ TEST_CASE ("shuffle" * doctest::skip(false || SKIP_SUITE)) {
 
   SPDLOG_DEBUG("Input:\n{}", tupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
 
-  auto expectedShuffledTupleSets = Shuffler::shuffle("a", 2, tupleSet);
-	  CHECK_MESSAGE(expectedShuffledTupleSets.has_value(), expectedShuffledTupleSets.error());
+//  run1(tupleSet);
+//  run2(tupleSet);
+  run3(tupleSet);
+  run4(tupleSet);
 
-  if (expectedShuffledTupleSets.has_value()) {
-	auto shuffledTupleSets = expectedShuffledTupleSets.value();
-
-	size_t partitionIndex = 0;
-	for (const auto &shuffledTupleSet: shuffledTupleSets) {
-	  SPDLOG_DEBUG("Output: partitionIndex: {}, \n{}", partitionIndex,
-				   shuffledTupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
-	  ++partitionIndex;
-	}
-  }
 }
 
-TEST_CASE ("shuffle-empty" * doctest::skip(false || SKIP_SUITE)) {
+TEST_CASE ("shuffle-empty" * doctest::skip(false)) {
 
   auto stringType = arrow::utf8();
 
@@ -74,18 +144,10 @@ TEST_CASE ("shuffle-empty" * doctest::skip(false || SKIP_SUITE)) {
 
   SPDLOG_DEBUG("Input:\n{}", tupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
 
-  auto expectedShuffledTupleSets = Shuffler::shuffle("a", 2, tupleSet);
-	  CHECK_MESSAGE(expectedShuffledTupleSets.has_value(), expectedShuffledTupleSets.error());
-
-  if (expectedShuffledTupleSets.has_value()) {
-	auto shuffledTupleSets = expectedShuffledTupleSets.value();
-	size_t partitionIndex = 0;
-	for (const auto &shuffledTupleSet: shuffledTupleSets) {
-	  SPDLOG_DEBUG("Output: partitionIndex: {}, \n{}", partitionIndex,
-				   shuffledTupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
-	  ++partitionIndex;
-	}
-  }
+//  run1(tupleSet);
+//  run2(tupleSet);
+  run3(tupleSet);
+  run4(tupleSet);
 }
 
 }

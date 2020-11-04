@@ -86,6 +86,10 @@ public:
 	return array;
   }
 
+  size_t size() override {
+	return buffer_.size();
+  }
+
 private:
   std::vector<CType> buffer_;
   std::shared_ptr<ArrowBuilderType> builder_;
