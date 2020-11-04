@@ -22,7 +22,7 @@ namespace normal::pushdown {
 
 class S3SelectScanKernel {
 
-  typedef std::function<void(const std::shared_ptr<TupleSet2> &)> TupleSetEventCallback;
+  using TupleSetEventCallback = std::function<void(const std::shared_ptr<TupleSet2> &)> ;
 
 public:
   S3SelectScanKernel(std::string s3Bucket,
@@ -45,6 +45,9 @@ public:
 
   tl::expected<std::shared_ptr<TupleSet2>, std::string>
   scan(const std::vector<std::string> &columnNames);
+
+  tl::expected<void, std::string>
+  scan2(const std::vector<std::string> &columnNames, const TupleSetEventCallback &tupleSetEventCallback);
 
   tl::expected<void, std::string> s3Select(const std::string &sql, const TupleSetEventCallback &tupleSetEventCallback);
 

@@ -120,7 +120,7 @@ std::string TupleSet2::showString() {
   return showString(TupleSetShowOptions(TupleSetShowOrientation::ColumnOriented));
 }
 
-std::shared_ptr<TupleSet> TupleSet2::toTupleSetV1() {
+std::shared_ptr<TupleSet> TupleSet2::toTupleSetV1() const {
 
   // FIXME: V1 tuple sets cant be empty
 

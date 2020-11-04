@@ -85,7 +85,7 @@ public:
    * Gets the tuple set as a v1 tuple set
    * @return
    */
-  std::shared_ptr<TupleSet> toTupleSetV1();
+  std::shared_ptr<TupleSet> toTupleSetV1() const;
 
   /**
    * Returns number of rows in the tuple set

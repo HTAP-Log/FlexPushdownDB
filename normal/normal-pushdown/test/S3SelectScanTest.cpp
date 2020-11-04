@@ -49,8 +49,8 @@ void run(const std::string &s3Bucket,
 	SPDLOG_DEBUG("  's3://{}/{}': size: {}", s3Bucket, partition.first, partition.second);
   }
 
-  std::shared_ptr<Partition> partition = std::make_shared<S3SelectPartition>(s3Bucket, s3Object);
-  auto cacheLoad = CacheLoad::make("cache-load", columnNames, {}, partition, 0, partitionMap[s3Object], true);
+  std::shared_ptr<Partition> partition = std::make_shared<S3SelectPartition>(s3Bucket, s3Object, partitionMap[fmt::format("{}/{}", s3ObjectPrefix, s3Object)]);
+  auto cacheLoad = CacheLoad::make("cache-load", columnNames, {}, partition, 0, partitionMap[fmt::format("{}/{}", s3ObjectPrefix, s3Object)], true);
   g->put(cacheLoad);
   auto merge = Merge::make("merge");
   g->put(merge);
@@ -59,7 +59,7 @@ void run(const std::string &s3Bucket,
 										  s3Object,
 										  "select {} from S3Object",
 										  0,
-										  partitionMap[s3Object],
+										  partitionMap[fmt::format("{}/{}", s3ObjectPrefix, s3Object)],
 										  fileType,
 										  columnNames,
 										  S3SelectCSVParseOptions(",", "\n"),
@@ -99,11 +99,9 @@ void run(const std::string &s3Bucket,
   client.shutdown();
 }
 
-#define SKIP_SUITE false
+TEST_SUITE ("s3select-scan" * doctest::skip(false)) {
 
-TEST_SUITE ("s3select-scan" * doctest::skip(SKIP_SUITE)) {
-
-TEST_CASE ("s3select-scan-v1-csv" * doctest::skip(false || SKIP_SUITE)) {
+TEST_CASE ("s3select-scan-v1-csv" * doctest::skip(false)) {
 
   normal::pushdown::AWSClient client;
   client.init();
@@ -145,7 +143,7 @@ TEST_CASE ("s3select-scan-v1-csv" * doctest::skip(false || SKIP_SUITE)) {
   client.shutdown();
 }
 
-TEST_CASE ("s3select-parser" * doctest::skip(false || SKIP_SUITE)) {
+TEST_CASE ("s3select-parser" * doctest::skip(false)) {
 
   Aws::Vector<unsigned char> data{'1', ',', '2', ',', '3', '\n',
 								  '4', ',', '5', ',', '6', '\n',
@@ -180,24 +178,28 @@ TEST_CASE ("s3select-parser" * doctest::skip(false || SKIP_SUITE)) {
   }
 }
 
-TEST_CASE ("s3select-scan-v2-csv-large" * doctest::skip(false || SKIP_SUITE)) {
-  run("s3filter", "ssb-sf1", "date.tbl", FileType::CSV, {"d_datekey", "D_DATE", "D_DAYOFWEEK", "D_MONTH", "D_YEAR"});
+TEST_CASE ("s3select-scan-v2-csv-large" * doctest::skip(false)) {
+  run("pushdowndb", "ssb-sf1/csv", "date.tbl", FileType::CSV, {"d_datekey", "D_DATE", "D_DAYOFWEEK", "D_MONTH", "D_YEAR"});
 }
 
-TEST_CASE ("s3select-scan-v2-csv" * doctest::skip(false || SKIP_SUITE)) {
+TEST_CASE ("s3select-scan-v2-csv" * doctest::skip(false)) {
   run("pushdowndb", "ssb-sf0.01/csv", "date.tbl", FileType::CSV, {"d_datekey"});
 }
 
-TEST_CASE ("s3select-scan-v2-csv-empty" * doctest::skip(false || SKIP_SUITE)) {
-  run("s3filter", "ssb-sf0.01", "supplier.tbl", FileType::CSV, {});
+TEST_CASE ("s3select-scan-v2-csv-empty" * doctest::skip(false)) {
+  run("pushdowndb", "ssb-sf0.01/csv", "supplier.tbl", FileType::CSV, {});
 }
 
-TEST_CASE ("s3select-scan-v2-parquet" * doctest::skip(false || SKIP_SUITE)) {
-  run("s3filter", "ssb-sf0.01/parquet", "supplier.snappy.parquet", FileType::Parquet, {"s_suppkey", "s_name"});
+TEST_CASE ("s3select-scan-v2-parquet" * doctest::skip(false)) {
+  run("pushdowndb", "ssb-sf0.01/parquet", "supplier.snappy.parquet", FileType::Parquet, {"s_suppkey", "s_name"});
 }
 
-TEST_CASE ("s3select-scan-v2-parquet-empty" * doctest::skip(false || SKIP_SUITE)) {
-  run("s3filter", "ssb-sf0.01/parquet", "supplier.snappy.parquet", FileType::Parquet, {});
+TEST_CASE ("s3select-scan-v2-parquet-empty" * doctest::skip(false)) {
+  run("pushdowndb", "ssb-sf0.01/parquet", "supplier.snappy.parquet", FileType::Parquet, {});
+}
+
+TEST_CASE ("s3select-scan-sf100-date" * doctest::skip(false)) {
+  run("pushdowndb", "ssb-sf100-sortlineorder/csv", "date.tbl", FileType::CSV, {"d_datekey"});
 }
 
 }

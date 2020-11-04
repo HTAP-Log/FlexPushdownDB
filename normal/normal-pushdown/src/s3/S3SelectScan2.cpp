@@ -133,17 +133,45 @@ void S3SelectScan2::onScan(const ScanMessage &Message) {
 
 void S3SelectScan2::readAndSendTuples(const std::vector<std::string> &columnNames) {
 
-  /*
-   * FIXME: Should support reading the file in pieces
-   */
-  auto expectedReadTupleSet = kernel_->scan(columnNames);
-  auto readTupleSet = expectedReadTupleSet.value();
+  std::optional<std::shared_ptr<TupleSet2>> cacheableTupleSet;
+
+  auto scanResult = kernel_->scan2(columnNames, [&](const std::shared_ptr<TupleSet2>& tupleSet){
+
+    // Concatenate tupleset to buffered tupleset for caching when query finishes
+    if(!cacheableTupleSet.has_value())
+	  cacheableTupleSet = tupleSet;
+    else{
+	  auto expectedConcatenatedTupleSet = TupleSet2::concatenate({cacheableTupleSet.value(), tupleSet});
+	  if(expectedConcatenatedTupleSet)
+	    throw std::runtime_error(expectedConcatenatedTupleSet.error());
+	  cacheableTupleSet = expectedConcatenatedTupleSet.value();
+    }
+
+    // Produce a chunk of the tupleset
+    std::shared_ptr<Message> message = std::make_shared<TupleMessage>(tupleSet->toTupleSetV1(), this->name());
+  	ctx()->tell(message);
+
+  });
+
+  // Throw if scan failed
+  if(!scanResult.has_value())
+    throw std::runtime_error(scanResult.error());
 
   // Store the read columns in the cache
-  requestStoreSegmentsInCache(readTupleSet);
+  if(cacheableTupleSet.has_value())
+  	requestStoreSegmentsInCache(cacheableTupleSet.value());
 
-  std::shared_ptr<Message> message = std::make_shared<TupleMessage>(readTupleSet->toTupleSetV1(), this->name());
-  ctx()->tell(message);
+//  /*
+//   * FIXME: Should support reading the file in pieces
+//   */
+//  auto expectedReadTupleSet = kernel_->scan(columnNames);
+//  auto readTupleSet = expectedReadTupleSet.value();
+//
+//  // Store the read columns in the cache
+//  requestStoreSegmentsInCache(readTupleSet);
+//
+//  std::shared_ptr<Message> message = std::make_shared<TupleMessage>(readTupleSet->toTupleSetV1(), this->name());
+//  ctx()->tell(message);
 }
 
 void S3SelectScan2::requestStoreSegmentsInCache(const std::shared_ptr<TupleSet2> &tupleSet) {

@@ -47,6 +47,29 @@ std::unique_ptr<S3SelectScanKernel> S3SelectScanKernel::make(const std::string &
 
 }
 
+tl::expected<void, std::string>
+S3SelectScanKernel::scan2(const std::vector<std::string> &columnNames,
+						  const TupleSetEventCallback &tupleSetEventCallback){
+
+  if (columnNames.empty()) {
+	// Makes an empty tuple set
+	auto tupleSet = TupleSet2::make(std::vector<std::shared_ptr<Column>>{});
+	tupleSetEventCallback(tupleSet);
+  } else {
+	auto sql = fmt::format(sql_, fmt::join(columnNames, ","));
+
+	auto result = s3Select(sql, [&](const std::shared_ptr<TupleSet2> &tupleSetChunk) -> auto {
+	  tupleSetChunk->renameColumns(columnNames);
+	  tupleSetEventCallback(tupleSetChunk);
+	});
+
+	if (!result.has_value())
+	  return tl::make_unexpected(result.error());
+  }
+
+  return {};
+}
+
 tl::expected<std::shared_ptr<TupleSet2>, std::string>
 S3SelectScanKernel::scan(const std::vector<std::string> &columnNames) {
 
