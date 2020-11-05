@@ -54,21 +54,21 @@ S3SelectQueries::dateScanPullUp(const std::string &s3Bucket,
 								const std::shared_ptr<Normal> &n) {
 
   auto s3ObjectPrefix = s3ObjectDir + (fileType == FileType::CSV ? "/csv" : "/parquet");
-  auto dateFile = s3ObjectDir + (fileType == FileType::CSV ? "date.tbl" : "date.snappy.parquet");
+  auto dateFile = (fileType == FileType::CSV ? "date.tbl" : "date.snappy.parquet");
 
   auto partitions = discoverPartitions(s3Bucket, s3ObjectPrefix, {dateFile}, client);
 
   auto g = n->createQuery();
 
   auto dateScans = common::Operators::makeS3SelectScanPushDownOperators("date",
-																		dateFile,
+																		s3ObjectPrefix + "/" + dateFile,
 																		s3Bucket,
 																		fileType,
 																		SSBSchema::date()->field_names(),
 																		"select * from s3Object",
 																		true,
 																		numConcurrentUnits,
-																		partitions[dateFile],
+																		partitions[s3ObjectPrefix + "/" + dateFile],
 																		client,
 																		g);
   auto collate = common::Operators::makeCollateOperator(g);

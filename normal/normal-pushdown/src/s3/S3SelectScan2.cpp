@@ -142,7 +142,7 @@ void S3SelectScan2::readAndSendTuples(const std::vector<std::string> &columnName
 	  cacheableTupleSet = tupleSet;
     else{
 	  auto expectedConcatenatedTupleSet = TupleSet2::concatenate({cacheableTupleSet.value(), tupleSet});
-	  if(expectedConcatenatedTupleSet)
+	  if(!expectedConcatenatedTupleSet.has_value())
 	    throw std::runtime_error(expectedConcatenatedTupleSet.error());
 	  cacheableTupleSet = expectedConcatenatedTupleSet.value();
     }
