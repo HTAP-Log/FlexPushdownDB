@@ -1,8 +1,13 @@
 project(normal-ssb VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 # need to link libraries on mac
-LINK_DIRECTORIES(/usr/local/Cellar/llvm@7/7.1.0_2/lib)
-LINK_DIRECTORIES(/usr/local/Cellar/binutils/2.35.1/lib)
+if(${APPLE})
+    message("MAC OS X")
+    LINK_DIRECTORIES(/usr/local/opt/llvm@7/lib)
+    LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
+else()
+    message("NOT MAC OS X")
+endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
 # SSB common classes
@@ -192,7 +197,7 @@ set(SSB_query_file_list
 
 FOREACH(SSB_query_file ${SSB_query_file_list})
     configure_file(${CMAKE_CURRENT_LIST_DIR}/sql/${SSB_query_file} ${CMAKE_CURRENT_BINARY_DIR}/sql/${SSB_query_file} COPYONLY)
-ENDFOREACH(SSB_query_file)
+ENDFOREACH()
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Metadata
@@ -237,3 +242,17 @@ configure_file(metadata/ssb-sf100-sortlineorder/snappy_parquet/partitionNums ${C
 
 #showTargetProps(normal-ssb-test)
 #showTargetProps(normal-ssb-benchmark)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# change lib position for mac (not sure why mac cannot find the correct location of graphviz's lib)
+#-----------------------------------------------------------------------------------------------------------------------
+
+set(executables normal-ssb-experiment normal-ssb-query-generate-file)
+if(${APPLE})
+    FOREACH(executable ${executables})
+        add_custom_command(TARGET ${executable} POST_BUILD COMMAND
+                ${CMAKE_INSTALL_NAME_TOOL} -change libgvplugin_neato_layout.6.dylib /usr/local/opt/graphviz/lib/graphviz/libgvplugin_neato_layout.6.dylib ${executable})
+        add_custom_command(TARGET ${executable} POST_BUILD COMMAND
+                ${CMAKE_INSTALL_NAME_TOOL} -change libgvplugin_core.6.dylib /usr/local/opt/graphviz/lib/graphviz/libgvplugin_core.6.dylib ${executable})
+    ENDFOREACH()
+endif()

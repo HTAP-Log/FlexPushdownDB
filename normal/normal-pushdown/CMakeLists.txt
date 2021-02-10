@@ -1,8 +1,11 @@
 project("normal-pushdown" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 # need to link libraries on mac
-LINK_DIRECTORIES(/usr/local/Cellar/llvm@7/7.1.0_2/lib)
-LINK_DIRECTORIES(/usr/local/Cellar/binutils/2.35.1/lib)
+if(${APPLE})
+    LINK_DIRECTORIES(/usr/local/opt/llvm@7/lib)
+    LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
+else()
+endif()
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Target
