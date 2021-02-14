@@ -80,8 +80,7 @@ private:
     std::shared_ptr<Partition>, std::pair<std::string, std::string>, PartitionPointerHash, PartitionPointerPredicate>>>> sortedColumns_;
 };
 
-const static std::shared_ptr<MiniCatalogue> defaultMiniCatalogue =
-        MiniCatalogue::defaultMiniCatalogue("pushdowndb", "ssb-sf100-sortlineorder/csv/");
+inline std::shared_ptr<MiniCatalogue> defaultMiniCatalogue;
 
 }
 

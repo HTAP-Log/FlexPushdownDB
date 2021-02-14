@@ -12,6 +12,7 @@
 #include <normal/cache/SegmentKey.h>
 #include <arrow/api.h>
 #include <fmt/format.h>
+#include <normal/connector/Globals.h>
 
 using namespace normal::cache;
 
@@ -105,7 +106,8 @@ std::vector<std::string> readFileByLines(const std::experimental::filesystem::pa
 
 std::shared_ptr<std::vector<std::pair<std::string, std::string>>> readMetadataSort(const std::string& schemaName, const std::string& fileName) {
   auto res = std::make_shared<std::vector<std::pair<std::string, std::string>>>();
-  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("sort").append(fileName);
+  auto filePath = std::experimental::filesystem::path(normal::connector::MetadataPath).append(schemaName).append("sort").append(fileName);
+//  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("sort").append(fileName);
   for (auto const &str: readFileByLines(filePath)) {
     auto splitRes = split(str, ",");
     res->emplace_back(std::pair<std::string, std::string>(splitRes[0], splitRes[1]));
@@ -115,7 +117,8 @@ std::shared_ptr<std::vector<std::pair<std::string, std::string>>> readMetadataSo
 
 std::shared_ptr<std::unordered_map<std::string, int>> readMetadataColumnLength(const std::string& schemaName) {
   auto res = std::make_shared<std::unordered_map<std::string, int>>();
-  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("column_length");
+  auto filePath = std::experimental::filesystem::path(normal::connector::MetadataPath).append(schemaName).append("column_length");
+//  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("column_length");
   for (auto const &str: readFileByLines(filePath)) {
     auto splitRes = split(str, ",");
     res->emplace(splitRes[0], stoi(splitRes[1]));
@@ -125,7 +128,8 @@ std::shared_ptr<std::unordered_map<std::string, int>> readMetadataColumnLength(c
 
 std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>>> readMetadataSchemas(const std::string& schemaName) {
   auto res = std::make_shared<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>>>();
-  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("schemas");
+  auto filePath = std::experimental::filesystem::path(normal::connector::MetadataPath).append(schemaName).append("schemas");
+//  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("schemas");
   for (auto const &str: readFileByLines(filePath)) {
     auto splitRes = split(str, ":");
     std::vector<std::shared_ptr<::arrow::Field>> fields;
@@ -140,7 +144,8 @@ std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>
 
 std::shared_ptr<std::unordered_map<std::string, int>> readMetadataPartitionNums(const std::string& schemaName) {
   auto res = std::make_shared<std::unordered_map<std::string, int>>();
-  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("partitionNums");
+  auto filePath = std::experimental::filesystem::path(normal::connector::MetadataPath).append(schemaName).append("partitionNums");
+//  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("partitionNums");
   for (auto const &str: readFileByLines(filePath)) {
     auto splitRes = split(str, ",");
     res->emplace(splitRes[0], stoi(splitRes[1]));
@@ -152,7 +157,8 @@ std::shared_ptr<std::unordered_map<std::string, int>> readMetadataPartitionNums(
 std::shared_ptr<std::unordered_map<std::shared_ptr<SegmentKey>, size_t, SegmentKeyPointerHash, SegmentKeyPointerPredicate>>
 readMetadataSegmentInfo(const std::string& s3Bucket, const std::string& schemaName) {
   auto res = std::make_shared<std::unordered_map<std::shared_ptr<SegmentKey>, size_t, SegmentKeyPointerHash, SegmentKeyPointerPredicate>>();
-  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("segment_info");
+  auto filePath = std::experimental::filesystem::path(normal::connector::MetadataPath).append(schemaName).append("segment_info");
+//  auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("segment_info");
   for (auto const &str: readFileByLines(filePath)) {
     auto splitRes = split(str, ",");
     std::string objectName = splitRes[0];

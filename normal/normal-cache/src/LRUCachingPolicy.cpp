@@ -97,4 +97,8 @@ void LRUCachingPolicy::onNewQuery() {
 
 }
 
+std::string LRUCachingPolicy::toString() {
+  return "LRU";
+}
+
 

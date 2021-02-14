@@ -249,3 +249,7 @@ void FBRSCachingPolicy::onNewQuery() {
     freeSizeOTC_ = freeSize_;
     keysInCacheOTC_.assign(keysInCache_.begin(), keysInCache_.end());
 }
+
+std::string FBRSCachingPolicy::toString() {
+  return "FBRS";
+}

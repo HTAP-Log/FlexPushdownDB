@@ -7,7 +7,8 @@ project(normal-util VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 add_library(normal-util
         include/normal/util/Globals.cpp include/normal/util/Globals.h
-        include/normal/util/Traits.h)
+        include/normal/util/Traits.h
+        include/normal/util/Util.h src/Util.cpp)
 
 target_include_directories(normal-util PUBLIC include)
 

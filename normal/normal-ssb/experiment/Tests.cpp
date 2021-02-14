@@ -196,9 +196,10 @@ void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType
   spdlog::set_level(spdlog::level::info);
 
   // parameters
-  const int warmBatchSize = 30, executeBatchSize = 50;
+  const int warmBatchSize = 0, executeBatchSize = 2;
   std::string bucket_name = "pushdowndb";
-  std::string dir_prefix = "ssb-sf100-sortlineorder/csv/";
+  std::string dir_prefix = "ssb-sf1-sortlineorder/csv/";
+  normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dir_prefix);
   normal::cache::beladyMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dir_prefix);
 
 

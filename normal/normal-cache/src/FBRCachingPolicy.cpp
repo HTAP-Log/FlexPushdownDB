@@ -239,3 +239,7 @@ CachingPolicyId FBRCachingPolicy::id() {
 void FBRCachingPolicy::onNewQuery() {
 
 }
+
+std::string FBRCachingPolicy::toString() {
+  return "FBR";
+}

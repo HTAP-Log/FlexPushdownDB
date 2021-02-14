@@ -42,6 +42,7 @@ public:
   std::string printLayoutAfterEveryQuery();
 
   CachingPolicyId id() override;
+  std::string toString() override;
   void onNewQuery() override;
 
 private:

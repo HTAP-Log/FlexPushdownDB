@@ -371,3 +371,7 @@ CachingPolicyId BeladyCachingPolicy::id() {
 void BeladyCachingPolicy::onNewQuery() {
 
 }
+
+std::string BeladyCachingPolicy::toString() {
+  return "WFBR";
+}

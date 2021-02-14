@@ -271,3 +271,7 @@ void WFBRCachingPolicy::onNewQuery() {
     freeSizeOTC_ = freeSize_;
     keysInCacheOTC_.assign(keysInCache_.begin(), keysInCache_.end());
 }
+
+std::string WFBRCachingPolicy::toString() {
+  return "WFBR";
+}
