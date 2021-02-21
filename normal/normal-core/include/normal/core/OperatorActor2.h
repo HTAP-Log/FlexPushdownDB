@@ -29,12 +29,22 @@ using ExpectedVoidString = tl::expected<void, std::string>;
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::vector<normal::core::OperatorConnection>);
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ExpectedVoidString);
 
+// FIXME: unsure how to deal with "first_id", if still using "first_custom_type_id" will raise a redefinition error
+CAF_BEGIN_TYPE_ID_BLOCK(OperatorActor2, normal::core::OperatorActor2_first_custom_type_id)
+CAF_ADD_ATOM(OperatorActor2, ConnectAtom)
+CAF_ADD_ATOM(OperatorActor2, StartAtom)
+CAF_ADD_ATOM(OperatorActor2, StopAtom)
+CAF_ADD_ATOM(OperatorActor2, CompleteAtom)
+CAF_ADD_TYPE_ID(OperatorActor2, (std::vector<normal::core::OperatorConnection>))
+CAF_ADD_TYPE_ID(OperatorActor2, (ExpectedVoidString))
+CAF_END_TYPE_ID_BLOCK(OperatorActor2)
+
 namespace normal::core {
 
-using ConnectAtom = ::caf::atom_constant<caf::atom("connect")>;
-using StartAtom = ::caf::atom_constant<caf::atom("start")>;
-using StopAtom = ::caf::atom_constant<caf::atom("stop")>;
-using CompleteAtom = ::caf::atom_constant<caf::atom("complete")>;
+//using ConnectAtom = ::caf::atom_constant<caf::atom("connect")>;
+//using StartAtom = ::caf::atom_constant<caf::atom("start")>;
+//using StopAtom = ::caf::atom_constant<caf::atom("stop")>;
+//using CompleteAtom = ::caf::atom_constant<caf::atom("complete")>;
 
 /**
  * Base operator actor definition
@@ -183,15 +193,17 @@ protected:
 	 * Default behavior is print_and_drop, which simply returns an unexpected_message
 	 * error. See caf::scheduled_actor::print_and_drop
 	 */
-	actor->set_default_handler([=](caf::scheduled_actor * /*actor*/, ::caf::message_view &message) {
-
-	  SPDLOG_ERROR("[Actor {} ('{}')]  Operator received unexpected message  |  queryId: {}, message: {}", actor->id(),
-				   actor->name(), queryId_.value(), message.content().stringify());
-
-	  onUnexpectedMessage(actor, message);
-
-	  return caf::sec::unexpected_message;
-	});
+	//FIXME: CAF 0.18.0 deleted message_view, how to adjust accordingly?
+//	actor->set_default_handler([=](caf::scheduled_actor * /*actor*/, ::caf::message_view &message) {
+//
+//
+//	  SPDLOG_ERROR("[Actor {} ('{}')]  Operator received unexpected message  |  queryId: {}, message: {}", actor->id(),
+//				   actor->name(), queryId_.value(), message.content().stringify());
+//
+//	  onUnexpectedMessage(actor, message);
+//
+//	  return caf::sec::unexpected_message;
+//	});
 
 	/**
 	 * Handler for unexpected exceptions thrown by actor
@@ -330,7 +342,7 @@ protected:
   virtual void onMonitoredDown(Actor /*actor*/, const ::caf::down_msg &/*downMessage*/) { /*NOOP*/ };
   virtual void onLinkedExit(Actor /*actor*/, const ::caf::exit_msg &/*exitMessage*/) { /*NOOP*/ };
   virtual void onException(Actor /*actor*/, const std::exception_ptr &/*exceptionPointer*/) { /*NOOP*/ };
-  virtual void onUnexpectedMessage(Actor /*actor*/, const ::caf::message_view &/*message*/) { /*NOOP*/ };
+  virtual void onUnexpectedMessage(Actor /*actor*/, const ::caf::message &/*message*/) { /*NOOP*/ };
 
   [[nodiscard]] virtual tl::expected<void, std::string>
   onStart(Actor /*actor*/,
@@ -600,7 +612,7 @@ private:
 						   std::static_pointer_cast<ConnectMessage>(envelope.getMessage())->connections());
 	} else {
 	  if (!actor->state.running_) {
-		actor->state.buffer_.emplace(actor->current_mailbox_element()->move_content_to_message(),
+		actor->state.buffer_.emplace(actor->current_mailbox_element()->content(),
 									 messageSender);
 		return {};
 	  } else {

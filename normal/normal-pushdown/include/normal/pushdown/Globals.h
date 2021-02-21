@@ -7,8 +7,6 @@
 
 #define LOG_LEVEL SPDLOG_LEVEL_DEBUG
 
-#define SPDLOG_ACTIVE_LEVEL LOG_LEVEL
-
 #include <aws/s3/S3Client.h>
 #include "AWSClient.h"
 #include "spdlog/spdlog.h"

@@ -264,4 +264,49 @@ void S3SelectScan::sendSegmentWeight() {
           .map_error([](auto err) { throw std::runtime_error(err); });
 }
 
+const std::string &S3SelectScan::getS3Bucket() const {
+  return s3Bucket_;
+}
+
+const std::string &S3SelectScan::getS3Object() const {
+  return s3Object_;
+}
+
+const std::vector<std::string> &S3SelectScan::getReturnedS3ColumnNames() const {
+  return returnedS3ColumnNames_;
+}
+
+const std::vector<std::string> &S3SelectScan::getNeededColumnNames() const {
+  return neededColumnNames_;
+}
+
+const int64_t& S3SelectScan::getStartOffset() const{
+  return startOffset_;
+}
+
+const int64_t& S3SelectScan::getFinishOffset() const{
+  return finishOffset_;
+}
+
+const std::shared_ptr<arrow::Schema> &S3SelectScan::getSchema() const {
+  return schema_;
+}
+
+const std::shared_ptr<Aws::S3::S3Client> &S3SelectScan::getS3Client() const {
+  return s3Client_;
+}
+
+const bool& S3SelectScan::isScanOnStart() const {
+  return scanOnStart_;
+}
+
+const bool& S3SelectScan::isToCache() const {
+  return toCache_;
+}
+
+const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> &
+S3SelectScan::getWeightedSegmentKeys() const {
+  return weightedSegmentKeys_;
+}
+
 }

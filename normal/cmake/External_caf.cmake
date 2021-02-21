@@ -1,6 +1,6 @@
 # CAF
 
-set(CAF_VERSION "0.17.6")
+set(CAF_VERSION "0.18.0")
 set(CAF_GIT_URL "https://github.com/actor-framework/actor-framework.git")
 
 
@@ -20,7 +20,6 @@ set(CAF_IO_STATIC_LIBS ${CAF_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}caf_io_stati
 set(CAF_OPENSSL_SHARED_LIBS ${CAF_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}caf_openssl${CMAKE_SHARED_LIBRARY_SUFFIX})
 set(CAF_OPENSSL_STATIC_LIBS ${CAF_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}caf_openssl_static${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-
 ExternalProject_Add(${CAF_BASE}
         PREFIX ${CAF_BASE_DIR}
         INSTALL_DIR ${CAF_INSTALL_DIR}
@@ -29,10 +28,10 @@ ExternalProject_Add(${CAF_BASE}
         GIT_PROGRESS ON
         GIT_SHALLOW ON
         UPDATE_DISCONNECTED TRUE
-        BUILD_BYPRODUCTS ${CAF_CORE_SHARED_LIBS} ${CAF_CORE_STATIC_LIBS} ${CAF_IO_SHARED_LIBS} ${CAF_IO_STATIC_LIBS} ${CAF_OPENSSL_SHARED_LIBS} ${CAF_OPENSSL_STATIC_LIBS}
+        BUILD_BYPRODUCTS ${CAF_CORE_STATIC_LIBS} ${CAF_IO_STATIC_LIBS} ${CAF_CORE_SHARED_LIBS} ${CAF_IO_SHARED_LIBS} ${CAF_OPENSSL_SHARED_LIBS} ${CAF_OPENSSL_STATIC_LIBS}
         CMAKE_ARGS
         -DCAF_BUILD_STATIC:BOOL=ON
-        -DCAF_NO_EXAMPLES:BOOL=ON
+        -DCAF_NO_EXAMPLES:BOOL=OFF
         -DCAF_NO_UNIT_TESTS:BOOL=ON
         -DCAF_NO_PYTHON:BOOL=ON
         -DCAF_NO_OPENCL:BOOL=ON
@@ -46,12 +45,18 @@ ExternalProject_Add(${CAF_BASE}
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX:STRING=${CAF_INSTALL_DIR}
+        # The following has to be set on MAC
+        -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
+        -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
+        -DOPENSSL_CRYPTO_LIBRARY=/usr/local/opt/openssl/lib/libcrypto.dylib
+        -DOPENSSL_SSL_LIBRARY=/usr/local/opt/openssl/lib/libssl.dylib
         )
-
 
 file(MAKE_DIRECTORY ${CAF_INCLUDE_DIR}) # Include directory needs to exist to run configure step
 
 find_package(Threads REQUIRED)
+
+message(${CAF_CORE_SHARED_LIBS})
 
 add_library(caf::libcaf_core_shared SHARED IMPORTED)
 set_target_properties(caf::libcaf_core_shared PROPERTIES IMPORTED_LOCATION ${CAF_CORE_SHARED_LIBS})

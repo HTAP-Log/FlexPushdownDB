@@ -11,7 +11,7 @@
 #include <normal/pushdown/AWSClient.h>
 #include <normal/pushdown/file/FileScan.h>
 #include <normal/pushdown/filter/Filter.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/pushdown/join/HashJoinBuild.h>
 #include <normal/pushdown/join/HashJoinProbe.h>
 #include <normal/pushdown/Aggregate.h>

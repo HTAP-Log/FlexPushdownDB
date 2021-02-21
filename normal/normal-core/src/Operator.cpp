@@ -70,5 +70,21 @@ long Operator::getQueryId() const {
   return queryId_;
 }
 
+size_t Operator::hash() {
+  return std::hash<std::string>()(name_);
+}
+
+const std::shared_ptr<OperatorContext> &Operator::getOpContext() const {
+  return opContext_;
+}
+
+const std::map<std::string, std::string> &Operator::getProducers() const {
+  return producers_;
+}
+
+const std::map<std::string, std::string> &Operator::getConsumers() const {
+  return consumers_;
+}
+
 } // namespace
 

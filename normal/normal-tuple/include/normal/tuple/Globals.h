@@ -7,7 +7,6 @@
 
 #define LOG_LEVEL SPDLOG_LEVEL_DEBUG
 
-#define SPDLOG_ACTIVE_LEVEL LOG_LEVEL
 #include <spdlog/spdlog.h>
 
 namespace normal::tuple {

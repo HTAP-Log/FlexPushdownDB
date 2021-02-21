@@ -27,6 +27,10 @@ using namespace normal::core;
 using namespace normal::core::message;
 using namespace normal::pushdown::scan;
 
+CAF_BEGIN_TYPE_ID_BLOCK(S3SelectScan2, normal::core::S3SelectScan2_first_custom_type_id)
+CAF_ADD_ATOM(S3SelectScan2, GetMetricsAtom)
+CAF_END_TYPE_ID_BLOCK(S3SelectScan2)
+
 using namespace normal::tuple;
 
 namespace normal::pushdown {
@@ -81,7 +85,7 @@ private:
   void readAndSendTuples(const std::vector<std::string> &columnNames);
 };
 
-using GetMetricsAtom = caf::atom_constant<caf::atom("g-metrics")>;
+//using GetMetricsAtom = caf::atom_constant<caf::atom("g-metrics")>;
 
 //using S3SelectScanActor = OperatorActor2::extend_with<::caf::typed_actor<
 //	caf::reacts_to<ScanAtom, std::vector<std::string>, bool>>>;

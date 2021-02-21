@@ -33,19 +33,27 @@ void OperatorManager::stop() {
 }
 
 OperatorManager::OperatorManager() : queryCounter_(0), running_(false){
-//  actorSystemConfig.load<caf::io::middleman>();
   actorSystem = std::make_unique<caf::actor_system>(actorSystemConfig);
   rootActor_ = std::make_shared<caf::scoped_actor>(*actorSystem);
 }
 
-OperatorManager::OperatorManager(std::shared_ptr<CachingPolicy>  cachingPolicy) :
+OperatorManager::OperatorManager(const std::shared_ptr<CachingPolicy>& cachingPolicy) :
   cachingPolicy_(std::move(cachingPolicy)),
   queryCounter_(0),
   running_(false){
-//  actorSystemConfig.load<caf::io::middleman>();
   actorSystem = std::make_unique<caf::actor_system>(actorSystemConfig);
   rootActor_ = std::make_shared<caf::scoped_actor>(*actorSystem);
 }
+
+OperatorManager::OperatorManager(const std::shared_ptr<CachingPolicy>& cachingPolicy,
+        const std::shared_ptr<caf::actor_system>& actorSystem)  :
+  cachingPolicy_(std::move(cachingPolicy)),
+  queryCounter_(0),
+  running_(false),
+  actorSystem(actorSystem){
+  rootActor_ = std::make_shared<caf::scoped_actor>(*this->actorSystem);
+}
+
 
 void OperatorManager::boot() {
   if (cachingPolicy_) {
@@ -64,13 +72,13 @@ std::string OperatorManager::showCacheMetrics() {
   };
 
   scoped_actor self{*actorSystem};
-  self->request(segmentCacheActor_, infinite, GetNumHitsAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetNumHitsAtom_v).receive(
 	  [&](int numHits) {
 		hitNum = numHits;
 	  },
 	  errorHandler);
 
-  self->request(segmentCacheActor_, infinite, GetNumMissesAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetNumMissesAtom_v).receive(
 	  [&](int numMisses) {
 		missNum = numMisses;
 	  },
@@ -78,13 +86,13 @@ std::string OperatorManager::showCacheMetrics() {
 
   double hitRate = (hitNum + missNum == 0) ? 0.0 : (double) hitNum / (double) (hitNum + missNum);
 
-  self->request(segmentCacheActor_, infinite, GetNumShardHitsAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetNumShardHitsAtom_v).receive(
 	  [&](int numShardHits) {
 		shardHitNum = numShardHits;
 	  },
 	  errorHandler);
 
-  self->request(segmentCacheActor_, infinite, GetNumShardMissesAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetNumShardMissesAtom_v).receive(
 	  [&](int numShardMisses) {
 		shardMissNum = numShardMisses;
 	  },
@@ -145,7 +153,7 @@ void OperatorManager::clearCacheMetrics() {
   // NOTE: Creating a new scoped_actor will work, but can use rootActor_ as well
   scoped_actor self{*actorSystem};
   // NOTE: anon_send a bit lighter than send
-  self->anon_send(segmentCacheActor_, ClearMetricsAtom::value);
+  self->anon_send(segmentCacheActor_, ClearMetricsAtom_v);
 }
 
 double OperatorManager::getCrtQueryHitRatio() {
@@ -158,20 +166,20 @@ double OperatorManager::getCrtQueryHitRatio() {
 
   // NOTE: Creating a new scoped_actor will work, but can use rootActor_ as well
   scoped_actor self{*actorSystem};
-  self->request(segmentCacheActor_, infinite, GetCrtQueryNumHitsAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetCrtQueryNumHitsAtom_v).receive(
           [&](int numHits) {
               crtQueryHitNum = numHits;
           },
           errorHandler);
 
-  self->request(segmentCacheActor_, infinite, GetCrtQueryNumMissesAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetCrtQueryNumMissesAtom_v).receive(
           [&](int numMisses) {
               crtQueryMissNum = numMisses;
           },
           errorHandler);
 
   // NOTE: anon_send a bit lighter than send
-  self->anon_send(segmentCacheActor_, ClearCrtQueryMetricsAtom::value);
+  self->anon_send(segmentCacheActor_, ClearCrtQueryMetricsAtom_v);
 
   return (crtQueryHitNum + crtQueryMissNum == 0) ? 0.0 : (double) crtQueryHitNum / (double) (crtQueryHitNum + crtQueryMissNum);
 }
@@ -186,20 +194,20 @@ double OperatorManager::getCrtQueryShardHitRatio() {
 
   // NOTE: Creating a new scoped_actor will work, but can use rootActor_ as well
   scoped_actor self{*actorSystem};
-  self->request(segmentCacheActor_, infinite, GetCrtQueryNumShardHitsAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetCrtQueryNumShardHitsAtom_v).receive(
           [&](int numShardHits) {
               crtQueryShardHitNum = numShardHits;
           },
           errorHandler);
 
-  self->request(segmentCacheActor_, infinite, GetCrtQueryNumShardMissesAtom::value).receive(
+  self->request(segmentCacheActor_, infinite, GetCrtQueryNumShardMissesAtom_v).receive(
           [&](int numShardMisses) {
               crtQueryShardMissNum = numShardMisses;
           },
           errorHandler);
 
   // NOTE: anon_send a bit lighter than send
-  self->anon_send(segmentCacheActor_, ClearCrtQueryShardMetricsAtom::value);
+  self->anon_send(segmentCacheActor_, ClearCrtQueryShardMetricsAtom_v);
 
   return (crtQueryShardHitNum + crtQueryShardMissNum == 0) ? 0.0 : (double) crtQueryShardHitNum / (double) (crtQueryShardHitNum + crtQueryShardMissNum);
 }

@@ -26,10 +26,12 @@ public:
   [[nodiscard]] const std::shared_ptr<core::OperatorManager> &getOperatorManager() const;
   [[nodiscard]] std::shared_ptr<core::graph::OperatorGraph> &getOperatorGraph();
   void parse(const std::string& sql);
+  void plan(int numNodes);
   void put(const std::shared_ptr<connector::Catalogue> &catalogue);
   const std::shared_ptr<plan::LogicalPlan> &getLogicalPlan() const;
   void clearOperatorGraph();
   void boot();
+  void boot(const std::shared_ptr<caf::actor_system>& actorSystem);    // boot with predefined actor_system
   void stop();
   void saveMetrics();
   void saveHitRatios();

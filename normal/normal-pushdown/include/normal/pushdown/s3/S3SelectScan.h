@@ -30,6 +30,8 @@ namespace normal::pushdown {
 
 class S3SelectScan : public normal::core::Operator {
 public:
+  S3SelectScan() = default;
+  S3SelectScan(const S3SelectScan& other) = default;
   S3SelectScan(std::string name,
 			   std::string type,
 			   std::string s3Bucket,
@@ -53,6 +55,19 @@ public:
   [[nodiscard]] size_t getGetConvertTimeNS() const;
   [[nodiscard]] size_t getSelectTransferAndConvertTimeNS() const;
   [[nodiscard]] size_t getSelectConvertTimeNS() const;
+
+  // A series of get functions
+  const std::string &getS3Bucket() const;
+  const std::string &getS3Object() const;
+  const std::vector<std::string> &getReturnedS3ColumnNames() const;
+  const std::vector<std::string> &getNeededColumnNames() const;
+  const int64_t& getStartOffset() const;
+  const int64_t& getFinishOffset() const;
+  const std::shared_ptr<arrow::Schema> &getSchema() const;
+  const std::shared_ptr<Aws::S3::S3Client> &getS3Client() const;
+  const bool& isScanOnStart() const;
+  const bool& isToCache() const;
+  const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> &getWeightedSegmentKeys() const;
 
 protected:
   std::string s3Bucket_;

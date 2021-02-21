@@ -14,7 +14,8 @@ endif()
 
 add_executable(normal-frontend src/Main.cpp
         include/normal/frontend/Client.h src/Client.cpp
-        include/normal/frontend/Global.h)
+        include/normal/frontend/Global.h
+        include/normal/frontend/Serialization.h)
 
 target_include_directories(normal-frontend PUBLIC include)
 

@@ -16,7 +16,7 @@
 #include <normal/core/OperatorDirectory.h>
 #include <normal/core/OperatorManager.h>
 #include <normal/core/Forward.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/pushdown/collate/Collate2.h>
 
 using namespace normal::core;
@@ -52,6 +52,9 @@ public:
   std::pair<size_t, size_t> getSelectTransferConvertTimesNS();
   std::string showMetrics();
   [[nodiscard]] const long &getId() const;
+  void setNode(const node_id &node);
+  void setPlacements(const std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> &placements);
+  const std::shared_ptr<Collate> &getLegacyCollateOperator() const;
 
 private:
   long id_;
@@ -64,6 +67,12 @@ private:
   std::chrono::steady_clock::time_point startTime_;
   std::chrono::steady_clock::time_point stopTime_;
 
+  /* Distributed nodes */
+  std::optional<node_id> node_;
+  std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> placements_;
+
+  caf::actor localSpawn(const std::shared_ptr<Operator>&);
+  caf::actor remoteSpawn(const std::shared_ptr<Operator>&);
 };
 
 }

@@ -160,7 +160,7 @@ tl::expected<void, std::string> S3Select::s3Select() {
 
   // combine columns with filterSql
   std::string sql = "";
-  for (auto colIndex = 0; colIndex < neededColumnNames_.size(); colIndex++) {
+  for (size_t colIndex = 0; colIndex < neededColumnNames_.size(); colIndex++) {
     if (colIndex == 0) {
       sql += neededColumnNames_[colIndex];
     } else {
@@ -247,7 +247,7 @@ std::shared_ptr<TupleSet2> S3Select::readTuples() {
 
     std::vector<std::shared_ptr<Column>> readColumns;
 
-    for (int col_id = 0; col_id < returnedS3ColumnNames_.size(); col_id++) {
+    for (size_t col_id = 0; col_id < returnedS3ColumnNames_.size(); col_id++) {
       auto &arrays = columnsReadFromS3_.at(col_id);
       if (arrays) {
         readColumns.emplace_back(Column::make(arrays->first, arrays->second));
@@ -299,6 +299,14 @@ int S3Select::getPredicateNum() {
   //        This +1 makes it so an empty filterSql_ string has one predicate. Is that intended? Perhaps it is fine
   //        if we are counting project.
   return subStrNum(filterSql_, "and") + subStrNum(filterSql_, "or") + 1;
+}
+
+const std::string &S3Select::getFilterSql() const {
+  return filterSql_;
+}
+
+const std::shared_ptr<S3CSVParser> &S3Select::getParser() const {
+  return parser_;
 }
 
 }

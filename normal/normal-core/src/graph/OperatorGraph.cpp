@@ -7,6 +7,8 @@
 #include <cassert>
 
 #include <caf/all.hpp>
+#include <caf/io/all.hpp>
+
 #include <experimental/filesystem>
 #include <utility>
 #include <graphviz/gvc.h>
@@ -15,14 +17,13 @@
 #include <normal/core/OperatorDirectoryEntry.h>
 #include <normal/core/Globals.h>
 #include <normal/pushdown/file/FileScan2.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/pushdown/collate/Collate2.h>
 #include <normal/pushdown/s3/S3SelectScan.h>
 #include <normal/pushdown/s3/S3SelectScan2.h>
 #include <normal/pushdown/s3/S3Select.h>
 #include <normal/pushdown/s3/S3Get.h>
 #include <normal/core/message/ConnectMessage.h>
-
 
 using namespace normal::core::graph;
 using namespace normal::core;
@@ -106,61 +107,84 @@ void graph::OperatorGraph::join() {
   // FIXME: Massive hack
   // Since almost all tests/benchmarks etc look at the collate operator to get the final tuples. Here we move them from
   // Collate2 to the old Collate operator.
-  (*rootActor_)->request(collateActorHandle_, caf::infinite, GetTupleSetAtom::value).receive(
-	  [&](const tl::expected<std::shared_ptr<TupleSet>, std::string> &expectedTupleSet) {
-		legacyCollateOperator_->setTuples(expectedTupleSet.value());
-	  },
-	  [&](const caf::error&  error){
-		throw std::runtime_error(to_string(error));
-	  });
+//  (*rootActor_)->request(collateActorHandle_, caf::infinite, GetTupleSetAtom_v).receive(
+//	  [&](const tl::expected<std::shared_ptr<TupleSet>, std::string> &expectedTupleSet) {
+//		legacyCollateOperator_->setTuples(expectedTupleSet.value());
+//	  },
+//	  [&](const caf::error&  error){
+//		throw std::runtime_error(to_string(error));
+//	  });
 
   stopTime_ = std::chrono::steady_clock::now();
 }
 
 void graph::OperatorGraph::boot() {
-
   // Create the operator actors
   for (auto &element: operatorDirectory_) {
-	auto op = element.second.getDef();
-	if(op->getType() == "FileScan"){
-	  auto fileScanOp = std::static_pointer_cast<FileScan>(op);
-	  auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn(FileScanFunctor,
-																		  fileScanOp->name(),
-																		  fileScanOp->getKernel()->getPath(),
-																		  fileScanOp->getKernel()->getFileType().value(),
-																		  fileScanOp->getColumnNames(),
-																		  fileScanOp->getKernel()->getStartPos(),
-																		  fileScanOp->getKernel()->getFinishPos(),
-																		  fileScanOp->getQueryId(),
-																		  *rootActor_,
-																		  operatorManager_.lock()->getSegmentCacheActor(),
-																		  fileScanOp->isScanOnStart()
-	  );
-	  if (!actorHandle)
-		throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
-	  element.second.setActorHandle(caf::actor_cast<caf::actor>(actorHandle));
-	}
-	else if(op->getType() == "Collate"){
-	  legacyCollateOperator_ = std::static_pointer_cast<Collate>(op);
-	  collateActorHandle_  = operatorManager_.lock()->getActorSystem()->spawn(CollateFunctor,
-																			  legacyCollateOperator_->name(),
-																			  legacyCollateOperator_->getQueryId(),
-																		  *rootActor_,
-																		  operatorManager_.lock()->getSegmentCacheActor()
-	  );
-	  if (!collateActorHandle_)
-		throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
-	  element.second.setActorHandle(caf::actor_cast<caf::actor>(collateActorHandle_));
-	}
-	else {
-	  auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor());
-	  op->create(ctx);
-	  auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn<normal::core::OperatorActor>(op);
-	  if (!actorHandle)
-		throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
-	  element.second.setActorHandle(caf::actor_cast<caf::actor>(actorHandle));
-	}
+    auto op = element.second.getDef();
+    int placement = placements_.find(op)->second;
+
+    if (placement == 0) {
+      element.second.setActorHandle(localSpawn(op));
+    } else {
+      element.second.setActorHandle(remoteSpawn(op));
+    }
   }
+}
+
+caf::actor graph::OperatorGraph::localSpawn(const std::shared_ptr<Operator>& op) {
+  if(op->getType() == "FileScan"){
+    auto fileScanOp = std::static_pointer_cast<FileScan>(op);
+    auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn(FileScanFunctor,
+                                                                        fileScanOp->name(),
+                                                                        fileScanOp->getKernel()->getPath(),
+                                                                        fileScanOp->getKernel()->getFileType().value(),
+                                                                        fileScanOp->getColumnNames(),
+                                                                        fileScanOp->getKernel()->getStartPos(),
+                                                                        fileScanOp->getKernel()->getFinishPos(),
+                                                                        fileScanOp->getQueryId(),
+                                                                        *rootActor_,
+                                                                        operatorManager_.lock()->getSegmentCacheActor(),
+                                                                        fileScanOp->isScanOnStart()
+    );
+    if (!actorHandle)
+      throw std::runtime_error(fmt::format("Failed to local-spawn operator actor '{}'", op->name()));
+    return caf::actor_cast<caf::actor>(actorHandle);
+  }
+//  else if(op->getType() == "Collate"){
+//    legacyCollateOperator_ = std::static_pointer_cast<Collate>(op);
+//    collateActorHandle_  = operatorManager_.lock()->getActorSystem()->spawn(CollateFunctor,
+//                                                                            legacyCollateOperator_->name(),
+//                                                                            legacyCollateOperator_->getQueryId(),
+//                                                                            *rootActor_,
+//                                                                            operatorManager_.lock()->getSegmentCacheActor()
+//    );
+//    if (!collateActorHandle_)
+//      throw std::runtime_error(fmt::format("Failed to local-spawn operator actor '{}'", op->name()));
+//    return caf::actor_cast<caf::actor>(collateActorHandle_);
+//  }
+  else {
+    if (op->getType() == "Collate")
+      legacyCollateOperator_ = std::static_pointer_cast<Collate>(op);
+    auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor());
+    op->create(ctx);
+    auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn<normal::core::OperatorActor>(op);
+    if (!actorHandle)
+      throw std::runtime_error(fmt::format("Failed to local-spawn operator actor '{}'", op->name()));
+    return caf::actor_cast<caf::actor>(actorHandle);
+  }
+}
+
+caf::actor graph::OperatorGraph::remoteSpawn(const std::shared_ptr<Operator>& op) {
+  auto remoteSpawnTout = std::chrono::seconds(10);
+  auto typedOp = *std::static_pointer_cast<S3Select>(op);
+  auto args = make_message();
+  auto expectedActorHandle = operatorManager_.lock()->getActorSystem()->middleman()
+          .remote_spawn<caf::actor>(node_.value(), "S3Select", args, remoteSpawnTout);
+  if (!expectedActorHandle) {
+    throw std::runtime_error(fmt::format("Failed to remote-spawn operator actor '{}': {}", op->name(), to_string(expectedActorHandle.error())));
+  }
+  return caf::actor_cast<caf::actor>(expectedActorHandle.value());
 }
 
 void graph::OperatorGraph::write_graph(const std::string &file) {
@@ -245,7 +269,7 @@ std::string graph::OperatorGraph::showMetrics() {
   long totalProcessingTime = 0;
   for (auto &entry : operatorDirectory_) {
 //	auto processingTime = entry.second.getOperatorContext().lock()->operatorActor()->getProcessingTime();
-	(*rootActor_)->request(entry.second.getActorHandle(), caf::infinite, GetProcessingTimeAtom::value).receive(
+	(*rootActor_)->request(entry.second.getActorHandle(), caf::infinite, GetProcessingTimeAtom_v).receive(
 		[&](long processingTime) {
 		  totalProcessingTime += processingTime;
 		},
@@ -286,7 +310,7 @@ std::string graph::OperatorGraph::showMetrics() {
 //	auto processingTime = entry.second.getOperatorContext().lock()->operatorActor()->getProcessingTime();
 //	auto timeSpan = operatorManager_.lock()->processingTimeSpans_.find(entry.second.getActorHandle().id());
 	long processingTime;
-	(*rootActor_)->request(entry.second.getActorHandle(), caf::infinite, GetProcessingTimeAtom::value).receive(
+	(*rootActor_)->request(entry.second.getActorHandle(), caf::infinite, GetProcessingTimeAtom_v).receive(
 		[&](long time) {
 		  processingTime = time;
 		},
@@ -490,4 +514,17 @@ tl::expected<std::shared_ptr<TupleSet2>, std::string> graph::OperatorGraph::exec
 
   auto tuples = legacyCollateOperator_->tuples();
   return TupleSet2::create(tuples);
+}
+
+void graph::OperatorGraph::setNode(const node_id &node) {
+  node_ = node;
+}
+
+void graph::OperatorGraph::setPlacements(
+        const std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> &placements) {
+  placements_ = placements;
+}
+
+const std::shared_ptr<Collate> &graph::OperatorGraph::getLegacyCollateOperator() const {
+  return legacyCollateOperator_;
 }

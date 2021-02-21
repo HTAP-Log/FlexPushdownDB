@@ -9,6 +9,7 @@
 
 namespace normal::util {
   std::string readFile(std::string filePath);
+  bool isInteger(std::string str);
 }
 
 

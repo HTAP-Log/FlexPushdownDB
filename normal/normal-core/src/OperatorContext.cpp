@@ -38,20 +38,20 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
 
   if(recipientId == "SegmentCache"){
     if(msg->type() == "LoadRequestMessage"){
-      operatorActor_->request(segmentCacheActor_, infinite, normal::core::cache::LoadAtom::value, std::static_pointer_cast<normal::core::cache::LoadRequestMessage>(msg))
+      operatorActor_->request(segmentCacheActor_, infinite, LoadAtom_v, std::static_pointer_cast<normal::core::cache::LoadRequestMessage>(msg))
       .then([=](const std::shared_ptr<normal::core::cache::LoadResponseMessage>& response){
       operatorActor_->anon_send(this->operatorActor(), Envelope(response));
 //		  send(response, this->operator_->name());
       });
     }
     else if(msg->type() == "StoreRequestMessage"){
-      operatorActor_->anon_send(segmentCacheActor_, normal::core::cache::StoreAtom::value, std::static_pointer_cast<normal::core::cache::StoreRequestMessage>(msg));
+      operatorActor_->anon_send(segmentCacheActor_, StoreAtom_v, std::static_pointer_cast<normal::core::cache::StoreRequestMessage>(msg));
     }
     else if(msg->type() == "WeightRequestMessage"){
-      operatorActor_->anon_send(segmentCacheActor_, normal::core::cache::WeightAtom::value, std::static_pointer_cast<normal::core::cache::WeightRequestMessage>(msg));
+      operatorActor_->anon_send(segmentCacheActor_, WeightAtom_v, std::static_pointer_cast<normal::core::cache::WeightRequestMessage>(msg));
     }
     else if(msg->type() == "CacheMetricsMessage"){
-      operatorActor_->anon_send(segmentCacheActor_, normal::core::cache::MetricsAtom::value, std::static_pointer_cast<normal::core::cache::CacheMetricsMessage>(msg));
+      operatorActor_->anon_send(segmentCacheActor_, MetricsAtom_v, std::static_pointer_cast<normal::core::cache::CacheMetricsMessage>(msg));
     }
     else{
       throw std::runtime_error("Unrecognized message " + msg->type());

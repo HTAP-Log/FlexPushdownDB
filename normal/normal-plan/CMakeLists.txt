@@ -42,6 +42,7 @@ target_link_libraries(normal-plan PRIVATE spdlog::spdlog)
 target_link_libraries(normal-plan PRIVATE fmt::fmt)
 target_link_libraries(normal-plan PUBLIC normal-pushdown)
 target_link_libraries(normal-plan PUBLIC normal-connector)
+target_link_libraries(normal-plan PUBLIC normal-util)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

@@ -39,7 +39,9 @@ private:
 
 public:
   OperatorManager();
-  explicit OperatorManager(std::shared_ptr<CachingPolicy> cachingPolicy);
+  explicit OperatorManager(const std::shared_ptr<CachingPolicy>& cachingPolicy);
+  explicit OperatorManager(const std::shared_ptr<CachingPolicy>& cachingPolicy,
+          const std::shared_ptr<caf::actor_system>& actorSystem);
 
   virtual ~OperatorManager();
   const caf::actor &getSegmentCacheActor() const;

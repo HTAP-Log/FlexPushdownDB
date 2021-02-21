@@ -24,10 +24,17 @@ CAF_ALLOW_UNSAFE_MESSAGE_TYPE(TupleSetPtr);
 using ExpectedTupleSetPtrString = tl::expected<std::shared_ptr<TupleSet>, std::string>;
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ExpectedTupleSetPtrString);
 
+CAF_BEGIN_TYPE_ID_BLOCK(Collate2, normal::core::Collate2_first_custom_type_id)
+CAF_ADD_ATOM(Collate2, TupleSetAtom)
+CAF_ADD_ATOM(Collate2, GetTupleSetAtom)
+CAF_ADD_TYPE_ID(Collate2, (TupleSetPtr))
+CAF_ADD_TYPE_ID(Collate2, (ExpectedTupleSetPtrString))
+CAF_END_TYPE_ID_BLOCK(Collate2)
+
 namespace normal::pushdown {
 
-using TupleSetAtom = caf::atom_constant<caf::atom("tupleset")>;
-using GetTupleSetAtom = caf::atom_constant<caf::atom("g-tupleset")>;
+//using TupleSetAtom = caf::atom_constant<caf::atom("tupleset")>;
+//using GetTupleSetAtom = caf::atom_constant<caf::atom("g-tupleset")>;
 
 using CollateActor = OperatorActor2::extend_with<::caf::typed_actor<
 	caf::reacts_to<TupleSetAtom, TupleSetPtr>,

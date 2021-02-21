@@ -32,7 +32,8 @@ public:
    * @return physicalPlan
    */
   static std::shared_ptr<PhysicalPlan> generate(const LogicalPlan &logicalPlan,
-                                                std::shared_ptr<normal::plan::operator_::mode::Mode> mode);
+                                                std::shared_ptr<normal::plan::operator_::mode::Mode> mode,
+                                                int numNodes);
 
   static void setQueryId(long queryId);
   static long getQueryId();

@@ -5,7 +5,7 @@
 #include <normal/plan/operator_/CollateLogicalOperator.h>
 
 
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 
 #include <normal/plan/operator_/type/OperatorTypes.h>
 

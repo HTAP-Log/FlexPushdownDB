@@ -34,6 +34,8 @@ private:
 
 public:
   explicit Operator(std::string name, std::string type, long queryId);
+  Operator() = default;
+  Operator(const Operator& other) = default;
   virtual ~Operator() = default;
 
   std::string &name();
@@ -41,6 +43,7 @@ public:
   [[ deprecated("Use std::shared_ptr<OperatorContext> ctx()") ]]
   std::shared_ptr<OperatorContext> weakCtx();
   void setName(const std::string &Name);
+  size_t hash();
   virtual void onReceive(const normal::core::message::Envelope &msg) = 0;
   long getQueryId() const;
 
@@ -54,8 +57,28 @@ public:
 
   void destroyActor();
 
+  // A series get functions
+  const std::shared_ptr<OperatorContext> &getOpContext() const;
+  const std::map<std::string, std::string> &getProducers() const;
+  const std::map<std::string, std::string> &getConsumers() const;
 };
 
+struct OperatorPointerHash {
+  inline size_t operator()(const std::shared_ptr<Operator> &op) const {
+    return op->hash();
+  }
+};
+
+struct OperatorPointerPredicate {
+  inline bool operator()(const std::shared_ptr<Operator>& lhs, const std::shared_ptr<Operator>& rhs) const {
+    return lhs->hash() == rhs->hash();
+  }
+};
+
+//template <class Inspector>
+//typename Inspector::result_type inspect(Inspector& f, Operator& op) {
+//  return f(caf::meta::type_name("OperatorMessage"), op.name(), op.getType());
+//}
 } // namespace
 
 #endif //NORMAL_NORMAL_CORE_SRC_OPERATOR_H

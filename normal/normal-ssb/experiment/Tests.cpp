@@ -132,6 +132,7 @@ auto executeSql(normal::sql::Interpreter &i, const std::string &sql, bool saveMe
 //  i.getOperatorManager()->getSegmentCacheActor()->ctx()->operatorMap().clearForSegmentCache();
   i.clearOperatorGraph();
   i.parse(sql);
+  i.plan(1);
 
   // graph is too large
 //  TestUtil::writeExecutionPlan(*i.getLogicalPlan());

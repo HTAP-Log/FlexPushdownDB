@@ -57,16 +57,20 @@ void Interpreter::parse(const std::string &sql) {
     logicalOperator->setMode(mode_);
     logicalOperator->setQueryId(queryId);
   }
+}
+
+void Interpreter::plan(int numNodes) {
 
   // Create physical plan
+  auto queryId = operatorGraph_->getId();
   plan::Planner::setQueryId(queryId);
-  std::shared_ptr<plan::PhysicalPlan> physicalPlan;
-  physicalPlan = plan::Planner::generate(*logicalPlan_, mode_);
+  auto physicalPlan = plan::Planner::generate(*logicalPlan_, mode_, numNodes);
+  SPDLOG_INFO("Total {} physical operators", physicalPlan->getPlacements().size());
 
-  SPDLOG_INFO("Total {} physical operators", physicalPlan->getOperators()->size());
   // Add the plan to the operatorGraph
-  for(const auto& physicalOperator: *physicalPlan->getOperators()){
-    operatorGraph_->put(physicalOperator.second);
+  operatorGraph_->setPlacements(physicalPlan->getPlacements());
+  for(const auto& physicalOperator: physicalPlan->getPlacements()){
+    operatorGraph_->put(physicalOperator.first);
   }
 
   SPDLOG_DEBUG("Finished");
@@ -95,6 +99,12 @@ std::shared_ptr<normal::core::graph::OperatorGraph> &Interpreter::getOperatorGra
 
 void Interpreter::boot() {
   operatorManager_ = std::make_shared<normal::core::OperatorManager>(cachingPolicy_);
+  operatorManager_->boot();
+  operatorManager_->start();
+}
+
+void Interpreter::boot(const std::shared_ptr<caf::actor_system>& actorSystem) {
+  operatorManager_ = std::make_shared<normal::core::OperatorManager>(cachingPolicy_, actorSystem);
   operatorManager_->boot();
   operatorManager_->start();
 }

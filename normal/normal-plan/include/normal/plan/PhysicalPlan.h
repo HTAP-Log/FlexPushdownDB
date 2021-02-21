@@ -22,17 +22,15 @@ namespace normal::plan {
 class PhysicalPlan {
 
 public:
-  PhysicalPlan();
+  PhysicalPlan(){};
 
-  void put(std::shared_ptr<core::Operator> operator_);
+  void put(std::shared_ptr<core::Operator> operator_, int placement);
 
-  [[nodiscard]] const std::shared_ptr<std::unordered_map<std::string,
-														 std::shared_ptr<core::Operator>>>
-  &getOperators() const;
+  [[nodiscard]] const std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> &
+  getPlacements() const;
 
 private:
-  std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<core::Operator>>> operators_;
-
+  std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> placements_;
 };
 
 }

@@ -10,6 +10,8 @@
 namespace normal::pushdown {
 class S3Select: public S3SelectScan {
   public:
+    S3Select() = default;
+    S3Select(const S3Select& other) = default;
     S3Select(std::string name,
            std::string s3Bucket,
            std::string s3Object,
@@ -40,8 +42,11 @@ class S3Select: public S3SelectScan {
                         long queryId = 0,
                         const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>>& weightedSegmentKeys = nullptr);
 
+  // A series of get functions
+  const std::string &getFilterSql() const;
+  const std::shared_ptr<S3CSVParser> &getParser() const;
 
-  private:
+private:
     std::string filterSql_;   // "where ...."
     std::shared_ptr<S3CSVParser> parser_;
 
@@ -54,6 +59,21 @@ class S3Select: public S3SelectScan {
     int getPredicateNum() override;
 };
 
+//template <class Inspector>
+//typename Inspector::result_type inspect(Inspector& f, S3Select& op) {
+//  return f(caf::meta::type_name("S3SelectOperatorMessage"),
+//          op.getFilterSql(),
+////          op.getParser(),
+//          op.getS3Bucket(), op.getS3Object(), op.getReturnedS3ColumnNames(), op.getNeededColumnNames(),
+//          op.getStartOffset(), op.getFinishOffset(),
+////          op.getSchema(),
+////          op.getS3Client(),
+//          op.isScanOnStart(), op.isToCache(),
+////          op.getWeightedSegmentKeys(),
+//          op.name(), op.getType(),
+////          op.getOpContext(),
+//          op.getProducers(), op.getConsumers());
+//}
 }
 
 #endif //NORMAL_NORMAL_CORE_SRC_S3SELECT_H

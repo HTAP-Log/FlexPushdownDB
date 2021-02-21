@@ -10,6 +10,31 @@
 
 using namespace normal::frontend;
 
+std::string set(const std::string& command, const std::shared_ptr<Client>& client) {
+  size_t whiteIndex = command.find(' ');
+  std::string output;
+  if (whiteIndex != std::string::npos) {
+    auto word1 = command.substr(0, whiteIndex);
+    auto word2 = command.substr(whiteIndex + 1);
+    if (word1 == "distributed") {
+      if (word2 == "True" || word2 == "true" || word2 == "TRUE") {
+        client->setDistributed(true);
+        output = "Set to distributed mode";
+      } else if (word2 == "False" || word2 == "false" || word2 == "FALSE") {
+        client->setDistributed(false);
+        output = "Set to single mode";
+      } else {
+        output = "Bad set command";
+      }
+    } else {
+      output = "Bad set command";
+    }
+  } else {
+    output = "Bad set command";
+  }
+  return output;
+}
+
 bool execute(const std::string& command, const std::shared_ptr<Client>& client) {
   if (command == "quit" || command == "exit") {
     return true;
@@ -22,7 +47,16 @@ bool execute(const std::string& command, const std::shared_ptr<Client>& client) 
       RESULT(client->executeSqlFile(word2));
       return false;
     } else if (word1 == "sql") {
-      RESULT(word2);
+      RESULT(client->executeSql(word2 + ";"))
+      return false;
+    } else if (word1 == "connect") {
+      client->connect();
+      return false;
+    } else if (word1 == "display") {
+      client->remoteDisplay(word2);
+      return false;
+    } else if (word1 == "set") {
+      RESULT(set(word2, client));
       return false;
     }
   }

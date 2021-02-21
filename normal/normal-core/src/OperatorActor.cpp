@@ -10,17 +10,30 @@
 
 #include "normal/core/Globals.h"
 #include "normal/core/message/Envelope.h"
+#include <normal/pushdown/s3/S3Select.h>
+
+using namespace normal::pushdown;
+using namespace ::caf;
 
 namespace normal::core {
 
-OperatorActor::OperatorActor(caf::actor_config &cfg, std::shared_ptr<Operator> opBehaviour) :
-	caf::event_based_actor(cfg),
+OperatorActor::OperatorActor(actor_config &cfg, std::shared_ptr<Operator> opBehaviour) :
+	event_based_actor(cfg),
 	opBehaviour_(std::move(opBehaviour)) {
-
   name_ = opBehaviour_->name();
 }
 
-caf::behavior behaviour(OperatorActor *self) {
+OperatorActor::OperatorActor(actor_config &cfg, Operator& opBehaviour) :
+  event_based_actor(cfg) {
+  name_ = opBehaviour.name();
+  if (opBehaviour.getType() == "S3Select") {
+    opBehaviour_ = std::make_shared<S3Select>(dynamic_cast<S3Select&>(opBehaviour));
+  } else {
+    throw std::runtime_error(fmt::format("Unimplemented operator for remote_spawn: {}", opBehaviour.getType()));
+  }
+}
+
+behavior behaviour(OperatorActor *self) {
 
   auto ctx = self->operator_()->weakCtx();
   if (!ctx)
@@ -83,7 +96,7 @@ caf::behavior behaviour(OperatorActor *self) {
 		}
 		else{
 		  if(!self->running_){
-			self->buffer_.emplace(self->current_mailbox_element()->move_content_to_message(), self->current_sender());
+			self->buffer_.emplace(self->current_mailbox_element()->content(), self->current_sender());
 		  }
 		  else {
 			if (msg.message().type() == "CompleteMessage") {
@@ -102,7 +115,7 @@ caf::behavior behaviour(OperatorActor *self) {
   };
 }
 
-caf::behavior OperatorActor::make_behavior() {
+behavior OperatorActor::make_behavior() {
   return behaviour(this);
 }
 
@@ -126,5 +139,6 @@ void OperatorActor::on_exit() {
    */
   this->opBehaviour_->destroyActor();
 }
+
 
 }

@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <normal/connector/partition/Partition.h>
+#include <caf/io/all.hpp>
 
 #include "SegmentRange.h"
 #include "SegmentMetadata.h"
@@ -47,7 +48,7 @@ public:
 
   size_t hash();
 
-    void setMetadata(const std::shared_ptr<SegmentMetadata> &metadata);
+  void setMetadata(const std::shared_ptr<SegmentMetadata> &metadata);
 
 private:
   std::shared_ptr<Partition> partition_;
@@ -70,6 +71,11 @@ struct SegmentKeyPointerPredicate {
   }
 };
 
+//template <class Inspector>
+//typename Inspector::result_type inspect(Inspector& f, SegmentKey& segmentKey) {
+//  return f(caf::meta::type_name("SegmentKey"),
+//          segmentKey.getPartition(), segmentKey.getColumnName());
+//}
 }
 
 #endif //NORMAL_NORMAL_CACHE_INCLUDE_NORMAL_CACHE_SEGMENTKEY_H

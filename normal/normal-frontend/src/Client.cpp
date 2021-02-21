@@ -14,22 +14,45 @@
 #include <normal/plan/Globals.h>
 #include <normal/util/Util.h>
 
+#include <normal/pushdown/file/FileScan2.h>
+#include <normal/pushdown/s3/S3SelectScan2.h>
+
 using namespace normal::frontend;
 using namespace normal::connector;
 using namespace normal::sql;
 using namespace normal::util;
 
 Client::Client():
-  cacheSize_(defaultCacheSize_), bucketName_(defaultBucketName_), dirPrefix_(defaultDirPrefix){}
+  cacheSize_(DefaultCacheSize_), bucketName_(DefaultBucketName_), dirPrefix_(DefaultDirPrefix_),
+  distributed_(true) {
+  ::caf::init_global_meta_objects<::caf::id_block::OperatorActor>();
+  ::caf::init_global_meta_objects<::caf::id_block::OperatorActor2>();
+  ::caf::init_global_meta_objects<::caf::id_block::SegmentCacheActor>();
+  ::caf::init_global_meta_objects<::caf::id_block::Collate2>();
+  ::caf::init_global_meta_objects<::caf::id_block::S3SelectScan2>();
+  ::caf::init_global_meta_objects<::caf::id_block::ScanOperator>();
+  ::caf::init_global_meta_objects<::caf::id_block::FileScan2>();
+  ::caf::init_global_meta_objects<::caf::id_block::Client>();
+  ::caf::core::init_global_meta_objects();
+  ::caf::io::middleman::init_global_meta_objects();
+  clientActorSystem_ = std::make_shared<caf::actor_system>(clientCfg_);
+  serverActorSystem_ = std::make_shared<caf::actor_system>(serverCfg_);
+}
 
 std::string Client::boot() {
+  /* Initialize query processing */
   defaultMiniCatalogue = MiniCatalogue::defaultMiniCatalogue(bucketName_, dirPrefix_);
-  setMode(defaultModeType_);
-  setCachingPolicy(defaultCachingPolicyType_);
+  setMode(DefaultModeType_);
+  setCachingPolicy(DefaultCachingPolicyType_);
   interpreter_ = std::make_shared<Interpreter>(mode_, cachingPolicy_);
   configureS3ConnectorMultiPartition(interpreter_, bucketName_, dirPrefix_);
-  interpreter_->boot();
-  return "Client boot";
+  interpreter_->boot(clientActorSystem_);
+  std::string output = "Client booted";
+
+  /* Initialize remote communication */
+  server();
+  output += "; server started";
+  return output;
 }
 
 std::string Client::stop() {
@@ -39,27 +62,57 @@ std::string Client::stop() {
   defaultMiniCatalogue.reset();
   cachingPolicy_.reset();
   mode_.reset();
-  return "Client stop";
+  return "Client stopped";
 }
 
 std::string Client::reboot() {
   stop();
   boot();
-  return "Client reboot";
+  return "Client rebooted";
+}
+
+void Client::connect() {
+  auto expectedNode = clientActorSystem_->middleman().connect(clientCfg_.host_, clientCfg_.port_);
+  if (!expectedNode) {
+    std::cerr << "*** connect failed: " << to_string(expectedNode.error()) << std::endl;
+    return;
+  }
+  std::cout << "connected to server" << std::endl;
+  node_ = expectedNode.value();
+}
+
+void Client::server() {
+  auto res = serverActorSystem_->middleman().open(serverCfg_.port_);
+  if (!res) {
+    std::cerr << "*** cannot open port: " << to_string(res.error()) << std::endl;
+    return;
+  }
+}
+
+void Client::setDistributed(bool distributed) {
+  distributed_ = distributed;
 }
 
 std::shared_ptr<TupleSet> Client::execute() {
   interpreter_->getCachingPolicy()->onNewQuery();
+  if (distributed_ && node_.has_value()) {
+    interpreter_->getOperatorGraph()->setNode(node_.value());
+  }
   interpreter_->getOperatorGraph()->boot();
   interpreter_->getOperatorGraph()->start();
   interpreter_->getOperatorGraph()->join();
-  auto tuples = std::static_pointer_cast<normal::pushdown::Collate>(interpreter_->getOperatorGraph()->getOperator("collate"))->tuples();
+  auto tuples = interpreter_->getOperatorGraph()->getLegacyCollateOperator()->tuples();
   return tuples;
 }
 
 std::string Client::executeSql(const std::string &sql) {
   interpreter_->clearOperatorGraph();
   interpreter_->parse(sql);
+  if (distributed_ && node_.has_value()) {
+    interpreter_->plan(2);
+  } else {
+    interpreter_->plan(1);
+  }
   auto tuples = execute();
   auto tupleSet = TupleSet2::create(tuples);
   std::string output = fmt::format("Output  |\n{}", tupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));

@@ -6,15 +6,13 @@
 
 using namespace normal::plan;
 
-PhysicalPlan::PhysicalPlan() :
-	operators_(std::make_shared<std::unordered_map<std::string, std::shared_ptr<normal::core::Operator>>>()) {}
-
-void PhysicalPlan::put(std::shared_ptr<normal::core::Operator> operator_) {
-  operators_->emplace(operator_->name(), operator_);
+void PhysicalPlan::put(std::shared_ptr<normal::core::Operator> operator_, int placement) {
+  placements_.emplace(operator_, placement);
 }
 
-const std::shared_ptr<std::unordered_map<std::string,
-										 std::shared_ptr<normal::core::Operator>>> &PhysicalPlan::getOperators() const {
-  return operators_;
+const std::unordered_map<std::shared_ptr<normal::core::Operator>, int, normal::core::OperatorPointerHash,
+normal::core::OperatorPointerPredicate> &
+PhysicalPlan::getPlacements() const {
+  return placements_;
 }
 

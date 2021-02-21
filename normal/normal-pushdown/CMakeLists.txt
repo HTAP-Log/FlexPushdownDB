@@ -13,7 +13,7 @@ endif()
 
 add_library(normal-pushdown STATIC
         include/normal/pushdown/Globals.h
-        src/Collate.cpp include/normal/pushdown/Collate.h
+        src/collate/Collate.cpp include/normal/pushdown/collate/Collate.h
         src/s3/S3SelectScan.cpp include/normal/pushdown/s3/S3SelectScan.h
         src/file/FileScan.cpp include/normal/pushdown/file/FileScan.h
         src/Aggregate.cpp include/normal/pushdown/Aggregate.h

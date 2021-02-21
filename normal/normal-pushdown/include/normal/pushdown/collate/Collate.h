@@ -34,12 +34,18 @@ private:
 
 public:
   explicit Collate(std::string name, long queryId = 0);
+  Collate() = default;
+  Collate(const Collate& other) = default;
   ~Collate() override = default;
   void show();
   std::shared_ptr<TupleSet> tuples();
   void setTuples(const std::shared_ptr<TupleSet> &Tuples);
 };
 
+//template <class Inspector>
+//typename Inspector::result_type inspect(Inspector& f, Collate& op) {
+//  return f(caf::meta::type_name("CollateOperatorMessage"), op.name(), op.getType());
+//}
 }
 
 #endif //NORMAL_NORMAL_S3_SRC_COLLATE_H

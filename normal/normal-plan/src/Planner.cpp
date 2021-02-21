@@ -11,8 +11,9 @@
 #include <normal/plan/operator_/AggregateLogicalOperator.h>
 #include <normal/plan/operator_/ProjectLogicalOperator.h>
 #include <normal/plan/operator_/GroupLogicalOperator.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/plan/mode/Modes.h>
+#include <normal/util/Util.h>
 
 using namespace normal::plan;
 
@@ -240,7 +241,7 @@ void wireUp (std::shared_ptr<normal::plan::operator_::LogicalOperator> &logicalP
     }
 
     // One-to-one wire up for all except aggregateReduce
-    for (auto index = 0; index < numConcurrentUnits; index++) {
+    for (size_t index = 0; index < numConcurrentUnits; index++) {
       auto streamOutPhysicalOperator = streamOutPhysicalOperators->at(index);
       auto streamInPhysicalOperator = aggregatePhysicalOperators->at(index);
       streamOutPhysicalOperator->produce(streamInPhysicalOperator);
@@ -264,7 +265,7 @@ void wireUp (std::shared_ptr<normal::plan::operator_::LogicalOperator> &logicalP
     }
 
     // One-to-one wire up for all except groupReduce
-    for (auto index = 0; index < numConcurrentUnits; index++) {
+    for (size_t index = 0; index < numConcurrentUnits; index++) {
       auto streamOutPhysicalOperator = streamOutPhysicalOperators->at(index);
       auto streamInPhysicalOperator = groupPhysicalOperators->at(index);
       streamOutPhysicalOperator->produce(streamInPhysicalOperator);
@@ -288,7 +289,7 @@ void wireUp (std::shared_ptr<normal::plan::operator_::LogicalOperator> &logicalP
     }
 
     // One-to-one wire up for all
-    for (auto index = 0; index < numConcurrentUnits; index++) {
+    for (size_t index = 0; index < numConcurrentUnits; index++) {
       auto streamOutPhysicalOperator = streamOutPhysicalOperators->at(index);
       auto streamInPhysicalOperator = projectPhysicalOperators->at(index);
       streamOutPhysicalOperator->produce(streamInPhysicalOperator);
@@ -310,9 +311,113 @@ void wireUp (std::shared_ptr<normal::plan::operator_::LogicalOperator> &logicalP
 
 }
 
-std::shared_ptr<PhysicalPlan> Planner::generate (const LogicalPlan &logicalPlan,
-                                                 std::shared_ptr<normal::plan::operator_::mode::Mode> mode) {
+// Uniform-hash placement
+std::shared_ptr<PhysicalPlan> generateDistributedPlacements(std::unordered_map<std::string, std::shared_ptr<Operator>>& nameToOperators,
+                                                 int numNodes) {
   auto physicalPlan = std::make_shared<PhysicalPlan>();
+  std::vector<std::string> rest;
+
+  while (!nameToOperators.empty()) {
+    auto next = nameToOperators.begin();
+    auto name = next->first;
+
+    if (name == "collate" || name == "groupReduce" || name == "aggregateReduce") {
+      physicalPlan->put(next->second, 0);
+      nameToOperators.erase(name);
+    }
+
+    else if (name.substr(0, 6) == "group-" || name.substr(0, 10) == "aggregate-" || name.substr(0, 5) == "proj-") {
+      name = (name.substr(0, 6) == "group-") ? "group-" : ((name.substr(0, 10) == "aggregate-") ? "aggregate-" : "proj-");
+      for (int i = 0; ; i++) {
+        std::string nameExt = name + std::to_string(i);
+        auto entry = nameToOperators.find(nameExt);
+        if (entry == nameToOperators.end()) break;
+        physicalPlan->put(entry->second, i % numNodes);
+        nameToOperators.erase(nameExt);
+      }
+    }
+
+    else if (name.substr(0, 5) == "join-") {
+      std::string joinAttribute = (name.substr(name.length() - 7, 7) == "shuffle") ?
+              name.substr(11, name.length() - 11 - 7 - 1): name.substr(11);
+      joinAttribute = joinAttribute.substr(0, joinAttribute.find_last_of('-'));
+      for (int i = 0; ; i++) {
+        std::string nameExtBuild = "join-build-" + joinAttribute + "-" + std::to_string(i);
+        std::string nameExtProbe = "join-probe-" + joinAttribute + "-" + std::to_string(i);
+        std::string nameExtShuffle = "join-probe-" + joinAttribute + "-" + std::to_string(i) + "-shuffle";
+        if (nameToOperators.find(nameExtBuild) == nameToOperators.end()) break;
+        physicalPlan->put(nameToOperators.find(nameExtBuild)->second, i % numNodes);
+        nameToOperators.erase(nameExtBuild);
+        physicalPlan->put(nameToOperators.find(nameExtProbe)->second, i % numNodes);
+        nameToOperators.erase(nameExtProbe);
+        if (nameToOperators.find(nameExtShuffle) != nameToOperators.end()) {
+          physicalPlan->put(nameToOperators.find(nameExtShuffle)->second, i % numNodes);
+          nameToOperators.erase(nameExtShuffle);
+        }
+      }
+    }
+
+    else if (name.substr(0, 10) == "s3select -") {
+      // TODO: following is a start to support range scan inside a partition
+      std::string scanTableName = (name.substr(name.length() - 7, 7) == "shuffle") ?
+              name.substr(11, name.length() - 11 - 7 - 1): name.substr(11);
+      scanTableName = scanTableName.substr(0, scanTableName.find_last_of('-'));
+      int lastDotIndex = scanTableName.find_last_of('.');
+      bool hasMultiPartition = normal::util::isInteger(scanTableName.substr(lastDotIndex + 1));
+      scanTableName = hasMultiPartition ? scanTableName.substr(0, lastDotIndex) : scanTableName;
+      int cntRange = 0;
+
+      if (hasMultiPartition) {
+        for (int i = 0;; i++) {      // partition level
+          bool partitionExist = true;
+          for (int j = 0;; j++) {    // range level
+            std::string nameExtS3Select = "s3select - " + scanTableName + "." + std::to_string(i) + "-" + std::to_string(j);
+            std::string nameExtShuffle = "s3select - " + scanTableName + "." + std::to_string(i) + "-" + std::to_string(j) + "-shuffle";
+            if (nameToOperators.find(nameExtS3Select) == nameToOperators.end()) {
+              if (j == 0) partitionExist = false;
+              break;
+            }
+            physicalPlan->put(nameToOperators.find(nameExtS3Select)->second, cntRange % numNodes);
+            nameToOperators.erase(nameExtS3Select);
+            if (nameToOperators.find(nameExtShuffle) != nameToOperators.end()) {
+              physicalPlan->put(nameToOperators.find(nameExtShuffle)->second, cntRange % numNodes);
+              nameToOperators.erase(nameExtShuffle);
+            }
+            cntRange++;
+          }
+          if (!partitionExist) break;
+        }
+      }
+
+      else {
+        for (int i = 0;; i++) {      // range level
+          std::string nameExtS3Select = "s3select - " + scanTableName + "-" + std::to_string(i);
+          std::string nameExtShuffle = "s3select - " + scanTableName + "-" + std::to_string(i) + "-shuffle";
+          if (nameToOperators.find(nameExtS3Select) == nameToOperators.end()) break;
+          physicalPlan->put(nameToOperators.find(nameExtS3Select)->second, cntRange % numNodes);
+          nameToOperators.erase(nameExtS3Select);
+          if (nameToOperators.find(nameExtShuffle) != nameToOperators.end()) {
+            physicalPlan->put(nameToOperators.find(nameExtShuffle)->second, cntRange % numNodes);
+            nameToOperators.erase(nameExtShuffle);
+          }
+          cntRange++;
+        }
+      }
+    }
+
+
+    else {
+      nameToOperators.erase(name);
+      rest.emplace_back(name);
+    }
+  }
+
+  return physicalPlan;
+}
+
+std::shared_ptr<PhysicalPlan> Planner::generate (const LogicalPlan &logicalPlan,
+                                                 std::shared_ptr<normal::plan::operator_::mode::Mode> mode,
+                                                 int numNodes) {
   auto logicalOperators = logicalPlan.getOperators();
   auto logicalToPhysical_map = std::make_shared<std::unordered_map<
           std::shared_ptr<normal::plan::operator_::LogicalOperator>,
@@ -332,8 +437,19 @@ std::shared_ptr<PhysicalPlan> Planner::generate (const LogicalPlan &logicalPlan,
     }
   }
 
-  for (const auto &physicalOperator: *allPhysicalOperators) {
-    physicalPlan->put(physicalOperator);
+  std::shared_ptr<PhysicalPlan> physicalPlan;
+  if (numNodes == 1) {
+    physicalPlan = std::make_shared<PhysicalPlan>();
+    for (const auto &physicalOperator: *allPhysicalOperators) {
+      physicalPlan->put(physicalOperator, 0);
+    }
+  }
+  else {
+    std::unordered_map<std::string, std::shared_ptr<Operator>> nameToOperators;
+    for (const auto &physicalOperator: *allPhysicalOperators) {
+      nameToOperators.emplace(physicalOperator->name(), physicalOperator);
+    }
+    physicalPlan = generateDistributedPlacements(nameToOperators, numNodes);
   }
 
   return physicalPlan;

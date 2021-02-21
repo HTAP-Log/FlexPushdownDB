@@ -2,7 +2,7 @@
 // Created by matt on 5/12/19.
 //
 
-#include "normal/pushdown/Collate.h"
+#include "normal/pushdown/collate/Collate.h"
 
 #include <vector>                      // for vector
 
