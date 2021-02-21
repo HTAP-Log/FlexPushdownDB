@@ -5,7 +5,7 @@
 #include <doctest/doctest.h>
 #include <normal/sql/Interpreter.h>
 #include <normal/ssb/TestUtil.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/connector/s3/S3SelectConnector.h>
 #include <normal/connector/s3/S3SelectExplicitPartitioningScheme.h>
 #include <normal/connector/s3/S3SelectCatalogueEntry.h>
@@ -195,6 +195,7 @@ void normal::ssb::concurrentGetTest(int numRequests) {
 
 void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType) {
   spdlog::set_level(spdlog::level::info);
+  normal::core::init_caf_global_meta_objects();
 
   // parameters
   const int warmBatchSize = 0, executeBatchSize = 2;

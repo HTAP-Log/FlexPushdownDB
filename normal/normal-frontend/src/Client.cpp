@@ -14,9 +14,6 @@
 #include <normal/plan/Globals.h>
 #include <normal/util/Util.h>
 
-#include <normal/pushdown/file/FileScan2.h>
-#include <normal/pushdown/s3/S3SelectScan2.h>
-
 using namespace normal::frontend;
 using namespace normal::connector;
 using namespace normal::sql;
@@ -25,16 +22,8 @@ using namespace normal::util;
 Client::Client():
   cacheSize_(DefaultCacheSize_), bucketName_(DefaultBucketName_), dirPrefix_(DefaultDirPrefix_),
   distributed_(true) {
-  ::caf::init_global_meta_objects<::caf::id_block::OperatorActor>();
-  ::caf::init_global_meta_objects<::caf::id_block::OperatorActor2>();
-  ::caf::init_global_meta_objects<::caf::id_block::SegmentCacheActor>();
-  ::caf::init_global_meta_objects<::caf::id_block::Collate2>();
-  ::caf::init_global_meta_objects<::caf::id_block::S3SelectScan2>();
-  ::caf::init_global_meta_objects<::caf::id_block::ScanOperator>();
-  ::caf::init_global_meta_objects<::caf::id_block::FileScan2>();
   ::caf::init_global_meta_objects<::caf::id_block::Client>();
-  ::caf::core::init_global_meta_objects();
-  ::caf::io::middleman::init_global_meta_objects();
+  normal::core::init_caf_global_meta_objects();
   clientActorSystem_ = std::make_shared<caf::actor_system>(clientCfg_);
   serverActorSystem_ = std::make_shared<caf::actor_system>(serverCfg_);
 }

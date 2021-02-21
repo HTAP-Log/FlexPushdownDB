@@ -8,7 +8,7 @@ project("normal-core" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 add_library(normal-core STATIC
         src/message/StartMessage.cpp include/normal/core/message/StartMessage.h
         src/message/Envelope.cpp include/normal/core/message/Envelope.h
-        include/normal/core/Globals.h
+        include/normal/core/Globals.h src/Globals.cpp
         src/message/CompleteMessage.cpp include/normal/core/message/CompleteMessage.h
         src/Normal.cpp include/normal/core/Normal.h
         src/OperatorActor.cpp include/normal/core/OperatorActor.h

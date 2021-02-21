@@ -5,7 +5,7 @@
 #include <doctest/doctest.h>
 #include <normal/sql/Interpreter.h>
 #include <normal/ssb/TestUtil.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/connector/s3/S3SelectExplicitPartitioningScheme.h>
 #include <normal/pushdown/Util.h>
 #include <normal/plan/mode/Modes.h>
@@ -217,6 +217,7 @@ TEST_CASE ("BeladyGenerateMetadata" * doctest::skip(true || SKIP_SUITE)) {
 
 TEST_CASE ("BeladyExperiment" * doctest::skip(true || SKIP_SUITE)) {
   spdlog::set_level(spdlog::level::info);
+  normal::core::init_caf_global_meta_objects();
   std::string bucket_name = "pushdowndb";
   std::string dir_prefix = "ssb-sf10-sortlineorder/csv/";
   normal::cache::beladyMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dir_prefix);

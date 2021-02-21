@@ -4,7 +4,7 @@
 
 #include <doctest/doctest.h>
 #include <normal/ssb/TestUtil.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/pushdown/s3/S3SelectScan.h>
 #include <normal/pushdown/join/HashJoinBuild.h>
 #include <normal/pushdown/join/HashJoinProbe.h>

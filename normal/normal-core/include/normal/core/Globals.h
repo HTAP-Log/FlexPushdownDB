@@ -11,6 +11,8 @@
  * Setting the log level here will disable macros for levels below it
  */
 #include <spdlog/spdlog.h>
+#include <caf/all.hpp>
+#include <caf/io/all.hpp>
 
 namespace normal::core {
 
@@ -21,6 +23,8 @@ namespace normal::core {
   inline constexpr ::caf::type_id_t S3SelectScan2_first_custom_type_id = ::caf::first_custom_type_id + 400;
   inline constexpr ::caf::type_id_t ScanOperator_first_custom_type_id = ::caf::first_custom_type_id + 500;
   inline constexpr ::caf::type_id_t FileScan2_first_custom_type_id = ::caf::first_custom_type_id + 600;
+
+  void init_caf_global_meta_objects();
 
 }
 
