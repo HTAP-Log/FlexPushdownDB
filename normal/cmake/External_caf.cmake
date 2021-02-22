@@ -20,6 +20,14 @@ set(CAF_IO_STATIC_LIBS ${CAF_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}caf_io_stati
 set(CAF_OPENSSL_SHARED_LIBS ${CAF_LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}caf_openssl${CMAKE_SHARED_LIBRARY_SUFFIX})
 set(CAF_OPENSSL_STATIC_LIBS ${CAF_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}caf_openssl_static${CMAKE_STATIC_LIBRARY_SUFFIX})
 
+if(APPLE) # MacOS
+    set(OPENSSL_ROOT_DIR /usr/local/opt/openssl)
+elseif(UNIX AND NOT APPLE) # Linux
+    set(OPENSSL_ROOT_DIR /usr)
+endif()
+
+find_package(OpenSSL REQUIRED)
+
 ExternalProject_Add(${CAF_BASE}
         PREFIX ${CAF_BASE_DIR}
         INSTALL_DIR ${CAF_INSTALL_DIR}
@@ -45,11 +53,12 @@ ExternalProject_Add(${CAF_BASE}
         -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
         -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX:STRING=${CAF_INSTALL_DIR}
-        # The following has to be set on MAC
-        -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl
-        -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
-        -DOPENSSL_CRYPTO_LIBRARY=/usr/local/opt/openssl/lib/libcrypto.dylib
-        -DOPENSSL_SSL_LIBRARY=/usr/local/opt/openssl/lib/libssl.dylib
+        # Not sure if all these are needed, seems excessive but can't hurt I suppose :)
+        -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+        -DOPENSSL_INCLUDE_DIR=${OPENSSL_INCLUDE_DIR}
+        -DOPENSSL_LIBRARIES=${OPENSSL_LIBRARIES}
+        -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_CRYPTO_LIBRARIES}
+        -DOPENSSL_SSL_LIBRARY=${OPENSSL_SSL_LIBRARIES}
         )
 
 file(MAKE_DIRECTORY ${CAF_INCLUDE_DIR}) # Include directory needs to exist to run configure step
