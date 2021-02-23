@@ -58,7 +58,7 @@ public:
         return bytes_vec;
     }
 
-    void setTableBytes(const std::vector<std::byte> &bytes_vec) {
+    void fromBytes(const std::vector<std::byte> &bytes_vec) {
 
         arrow::Status status;
 
@@ -91,14 +91,14 @@ private:
  */
 template<class Inspector>
 bool inspect(Inspector &f, TestMessage &x) {
-    auto getTableBytes = [&x]() -> decltype(auto) {
+    auto toBytes = [&x]() -> decltype(auto) {
         return x.toBytes();
     };
-    auto setTableBytes = [&x](const std::vector<std::byte> &value) {
-        x.setTableBytes(value);
+    auto fromBytes = [&x](const std::vector<std::byte> &value) {
+        x.fromBytes(value);
         return true;
     };
-    return f.object(x).fields(f.field("table_bytes", getTableBytes, setTableBytes));
+    return f.object(x).fields(f.field("table_bytes", toBytes, fromBytes));
 }
 
 /**
