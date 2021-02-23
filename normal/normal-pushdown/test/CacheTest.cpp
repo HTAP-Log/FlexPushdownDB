@@ -7,11 +7,11 @@
 #include <doctest/doctest.h>
 
 #include <normal/pushdown/cache/CacheLoad.h>
-#include <normal/pushdown/Collate.h>
+#include <normal/pushdown/collate/Collate.h>
 #include <normal/core/OperatorManager.h>
 #include <normal/core/graph/OperatorGraph.h>
 #include <normal/pushdown/file/FileScan.h>
-#include <normal/pushdown/s3/S3SelectScan.h>
+#include <normal/pushdown/s3/S3SelectScan2.h>
 #include <normal/connector/local-fs/LocalFilePartition.h>
 #include <normal/pushdown/merge/Merge.h>
 #include <normal/connector/s3/S3SelectPartition.h>
@@ -30,70 +30,53 @@ using namespace normal::pushdown::merge;
 
 void makeQuery(const std::vector<std::string>& columnNames, std::shared_ptr<OperatorGraph> &g) {
 
-  auto testFile = filesystem::absolute("data/cache/test.csv");
-  auto numBytesTestFile = filesystem::file_size(testFile);
-
-//  auto g = OperatorGraph::make(mgr);
+//  auto testFile = filesystem::absolute("data/cache/test.csv");
+//  auto numBytesTestFile = filesystem::file_size(testFile);
 //
-//  std::shared_ptr<Partition> partition = std::make_shared<LocalFilePartition>(testFile);
-//
+//  auto columnNamess = std::vector<std::string>{"lo_orderkey", "lo_orderdate", "lo_extendedprice", "lo_discount"};
+//  numBytesTestFile = 5947638;
+//  auto partition = std::make_shared<S3SelectPartition>("s3filter", "ssb-sf0.01/lineorder.tbl", numBytesTestFile);
 //  auto cacheLoad = CacheLoad::make(fmt::format("/query-{}/cache-load", g->getId()),
-//								   columnNames,
+//								   columnNamess,
+//                   std::vector<std::string>(),
 //								   partition,
 //								   0,
-//								   numBytesTestFile);
+//								   numBytesTestFile,
+//								   true);
 //
-//  auto fileScan = FileScan::make(fmt::format("/query-{}/file-scan", g->getId()),
-//								 testFile,
-//								 columnNames,
-//								 0,
-//								 numBytesTestFile,
-//								 g->getId());
-
-  auto columnNamess = std::vector<std::string>{"lo_orderkey", "lo_orderdate", "lo_extendedprice", "lo_discount"};
-  numBytesTestFile = 5947638;
-  auto partition = std::make_shared<S3SelectPartition>("s3filter", "ssb-sf0.01/lineorder.tbl", numBytesTestFile);
-  auto cacheLoad = CacheLoad::make(fmt::format("/query-{}/cache-load", g->getId()),
-								   columnNamess,
-                   std::vector<std::string>(),
-								   partition,
-								   0,
-								   numBytesTestFile,
-								   true);
-
-  normal::pushdown::AWSClient client;
-  client.init();
-  auto fileScan = S3SelectScan::make("s3scan",
-                                     partition->getBucket(),
-                                     partition->getObject(),
-                                     "",
-                                     columnNamess,
-                                     0,
-                                     numBytesTestFile,
-                                     S3SelectCSVParseOptions(",", "\n"),
-                                     client.defaultS3Client(),
-                                     false);
-
-  auto merge = Merge::make(fmt::format("/query-{}/merge", g->getId()));
-
-  auto collate = std::make_shared<Collate>(fmt::format("/query-{}/collate", g->getId()), g->getId());
-
-  cacheLoad->setHitOperator(merge);
-  merge->setLeftProducer(cacheLoad);
-
-  cacheLoad->setMissOperatorToCache(fileScan);
-  fileScan->consume(cacheLoad);
-
-  fileScan->produce(merge);
-  merge->setRightProducer(fileScan);
-
-  merge->produce(collate);
-  collate->consume(merge);
-
-  g->put(cacheLoad);
-  g->put(fileScan);
-  g->put(merge);
-  g->put(collate);
+//  normal::pushdown::AWSClient client;
+//  client.init();
+//  auto fileScan = S3SelectScan2::make("s3scan",
+//                                     partition->getBucket(),
+//                                     partition->getObject(),
+//                                     "",
+//                                     columnNamess,
+//                                     0,
+//                                     numBytesTestFile,
+//                                     S3SelectCSVParseOptions(",", "\n"),
+//                                     client.defaultS3Client(),
+//                                     false);
+//
+//  auto merge = Merge::make(fmt::format("/query-{}/merge", g->getId()));
+//
+//  auto collate = std::make_shared<Collate>(fmt::format("/query-{}/collate", g->getId()), g->getId());
+//
+//  cacheLoad->setHitOperator(merge);
+//  merge->setLeftProducer(cacheLoad);
+//
+//  cacheLoad->setMissOperatorToCache(fileScan);
+//  fileScan->consume(cacheLoad);
+//
+//  fileScan->produce(merge);
+//  merge->setRightProducer(fileScan);
+//
+//  merge->produce(collate);
+//  collate->consume(merge);
+//
+//  g->put(cacheLoad);
+//  g->put(fileScan);
+//  g->put(merge);
+//  g->put(collate);
 
 //  return g;
 }

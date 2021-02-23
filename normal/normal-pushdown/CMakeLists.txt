@@ -108,7 +108,9 @@ add_executable(normal-pushdown-test
         test/FileScanTest.cpp
         test/CacheTest.cpp
         test/S3SelectScanTest.cpp
-        test/ShuffleTest.cpp test/MergeTest.cpp test/BloomJoinTest.cpp)
+        test/ShuffleTest.cpp test/MergeTest.cpp
+        test/BloomJoinTest.cpp
+        test/ArrowCAFSerializationTest.cpp)
 
 
 target_include_directories(normal-pushdown-test PRIVATE include)
