@@ -76,11 +76,11 @@ tl::expected<void, std::string> Shuffle::buffer(const std::shared_ptr<TupleSet2>
 	buffers_[partitionIndex] = concatenateResult.value();
 
 	std::shared_ptr<arrow::Table> combinedTable;
-	auto status = buffers_[partitionIndex].value()->getArrowTable().value()
-		->CombineChunks(arrow::default_memory_pool(), &combinedTable);
-	if (!status.ok())
-	  return tl::make_unexpected(status.message());
-	buffers_[partitionIndex] = TupleSet2::make(combinedTable);
+	auto maybe_table = buffers_[partitionIndex].value()->getArrowTable().value()
+		->CombineChunks(arrow::default_memory_pool());
+	if (!maybe_table.ok())
+	  return tl::make_unexpected(maybe_table.status().message());
+	buffers_[partitionIndex] = TupleSet2::make(*maybe_table);
   }
 
   return {};

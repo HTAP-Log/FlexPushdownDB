@@ -67,12 +67,11 @@ ShuffleKernel::shuffle(const std::string &columnName,
   // Combine the record batches into tuple sets
   std::vector<std::shared_ptr<TupleSet2>> shuffledTupleSetVector{numPartitions};
   for (size_t i = 0; i < shuffledRecordBatchesVector.size(); ++i) {
-	std::shared_ptr<::arrow::Table> shuffledTable;
-	status = ::arrow::Table::FromRecordBatches(shuffledRecordBatchesVector[i], &shuffledTable);
-	if (!status.ok()) {
-	  return tl::unexpected{fmt::format(status.message())};
+	auto maybe_table  = ::arrow::Table::FromRecordBatches(shuffledRecordBatchesVector[i]);
+	if (!maybe_table.ok()) {
+	  return tl::unexpected{fmt::format(maybe_table.status().message())};
 	}
-	shuffledTupleSetVector[i] = TupleSet2::make(shuffledTable);
+	shuffledTupleSetVector[i] = TupleSet2::make(*maybe_table);
   }
 
   return shuffledTupleSetVector;

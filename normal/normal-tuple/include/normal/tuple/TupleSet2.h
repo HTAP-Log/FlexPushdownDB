@@ -177,9 +177,10 @@ public:
   tl::expected<void, std::string> renameColumns(const std::vector<std::string>& columnNames){
 
     if(table_.has_value()){
-      auto result = table_.value()->RenameColumns(columnNames, &table_.value());
-      if(!result.ok())
-        return tl::make_unexpected(result.message());
+      auto maybe_table = table_.value()->RenameColumns(columnNames);
+      if(!maybe_table.ok())
+        return tl::make_unexpected(maybe_table.status().message());
+      table_ = *maybe_table;
     }
 
     return {};

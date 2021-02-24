@@ -55,10 +55,10 @@ void GroupKey::append(std::string name, const std::shared_ptr<normal::tuple::Sca
 
   // FIXME: This seems wacky
   auto schema = schema_->getSchema();
-  auto status = schema->AddField(schema->fields().size(), ::arrow::field(name, attribute->type()), &schema);
-  if(!status.ok())
-    throw std::runtime_error(status.message());
-  schema_ = std::make_shared<Schema>(schema);
+  auto maybe_schema = schema->AddField(schema->fields().size(), ::arrow::field(name, attribute->type()));
+  if(!maybe_schema.ok())
+    throw std::runtime_error(maybe_schema.status().message());
+  schema_ = std::make_shared<Schema>(*maybe_schema);
 
   attributes_.emplace_back(attribute);
 }

@@ -245,15 +245,13 @@ tl::expected<std::shared_ptr<::arrow::Buffer>, std::string>
 CSVParser::concatenateBuffers(std::shared_ptr<::arrow::Buffer> buffer1, std::shared_ptr<::arrow::Buffer> buffer2) {
 
   ::arrow::Status status;
-  std::shared_ptr<::arrow::Buffer> buffer;
-
   auto bufferVector = {std::move(buffer1), std::move(buffer2)};
 
-  status = ::arrow::ConcatenateBuffers(bufferVector, ::arrow::default_memory_pool(), &buffer);
-  if (!status.ok())
-	return tl::unexpected(status.ToString());
+  auto maybe_buffer = ::arrow::ConcatenateBuffers(bufferVector, ::arrow::default_memory_pool());
+  if (!maybe_buffer.ok())
+	return tl::unexpected(maybe_buffer.status().message());
 
-  return buffer;
+  return *maybe_buffer;
 }
 
 tl::expected<std::shared_ptr<Schema>, std::string> CSVParser::parseSchema() {

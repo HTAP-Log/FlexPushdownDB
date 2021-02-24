@@ -10,9 +10,69 @@
 #include <arrow/ipc/api.h>
 #include <arrow/io/api.h>
 #include <normal/tuple/arrow/Arrays.h>
+#include <normal/tuple/TupleSet2.h>
 #include "Globals.h"
 
 using namespace caf;
+
+std::shared_ptr<arrow::Table> bytes_to_table(const std::vector<std::uint8_t>& bytes_vec){
+
+    arrow::Status status;
+
+    // Create a view over the given byte vector, but then get a copy because the vector ref eventually disappears
+    auto buffer_view = ::arrow::Buffer::Wrap(bytes_vec);
+    auto maybe_buffer = buffer_view->CopySlice(0, buffer_view->size(), arrow::default_memory_pool());
+    if (!maybe_buffer.ok())
+        throw std::runtime_error(fmt::format("Error converting bytes to Arrow table  |  error: {}", maybe_buffer.status().message()));
+
+    // Get a reader over the buffer
+    auto buffer_reader = std::make_shared<::arrow::io::BufferReader>(*maybe_buffer);
+
+    // Get a record batch reader over that
+    auto maybe_reader = arrow::ipc::RecordBatchStreamReader::Open(buffer_reader);
+    if (!maybe_reader.ok())
+        throw std::runtime_error(fmt::format("Error converting bytes to Arrow table  |  error: {}", maybe_reader.status().message()));
+
+    // Read the table
+    std::shared_ptr<arrow::Table> table;
+    status = (*maybe_reader)->ReadAll(&table);
+    if (!status.ok())
+        throw std::runtime_error(fmt::format("Error converting bytes to Arrow table  |  error: {}", status.message()));
+
+    return table;
+}
+
+std::vector<std::uint8_t> table_to_bytes(const std::shared_ptr<arrow::Table>& table){
+
+    arrow::Status status;
+
+    auto maybe_output_stream = arrow::io::BufferOutputStream::Create();
+    if (!maybe_output_stream.ok())
+        throw std::runtime_error(fmt::format("Error converting Arrow table to bytes  |  error: {}", maybe_output_stream.status().message()));
+
+    auto maybe_writer = arrow::ipc::MakeStreamWriter((*maybe_output_stream).get(), table->schema());
+    if (!maybe_writer.ok())
+        throw std::runtime_error(fmt::format("Error converting Arrow table to bytes  |  error: {}", maybe_writer.status().message()));
+
+    status = (*maybe_writer)->WriteTable(*table);
+    if (!status.ok())
+        throw std::runtime_error(fmt::format("Error converting Arrow table to bytes  |  error: {}", status.message()));
+
+    status = (*maybe_writer)->Close();
+    if (!status.ok())
+        throw std::runtime_error(fmt::format("Error converting Arrow table to bytes  |  error: {}", status.message()));
+
+    auto maybe_buffer = (*maybe_output_stream)->Finish();
+    if (!maybe_buffer.ok())
+        throw std::runtime_error(fmt::format("Error converting Arrow table to bytes  |  error: {}", status.message()));
+
+    auto data = (*maybe_buffer)->data();
+    auto length = (*maybe_buffer)->size();
+
+    std::vector<std::uint8_t> bytes_vec(data, data + length);
+
+    return bytes_vec;
+}
 
 /**
  * A test message. Contains a pointer to an arrow table plus methods for converting to and from a byte vector.
@@ -31,50 +91,12 @@ public:
         table_ = table;
     }
 
-    [[nodiscard]] std::vector<std::byte> toBytes() const {
-
-        arrow::Status status;
-
-        auto maybe_output_stream = arrow::io::BufferOutputStream::Create(0, arrow::default_memory_pool());
-        if (!maybe_output_stream.ok())
-            SPDLOG_ERROR("Error  |  error: {}", maybe_output_stream.status().message());
-        auto maybe_writer = arrow::ipc::RecordBatchStreamWriter::Open((*maybe_output_stream).get(), table_->schema());
-        if (!maybe_writer.ok())
-            SPDLOG_ERROR("Error  |  error: {}", maybe_writer.status().message());
-
-        status = (*maybe_writer)->WriteTable(*table_);
-        if (!status.ok())
-            SPDLOG_ERROR("Error  |  error: {}", status.message());
-
-        auto maybe_buffer = (*maybe_output_stream)->Finish();
-        if (!maybe_buffer.ok())
-            SPDLOG_ERROR("Error  |  error: {}", maybe_buffer.status().message());
-
-        auto data = (*maybe_buffer)->data();
-        auto length = (*maybe_buffer)->size();
-        auto bytes = reinterpret_cast<const std::byte *>(data);
-
-        std::vector<std::byte> bytes_vec(bytes, bytes + length);
-        return bytes_vec;
+    [[nodiscard]] std::vector<std::uint8_t> toBytes() const {
+        return table_to_bytes(table_);
     }
 
-    void fromBytes(const std::vector<std::byte> &bytes_vec) {
-
-        arrow::Status status;
-
-        auto bytes = reinterpret_cast<const uint8_t *>(bytes_vec.data());
-        auto buffer = ::arrow::Buffer(bytes, bytes_vec.size());
-
-        auto input_stream = arrow::io::BufferReader(buffer);
-
-        std::shared_ptr<arrow::ipc::RecordBatchReader> reader;
-        status = arrow::ipc::RecordBatchStreamReader::Open(&input_stream, &reader);
-        if (!status.ok())
-            SPDLOG_ERROR("Error  |  error: {}", status.message());
-
-        status = reader->ReadAll(&table_);
-        if (!status.ok())
-            SPDLOG_ERROR("Error  |  error: {}", status.message());
+    void fromBytes(const std::vector<std::uint8_t> &bytes_vec) {
+        table_ = bytes_to_table(bytes_vec);
     }
 
 private:
@@ -94,7 +116,7 @@ bool inspect(Inspector &f, TestMessage &x) {
     auto toBytes = [&x]() -> decltype(auto) {
         return x.toBytes();
     };
-    auto fromBytes = [&x](const std::vector<std::byte> &value) {
+    auto fromBytes = [&x](const std::vector<std::uint8_t> &value) {
         x.fromBytes(value);
         return true;
     };
@@ -128,6 +150,22 @@ struct pong_state {
 };
 
 
+std::shared_ptr<arrow::Table> makeTestTable(){
+    auto schema = ::arrow::schema({
+                                          {field("f0", ::arrow::int32())},
+                                          {field("f1", ::arrow::int32())},
+                                          {field("f2", ::arrow::int32())},
+                                  });
+
+    auto array_0 = Arrays::make<::arrow::Int32Type>({1, 2, 3}).value();
+    auto array_1 = Arrays::make<::arrow::Int32Type>({4, 5, 6}).value();
+    auto array_2 = Arrays::make<::arrow::Int32Type>({7, 8, 9}).value();
+
+    auto table = ::arrow::Table::Make(schema, {array_0, array_1, array_2});
+
+    return table;
+}
+
 /**
  * Pings behaviour. Just sends a test message to pong. Should receive it back again and quit.
  * @param self
@@ -135,30 +173,17 @@ struct pong_state {
  */
 ping_actor::behavior_type ping_behaviour(ping_actor::stateful_pointer <ping_state> self) {
 
-    SPDLOG_DEBUG("ping spawned  |");
+    SPDLOG_INFO("ping spawned");
 
     return {
             [=](connect_atom, const actor &p_actor) {
-                SPDLOG_DEBUG("ping received connect message  |");
                 self->state.pong = actor_cast<pong_actor>(p_actor);
-
-                auto schema = ::arrow::schema({
-                                                      {field("f0", ::arrow::int32())},
-                                                      {field("f1", ::arrow::int32())},
-                                                      {field("f2", ::arrow::int32())},
-                                              });
-
-                auto array_0 = Arrays::make<::arrow::Int32Type>({1, 2, 3}).value();
-                auto array_1 = Arrays::make<::arrow::Int32Type>({4, 5, 6}).value();
-                auto array_2 = Arrays::make<::arrow::Int32Type>({7, 8, 9}).value();
-
-                auto table = ::arrow::Table::Make(schema, {array_0, array_1, array_2});
-
+                auto table = makeTestTable();
+                SPDLOG_INFO("ping received connect message, sending table  |  table: {}", normal::tuple::TupleSet2(table).showString(normal::tuple::TupleSetShowOptions(normal::tuple::TupleSetShowOrientation::RowOriented)));
                 self->send(self->state.pong, put_atom_v, TestMessage(table));
-
             },
             [=](put_atom, const TestMessage &message) {
-                SPDLOG_DEBUG("ping received test message  |  num_rows: {}", message.getTable()->num_rows());
+                SPDLOG_INFO("ping received test message from pong  |  table: {}", normal::tuple::TupleSet2(message.getTable()).showString(normal::tuple::TupleSetShowOptions(normal::tuple::TupleSetShowOrientation::RowOriented)));
                 self->quit();
             }
     };
@@ -171,11 +196,11 @@ ping_actor::behavior_type ping_behaviour(ping_actor::stateful_pointer <ping_stat
  */
 pong_actor::behavior_type pong_behaviour(pong_actor::stateful_pointer <pong_state> self) {
 
-    SPDLOG_DEBUG("pong spawned  |");
+    SPDLOG_INFO("pong spawned");
 
     return {
             [=](put_atom, const TestMessage &message) {
-                SPDLOG_DEBUG("pong received test message  |  num_rows: {}", message.getTable()->num_rows());
+                SPDLOG_INFO("pong received test message from ping, sending back table  |  Table: {}", normal::tuple::TupleSet2(message.getTable()).showString(normal::tuple::TupleSetShowOptions(normal::tuple::TupleSetShowOrientation::RowOriented)));
                 self->anon_send(caf::actor_cast<caf::actor>(self->current_sender()), put_atom_v, message);
                 self->quit();
             }
@@ -188,6 +213,24 @@ pong_actor::behavior_type pong_behaviour(pong_actor::stateful_pointer <pong_stat
  * finish.
  */
 TEST_CASE ("remote-serialization") {
+
+//    auto inTable = makeTestTable();
+//    SPDLOG_INFO("In table: {}", normal::tuple::TupleSet2(inTable).showString(normal::tuple::TupleSetShowOptions(normal::tuple::TupleSetShowOrientation::RowOriented)));
+//
+//    auto bytes = table_to_bytes(inTable);
+//
+//    SPDLOG_INFO("Bytes read");
+//    for (auto val : bytes) printf("\\x%.2x", val);
+//    SPDLOG_INFO("");
+//
+//    inTable.reset();
+//
+//    SPDLOG_INFO("Bytes read after freeing table ptr");
+//    for (auto val : bytes) printf("\\x%.2x", val);
+//    SPDLOG_INFO("");
+//
+//    auto outTable = bytes_to_table(bytes);
+//    SPDLOG_INFO("Out table: {}", normal::tuple::TupleSet2(outTable).showString(normal::tuple::TupleSetShowOptions(normal::tuple::TupleSetShowOrientation::RowOriented)));
 
     auto p1 = std::promise<bool>();
     auto f1 = p1.get_future();
@@ -242,12 +285,12 @@ TEST_CASE ("remote-serialization") {
     auto maybe_ping = actor_system.middleman().remote_actor<ping_actor>("127.0.0.1", 40001);
     if (!maybe_ping)
         SPDLOG_ERROR("Error connecting to ping  |  error: {}", to_string(maybe_ping));
-    SPDLOG_DEBUG("Connected to ping");
+    SPDLOG_INFO("Connected to ping");
 
     auto maybe_pong = actor_system.middleman().remote_actor<pong_actor>("127.0.0.1", 40002);
     if (!maybe_pong)
         SPDLOG_ERROR("Error connecting to pong  |  error: {}", to_string(maybe_pong));
-    SPDLOG_DEBUG("Connected to pong");
+    SPDLOG_INFO("Connected to pong");
 
     scoped_actor self{actor_system};
     self->anon_send(maybe_ping.value(), connect_atom_v, caf::actor_cast<actor>(maybe_pong.value()));
