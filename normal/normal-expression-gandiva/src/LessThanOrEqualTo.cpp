@@ -12,7 +12,9 @@
 using namespace normal::expression::gandiva;
 
 LessThanOrEqualTo::LessThanOrEqualTo(std::shared_ptr<Expression> Left, std::shared_ptr<Expression> Right)
-	: BinaryExpression(Left, Right) {}
+	: BinaryExpression(Left, Right) {
+  expType_ = "LessThanOrEqualTo";
+}
 
 void LessThanOrEqualTo::compile(std::shared_ptr<arrow::Schema> Schema) {
 

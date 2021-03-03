@@ -21,8 +21,7 @@ struct msg2 {
 struct msg {
     std::string value;
     bool valid;
-//    std::shared_ptr<msg2> subMsg;
-    msg2 subMsg;
+    std::shared_ptr<msg2> subMsg;
 };
 
 using display = caf::typed_actor<
@@ -31,7 +30,7 @@ using display = caf::typed_actor<
 static display::behavior_type display_fun(display::pointer self) {
   return {
           [=](const msg content) {
-              std::string res = content.value + (content.valid ? "true" : "false") + std::to_string(content.subMsg.id2);
+              std::string res = content.value + (content.valid ? "true" : "false");
               aout(self) << "received task from a remote node: " << res << std::endl;
               return res + " received";
           }
@@ -45,27 +44,25 @@ bool inspect(Inspector& f, msg& m) {
                             f.field("subMsg", m.subMsg));
 }
 
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, msg2& m) {
-//  return f(meta::type_name("msg2"), m.value2, m.id2);
-//}
-
 template <class Inspector>
 bool inspect(Inspector& f, msg2& m) {
   return f.object(m).fields(f.field("value", m.value2),
                             f.field("id2", m.id2));
 }
 
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, std::shared_ptr<msg2> m) {
-//  return f(meta::type_name("msg"), m->value2, m->id2);
-//}
-
 }
 
-CAF_BEGIN_TYPE_ID_BLOCK(Client, ::caf::first_custom_type_id + 1000)
+using namespace normal::frontend;
+
+CAF_BEGIN_TYPE_ID_BLOCK(Client, ::caf::first_custom_type_id + 10000)
 CAF_ADD_TYPE_ID(Client, (normal::frontend::msg))
+CAF_ADD_TYPE_ID(Client, (normal::frontend::msg2))
 CAF_ADD_TYPE_ID(Client, (normal::frontend::display))
 CAF_END_TYPE_ID_BLOCK(Client)
+
+template <>
+struct inspector_access<std::shared_ptr<msg2>> : variant_inspector_access<std::shared_ptr<msg2>> {
+    // nop
+};
 
 #endif //NORMAL_FRONTEND_SERIALIZATION_H

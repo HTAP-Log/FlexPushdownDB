@@ -9,6 +9,7 @@ using namespace normal::expression::gandiva;
 
 Or::Or(std::shared_ptr<Expression> left, std::shared_ptr<Expression> right)
         : BinaryExpression(left, right) {
+  expType_ = "Or";
 }
 
 void Or::compile(std::shared_ptr<arrow::Schema> schema) {

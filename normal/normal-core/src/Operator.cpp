@@ -19,7 +19,7 @@ Operator::Operator(std::string name, std::string type, long queryId) :
     queryId_(queryId) {
 }
 
-const std::string &Operator::getType() const {
+std::string &Operator::getType() {
   return type_;
 }
 
@@ -74,15 +74,15 @@ size_t Operator::hash() {
   return std::hash<std::string>()(name_);
 }
 
-const std::shared_ptr<OperatorContext> &Operator::getOpContext() const {
+std::shared_ptr<OperatorContext> &Operator::getOpContext() {
   return opContext_;
 }
 
-const std::map<std::string, std::string> &Operator::getProducers() const {
+std::map<std::string, std::string> &Operator::getProducers() {
   return producers_;
 }
 
-const std::map<std::string, std::string> &Operator::getConsumers() const {
+std::map<std::string, std::string> &Operator::getConsumers() {
   return consumers_;
 }
 

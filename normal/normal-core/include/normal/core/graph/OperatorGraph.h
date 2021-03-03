@@ -18,6 +18,7 @@
 #include <normal/core/Forward.h>
 #include <normal/pushdown/collate/Collate.h>
 #include <normal/pushdown/collate/Collate2.h>
+#include <normal/core/serialization/OperatorSer.h>
 
 using namespace normal::core;
 using namespace normal::core::cache;
@@ -67,7 +68,7 @@ private:
   std::chrono::steady_clock::time_point startTime_;
   std::chrono::steady_clock::time_point stopTime_;
 
-  /* Distributed nodes */
+  /* Distributed */
   std::optional<node_id> node_;
   std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> placements_;
 

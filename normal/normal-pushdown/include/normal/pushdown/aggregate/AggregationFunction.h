@@ -9,8 +9,8 @@
 
 #include <normal/tuple/TupleSet.h>
 #include <normal/expression/Projector.h>
-
 #include <normal/pushdown/aggregate/AggregationResult.h>
+#include <normal/core/Globals.h>
 
 using namespace normal::tuple;
 
@@ -35,7 +35,10 @@ protected:
   std::optional<std::shared_ptr<arrow::Schema>> inputSchema_;
 
 public:
-  explicit AggregationFunction(std::string alias);
+  explicit AggregationFunction(std::string alias, std::string type);
+  AggregationFunction() = default;
+  AggregationFunction(const AggregationFunction&) = default;
+  AggregationFunction& operator=(const AggregationFunction&) = default;
   virtual ~AggregationFunction() = default;
 
   /**
@@ -46,7 +49,7 @@ public:
    *
    * @return
    */
-  [[nodiscard]] const std::string &alias() const;
+  [[nodiscard]] std::string &alias();
 
   virtual void apply(std::shared_ptr<aggregate::AggregationResult> result, std::shared_ptr<TupleSet> tuples) = 0;
   virtual std::shared_ptr<arrow::DataType> returnType() = 0;
@@ -56,10 +59,11 @@ public:
    * compute its final result.
    */
   virtual void finalize(std::shared_ptr<aggregate::AggregationResult> result) = 0;
+  std::string& type();
 
 private:
   std::string alias_;
-
+  std::string type_;
 };
 
 }

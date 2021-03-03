@@ -26,7 +26,8 @@ add_library(normal-expression-gandiva STATIC
         src/Or.cpp include/normal/expression/gandiva/Or.h
         src/StringLiteral.cpp include/normal/expression/gandiva/StringLiteral.h
         src/BinaryExpression.cpp include/normal/expression/gandiva/BinaryExpression.h
-        src/Globals.cpp)
+        src/Globals.cpp
+        include/normal/expression/gandiva/serialization/ExpressionSer.h)
 
 target_include_directories(normal-expression-gandiva PUBLIC include)
 
@@ -36,6 +37,7 @@ target_link_libraries(normal-expression-gandiva PUBLIC gandiva_static)
 target_link_libraries(normal-expression-gandiva PUBLIC expected)
 target_link_libraries(normal-expression-gandiva PUBLIC normal-core)
 target_link_libraries(normal-expression-gandiva PUBLIC normal-expression)
+target_link_libraries(normal-expression-gandiva PUBLIC normal-util)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

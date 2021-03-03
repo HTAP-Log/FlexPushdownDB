@@ -8,6 +8,7 @@
 #include <memory>
 
 #include <caf/all.hpp>
+#include <normal/util/CAFUtil.h>
 
 #include "normal/core/message/Message.h"
 
@@ -34,10 +35,18 @@ public:
     return message_;
   }
 
+// caf inspect
+public:
+template <class Inspector>
+friend bool inspect(Inspector& f, Envelope& envelope) {
+  return f.apply(envelope.message_);
+}
 };
 
 }
 
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(normal::core::message::Envelope)
+CAF_BEGIN_TYPE_ID_BLOCK(Envelope, normal::util::Envelope_first_custom_type_id)
+CAF_ADD_TYPE_ID(Envelope, (normal::core::message::Envelope))
+CAF_END_TYPE_ID_BLOCK(Envelope)
 
 #endif //NORMAL_NORMAL_CORE_SRC_ENVELOPE_H

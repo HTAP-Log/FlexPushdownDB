@@ -15,6 +15,8 @@ class Float64Type: public Type {
 
 public:
   explicit Float64Type() : Type("Float64") {}
+  Float64Type(const Float64Type&) = default;
+  Float64Type& operator=(const Float64Type&) = default;
 
   std::string asGandivaTypeString() override {
     return "FLOAT8";
@@ -24,6 +26,12 @@ public:
     return arrow::float64();
   }
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Float64Type& type) {
+    return f.apply(type.name());
+  }
 };
 
 std::shared_ptr<Type> float64Type();

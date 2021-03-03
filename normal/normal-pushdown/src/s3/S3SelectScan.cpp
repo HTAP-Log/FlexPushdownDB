@@ -76,12 +76,11 @@ S3SelectScan::S3SelectScan(std::string name,
 			   std::vector<std::string> neededColumnNames,
 			   int64_t startOffset,
 			   int64_t finishOffset,
-         std::shared_ptr<arrow::Schema> schema,
-			   std::shared_ptr<Aws::S3::S3Client> s3Client,
+         std::string tableName,
 			   bool scanOnStart,
 			   bool toCache,
 			   long queryId,
-         std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys) :
+         std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys) :
 	Operator(std::move(name), type, queryId),
 	s3Bucket_(std::move(s3Bucket)),
 	s3Object_(std::move(s3Object)),
@@ -89,12 +88,20 @@ S3SelectScan::S3SelectScan(std::string name,
 	neededColumnNames_(std::move(neededColumnNames)),
 	startOffset_(startOffset),
 	finishOffset_(finishOffset),
-	schema_(std::move(schema)),
-	s3Client_(std::move(s3Client)),
-	columnsReadFromS3_(returnedS3ColumnNames_.size()),
+	tableName_(std::move(tableName)),
+//	columnsReadFromS3_(returnedS3ColumnNames_.size()),
 	scanOnStart_(scanOnStart),
 	toCache_(toCache),
   weightedSegmentKeys_(std::move(weightedSegmentKeys)) {
+}
+
+void S3SelectScan::makeSchema() {
+  schema_ = normal::connector::defaultMiniCatalogue->getSchema(tableName_);
+}
+
+void S3SelectScan::reserveColumnsReadFromS3() {
+  columnsReadFromS3_ = std::vector<std::shared_ptr<std::pair<std::string, ::arrow::ArrayVector>>>(
+          returnedS3ColumnNames_.size());
 }
 
 void S3SelectScan::onStart() {
@@ -237,7 +244,7 @@ void S3SelectScan::sendSegmentWeight() {
     double weight = selectivity * (predicateNum / (predicateNum + predPara));
 //    double weight = selectivity * predicateNum;
 
-    for (auto const &segmentKey: *weightedSegmentKeys_) {
+    for (auto const &segmentKey: weightedSegmentKeys_) {
       weightMap->emplace(segmentKey, weight);
     }
   }
@@ -247,8 +254,8 @@ void S3SelectScan::sendSegmentWeight() {
      * Refined weight function:
      *   w = sel / vNetwork + (lenRow / (lenCol * vScan) + #pred / (lenCol * vFilter)) / #key
      */
-    auto numKey = (double) weightedSegmentKeys_->size();
-    for (auto const &segmentKey: *weightedSegmentKeys_) {
+    auto numKey = (double) weightedSegmentKeys_.size();
+    for (auto const &segmentKey: weightedSegmentKeys_) {
       auto columnName = segmentKey->getColumnName();
       auto tableName = miniCatalogue->findTableOfColumn(columnName);
       auto lenCol = (double) miniCatalogue->lengthOfColumn(columnName);
@@ -292,10 +299,6 @@ const std::shared_ptr<arrow::Schema> &S3SelectScan::getSchema() const {
   return schema_;
 }
 
-const std::shared_ptr<Aws::S3::S3Client> &S3SelectScan::getS3Client() const {
-  return s3Client_;
-}
-
 const bool& S3SelectScan::isScanOnStart() const {
   return scanOnStart_;
 }
@@ -304,8 +307,7 @@ const bool& S3SelectScan::isToCache() const {
   return toCache_;
 }
 
-const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> &
-S3SelectScan::getWeightedSegmentKeys() const {
+const std::vector<std::shared_ptr<normal::cache::SegmentKey>> &S3SelectScan::getWeightedSegmentKeys() const {
   return weightedSegmentKeys_;
 }
 

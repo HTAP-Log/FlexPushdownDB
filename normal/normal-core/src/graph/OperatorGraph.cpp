@@ -176,15 +176,16 @@ caf::actor graph::OperatorGraph::localSpawn(const std::shared_ptr<Operator>& op)
 }
 
 caf::actor graph::OperatorGraph::remoteSpawn(const std::shared_ptr<Operator>& op) {
+  auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor());
+  op->create(ctx);
   auto remoteSpawnTout = std::chrono::seconds(10);
-  auto typedOp = *std::static_pointer_cast<S3Select>(op);
-  auto args = make_message();
+  auto args = make_message(op);
   auto expectedActorHandle = operatorManager_.lock()->getActorSystem()->middleman()
-          .remote_spawn<caf::actor>(node_.value(), "S3Select", args, remoteSpawnTout);
+          .remote_spawn<caf::actor>(node_.value(), "OperatorActor", args, remoteSpawnTout);
   if (!expectedActorHandle) {
     throw std::runtime_error(fmt::format("Failed to remote-spawn operator actor '{}': {}", op->name(), to_string(expectedActorHandle.error())));
   }
-  return caf::actor_cast<caf::actor>(expectedActorHandle.value());
+  return expectedActorHandle.value();
 }
 
 void graph::OperatorGraph::write_graph(const std::string &file) {

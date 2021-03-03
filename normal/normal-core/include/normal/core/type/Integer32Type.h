@@ -16,6 +16,8 @@ private:
 
 public:
   explicit Integer32Type() : Type("Int32") {}
+  Integer32Type(const Integer32Type&) = default;
+  Integer32Type& operator=(const Integer32Type&) = default;
 
   std::string asGandivaTypeString() override {
 	return "INT";
@@ -23,6 +25,13 @@ public:
 
   std::shared_ptr<arrow::DataType> asArrowType() override {
 	return arrow::int32();
+  }
+
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Integer32Type& type) {
+    return f.apply(type.name());
   }
 
 };

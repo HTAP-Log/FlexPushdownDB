@@ -13,6 +13,7 @@
 using namespace normal::expression::gandiva;
 
 Column::Column(std::string columnName): columnName_(std::move(columnName)) {
+  expType_ = "Column";
 }
 
 void Column::compile(std::shared_ptr<arrow::Schema> schema) {

@@ -2,7 +2,7 @@ project("normal-pushdown" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 # need to link libraries on mac
 if(${APPLE})
-    LINK_DIRECTORIES(/usr/local/opt/llvm@7/lib)
+    LINK_DIRECTORIES(/usr/local/opt/llvm/lib)
     LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 else()
 endif()
@@ -74,7 +74,8 @@ add_library(normal-pushdown STATIC
         include/normal/pushdown/group/GroupKey2.h
         include/normal/pushdown/group/AggregateBuilder.cpp include/normal/pushdown/group/AggregateBuilder.h
         include/normal/pushdown/group/AggregateBuilderWrapper.cpp include/normal/pushdown/group/AggregateBuilderWrapper.h
-        include/normal/pushdown/s3/S3Select.h include/normal/pushdown/s3/S3Get.h src/s3/S3Select.cpp src/s3/S3Get.cpp)
+        include/normal/pushdown/s3/S3Select.h include/normal/pushdown/s3/S3Get.h src/s3/S3Select.cpp src/s3/S3Get.cpp
+        include/normal/pushdown/serialization/AggregationFunctionSer.h)
 
 target_include_directories(normal-pushdown PUBLIC include)
 
@@ -90,6 +91,7 @@ target_link_libraries(normal-pushdown PUBLIC normal-core)
 target_link_libraries(normal-pushdown PUBLIC normal-tuple)
 target_link_libraries(normal-pushdown PUBLIC normal-expression)
 target_link_libraries(normal-pushdown PUBLIC normal-expression-gandiva)
+target_link_libraries(normal-pushdown PUBLIC normal-util)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

@@ -34,4 +34,8 @@ bool LocalFilePartition::operator==(const LocalFilePartition &other) {
   return path_ == other.path_;
 }
 
+std::string LocalFilePartition::type() {
+  return "LocalFilePartition";
+}
+
 

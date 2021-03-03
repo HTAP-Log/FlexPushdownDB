@@ -2,7 +2,7 @@ project(normal-frontend VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 # need to link libraries on mac
 if(${APPLE})
-    LINK_DIRECTORIES(/usr/local/opt/llvm@7/lib)
+    LINK_DIRECTORIES(/usr/local/opt/llvm/lib)
     LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 else()
     message("NOT MAC OS X")
@@ -23,6 +23,10 @@ target_link_libraries(normal-frontend PUBLIC normal-pushdown)
 target_link_libraries(normal-frontend PUBLIC normal-sql)
 target_link_libraries(normal-frontend PUBLIC normal-util)
 target_link_libraries(normal-frontend PRIVATE spdlog::spdlog)
+
+add_executable(variant_serialization src/Variant_serialization.cpp)
+target_link_libraries(variant_serialization PUBLIC caf::libcaf_core_shared)
+target_link_libraries(variant_serialization PUBLIC caf::libcaf_io_shared)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # change lib position for mac (not sure why mac cannot find the correct location of graphviz's lib)

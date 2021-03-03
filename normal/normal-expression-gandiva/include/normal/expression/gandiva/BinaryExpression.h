@@ -16,6 +16,9 @@ class BinaryExpression : public Expression {
 
 public:
   BinaryExpression(const std::shared_ptr<Expression> &left, const std::shared_ptr<Expression> &right);
+  BinaryExpression() = default;
+  BinaryExpression(const BinaryExpression&) = default;
+  BinaryExpression& operator=(const BinaryExpression&) = default;
 
   std::shared_ptr<std::vector<std::string> > involvedColumnNames() override;
 

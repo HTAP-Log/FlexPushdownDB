@@ -26,7 +26,8 @@ void Shuffle::onReceive(const Envelope &msg) {
 	this->onStart();
   } else if (msg.message().type() == "TupleMessage") {
 	auto tupleMessage = dynamic_cast<const TupleMessage &>(msg.message());
-	this->onTuple(tupleMessage);
+	if (tupleMessage.tuples())
+	  this->onTuple(tupleMessage);
   } else if (msg.message().type() == "CompleteMessage") {
 	auto completeMessage = dynamic_cast<const CompleteMessage &>(msg.message());
 	this->onComplete(completeMessage);

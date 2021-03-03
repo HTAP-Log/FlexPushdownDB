@@ -12,7 +12,9 @@
 using namespace normal::expression::gandiva;
 
 GreaterThanOrEqualTo::GreaterThanOrEqualTo(std::shared_ptr<Expression> Left, std::shared_ptr<Expression> Right)
-	: BinaryExpression(Left, Right) {}
+	: BinaryExpression(Left, Right) {
+  expType_ = "GreaterThanOrEqualTo";
+}
 
 void GreaterThanOrEqualTo::compile(std::shared_ptr<arrow::Schema> Schema) {
 

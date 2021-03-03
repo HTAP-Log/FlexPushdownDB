@@ -7,7 +7,7 @@
 
 #include <caf/all.hpp>
 #include <utility>
-
+#include <normal/util/CAFUtil.h>
 #include <normal/core/Forward.h>
 #include <normal/core/OperatorActor2.h>
 #include <normal/core/cache/SegmentCacheActor.h>
@@ -24,7 +24,7 @@ using namespace normal::core::message;
 using namespace normal::core::cache;
 using namespace normal::tuple;
 
-CAF_BEGIN_TYPE_ID_BLOCK(FileScan2, normal::core::FileScan2_first_custom_type_id)
+CAF_BEGIN_TYPE_ID_BLOCK(FileScan2, normal::util::FileScan2_first_custom_type_id)
 CAF_ADD_TYPE_ID(FileScan2, (std::vector<std::string>))
 CAF_END_TYPE_ID_BLOCK(FileScan2)
 

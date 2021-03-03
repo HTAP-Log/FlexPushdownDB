@@ -265,7 +265,7 @@ std::string Interpreter::showMetrics() {
   ss << std::endl;
   ss << std::left << std::setw(155) << std::setfill('-') << "" << std::endl;
   ss << std::setfill(' ');
-  for (int qid = 1; qid <= executionTimes_.size(); ++qid) {
+  for (size_t qid = 1; qid <= executionTimes_.size(); ++qid) {
     std::stringstream formattedProcessingTime1;
     formattedProcessingTime1 << executionTimes_[qid - 1] << " secs";
     std::stringstream formattedProcessedBytes1;
@@ -342,7 +342,7 @@ std::string Interpreter::showHitRatios() {
   ss << std::endl;
   ss << "Hit ratios, Shard Hit Ratios:" << std::endl;
   ss << std::endl;
-  for (int i = 0; i < hitRatios_.size(); i++) {
+  for (size_t i = 0; i < hitRatios_.size(); i++) {
     int qId = i + 1;
     auto const hitRatio = hitRatios_.at(i);
     auto const shardHitRatio = shardHitRatios_.at(i);

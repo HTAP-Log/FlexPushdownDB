@@ -12,9 +12,13 @@
 class LocalFilePartition: public Partition {
 public:
   explicit LocalFilePartition(std::string Path);
+  LocalFilePartition() = default;
+  LocalFilePartition(const LocalFilePartition&) = default;
+  LocalFilePartition& operator=(const LocalFilePartition&) = default;
 
   [[nodiscard]] const std::string &getPath() const;
   std::string toString() override;
+  std::string type() override;
   size_t hash() override;
 
   bool equalTo(std::shared_ptr<Partition> other) override;
@@ -24,6 +28,12 @@ public:
 private:
   std::string path_;
 
+// caf inspect
+public:
+template <class Inspector>
+friend bool inspect(Inspector& f, LocalFilePartition& partition) {
+  return f.apply(partition.path_);
+}
 };
 
 #endif //NORMAL_NORMAL_SQL_INCLUDE_NORMAL_SQL_CONNECTOR_PARTITION_LOCALFILEPARTITION_H

@@ -23,6 +23,9 @@ class Shuffle : public Operator {
 
 public:
   Shuffle(const std::string &Name, std::string ColumnName, long queryId);
+  Shuffle() = default;
+  Shuffle(const Shuffle&) = default;
+  Shuffle& operator=(const Shuffle&) = default;
 
   static std::shared_ptr<Shuffle> make(const std::string &Name, const std::string &ColumnName, long queryId = 0);
 
@@ -73,6 +76,19 @@ private:
   long shuffleTime_ = 0;
   long numRowShuffled_ = 0;
   size_t bytesShuffled_ = 0;
+
+// caf inspect
+public:
+template <class Inspector>
+friend bool inspect(Inspector& f, Shuffle& op) {
+  return f.object(op).fields(f.field("columnName", op.columnName_),
+                             f.field("consumers", op.consumers_),
+                             f.field("name", op.name()),
+                             f.field("type", op.getType()),
+                             f.field("opContext", op.getOpContext()),
+                             f.field("producers", op.getProducers()),
+                             f.field("consumers", op.getConsumers()));
+}
 };
 
 }

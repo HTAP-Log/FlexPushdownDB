@@ -20,6 +20,9 @@ class HashJoinBuildKernel2 {
 
 public:
   explicit HashJoinBuildKernel2(std::string columnName);
+  HashJoinBuildKernel2() = default;
+  HashJoinBuildKernel2(const HashJoinBuildKernel2&) = default;
+  HashJoinBuildKernel2& operator=(const HashJoinBuildKernel2&) = default;
   static HashJoinBuildKernel2 make(const std::string &columnName);
 
   [[nodiscard]] tl::expected<void,std::string> put(const std::shared_ptr<TupleSet2> &tupleSet);
@@ -38,6 +41,13 @@ private:
    * The hashtable as an indexed tupleset
    */
   std::optional<std::shared_ptr<TupleSetIndex>> tupleSetIndex_;
+
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, HashJoinBuildKernel2& kernel) {
+    return f.object(kernel).fields(f.field("columnName", kernel.columnName_));
+  }
 
 };
 

@@ -21,11 +21,11 @@ namespace normal::pushdown::filter {
 class Filter : public normal::core::Operator {
 public:
   explicit Filter(std::string Name, std::shared_ptr<FilterPredicate> Pred, long queryId,
-                  const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> &weightedSegmentKeys);
+                  const std::vector<std::shared_ptr<normal::cache::SegmentKey>> &weightedSegmentKeys);
 
   static std::shared_ptr<Filter> make(const std::string &Name, const std::shared_ptr<FilterPredicate> &Pred,
                                       long queryId = 0,
-                                      std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys = nullptr);
+                                      const std::vector<std::shared_ptr<normal::cache::SegmentKey>>& weightedSegmentKeys = std::vector<std::shared_ptr<normal::cache::SegmentKey>>());
 
   void onReceive(const core::message::Envelope &Envelope) override;
 
@@ -63,7 +63,7 @@ private:
   /**
    * Used to compute filter weight
    */
-  std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys_;
+  std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys_;
   long totalNumRows_ = 0;
   long filteredNumRows_ = 0;
 

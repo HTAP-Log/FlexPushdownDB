@@ -16,6 +16,9 @@
 #include "normal/core/message/Envelope.h"
 #include "Globals.h"
 #include <normal/core/Forward.h>
+#include <normal/core/serialization/MessageSer.h>
+
+using namespace normal::core;
 
 namespace normal::core {
 
@@ -35,10 +38,12 @@ private:
 public:
   explicit Operator(std::string name, std::string type, long queryId);
   Operator() = default;
-  Operator(const Operator& other) = default;
+  Operator(const Operator&) = default;
+  Operator& operator=(const Operator&) = default;
   virtual ~Operator() = default;
 
   std::string &name();
+  std::string &getType();
   std::shared_ptr<OperatorContext> ctx();
   [[ deprecated("Use std::shared_ptr<OperatorContext> ctx()") ]]
   std::shared_ptr<OperatorContext> weakCtx();
@@ -53,14 +58,13 @@ public:
   void create(const std::shared_ptr<OperatorContext>& ctx);
   virtual void produce(const std::shared_ptr<Operator> &operator_);
   virtual void consume(const std::shared_ptr<Operator> &operator_);
-  const std::string &getType() const;
 
   void destroyActor();
 
   // A series get functions
-  const std::shared_ptr<OperatorContext> &getOpContext() const;
-  const std::map<std::string, std::string> &getProducers() const;
-  const std::map<std::string, std::string> &getConsumers() const;
+  std::shared_ptr<OperatorContext> &getOpContext();
+  std::map<std::string, std::string> &getProducers();
+  std::map<std::string, std::string> &getConsumers();
 };
 
 struct OperatorPointerHash {
@@ -75,10 +79,6 @@ struct OperatorPointerPredicate {
   }
 };
 
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, Operator& op) {
-//  return f(caf::meta::type_name("OperatorMessage"), op.name(), op.getType());
-//}
 } // namespace
 
 #endif //NORMAL_NORMAL_CORE_SRC_OPERATOR_H

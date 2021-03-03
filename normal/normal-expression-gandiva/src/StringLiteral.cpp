@@ -6,7 +6,9 @@
 
 using namespace normal::expression::gandiva;
 
-StringLiteral::StringLiteral(std::string value) : value_(value) {}
+StringLiteral::StringLiteral(std::string value) : value_(value) {
+  expType_ = "StringLiteral";
+}
 
 void StringLiteral::compile(std::shared_ptr<arrow::Schema>){
   auto literal = ::gandiva::TreeExprBuilder::MakeStringLiteral(value_);

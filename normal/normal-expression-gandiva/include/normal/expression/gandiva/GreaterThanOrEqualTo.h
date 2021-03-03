@@ -18,10 +18,21 @@ class GreaterThanOrEqualTo : public BinaryExpression {
 
 public:
   GreaterThanOrEqualTo(std::shared_ptr<Expression> Left, std::shared_ptr<Expression> Right);
+  GreaterThanOrEqualTo() = default;
+  GreaterThanOrEqualTo(const GreaterThanOrEqualTo&) = default;
+  GreaterThanOrEqualTo& operator=(const GreaterThanOrEqualTo&) = default;
 
   void compile(std::shared_ptr<arrow::Schema> schema) override;
   std::string alias() override;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, GreaterThanOrEqualTo& exp) {
+    return f.object(exp).fields(f.field("left", exp.left_),
+                                f.field("right", exp.right_),
+                                f.field("expType", exp.expType_));
+  }
 };
 
 std::shared_ptr<Expression> gte(std::shared_ptr<Expression> Left, std::shared_ptr<Expression> Right);

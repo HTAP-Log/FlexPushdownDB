@@ -27,7 +27,9 @@ public:
                               caf::actor actor,
                               OperatorRelationshipType relationshipType,
                               bool complete);
-
+  LocalOperatorDirectoryEntry() = default;
+  LocalOperatorDirectoryEntry(const LocalOperatorDirectoryEntry&) = default;
+  LocalOperatorDirectoryEntry& operator=(const LocalOperatorDirectoryEntry&) = default;
 
   [[nodiscard]] bool complete() const;
   void complete(bool complete);
@@ -39,6 +41,15 @@ public:
   [[nodiscard]] OperatorRelationshipType relationshipType() const;
   void relationshipType(OperatorRelationshipType relationshipType);
 
+// caf inspect
+public:
+template <class Inspector>
+friend bool inspect(Inspector& f, LocalOperatorDirectoryEntry& entry) {
+  return f.object(entry).fields(f.field("name", entry.name_),
+                                f.field("actor", entry.actor_),
+                                f.field("relationshipType", entry.relationshipType_),
+                                f.field("complete", entry.complete_));
+}
 };
 
 }

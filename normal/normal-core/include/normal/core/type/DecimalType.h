@@ -15,6 +15,9 @@ class DecimalType: public Type {
 
 public:
   explicit DecimalType(int precision, int scale) : Type("Decimal"), precision_(precision), scale_(scale) {}
+  DecimalType() = default;
+  DecimalType(const DecimalType&) = default;
+  DecimalType& operator=(const DecimalType&) = default;
 
   std::string asGandivaTypeString() override {
     return "DECIMAL";
@@ -28,6 +31,14 @@ private:
   int precision_;
   int scale_;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, DecimalType& type) {
+    return f.object(type).fields(f.field("precision", type.precision_),
+                                 f.field("scale", type.scale_),
+                                 f.field("name", type.name()));
+  }
 };
 
 std::unique_ptr<Type> decimalType(int precision, int scale);

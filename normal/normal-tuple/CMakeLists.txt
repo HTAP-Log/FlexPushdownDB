@@ -40,7 +40,8 @@ add_library(normal-tuple STATIC
         src/FileType.cpp include/normal/tuple/FileType.h
         src/FileReaderBuilder.cpp include/normal/tuple/FileReaderBuilder.h
         src/CSVReader.cpp include/normal/tuple/CSVReader.h
-        src/ArrayAppenderWrapper.cpp include/normal/tuple/ArrayAppenderWrapper.h)
+        src/ArrayAppenderWrapper.cpp include/normal/tuple/ArrayAppenderWrapper.h
+        src/serialization/TupleSetSer.cpp include/normal/tuple/serialization/TupleSetSer.h)
 
 target_include_directories(normal-tuple PUBLIC include)
 
@@ -50,6 +51,7 @@ target_link_libraries(normal-tuple PRIVATE LLVM-filesystem)
 target_link_libraries(normal-tuple PUBLIC expected)
 target_link_libraries(normal-tuple PUBLIC arrow_static)
 target_link_libraries(normal-tuple PUBLIC parquet_static)
+target_link_libraries(normal-tuple PUBLIC normal-util)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

@@ -24,6 +24,9 @@ class HashJoinProbeKernel2 {
 
 public:
   explicit HashJoinProbeKernel2(JoinPredicate pred, std::set<std::string> neededColumnNames);
+  HashJoinProbeKernel2() = default;
+  HashJoinProbeKernel2(const HashJoinProbeKernel2&) = default;
+  HashJoinProbeKernel2& operator=(const HashJoinProbeKernel2&) = default;
   static HashJoinProbeKernel2 make(JoinPredicate pred, std::set<std::string> neededColumnNames);
 
   tl::expected<void, std::string> joinBuildTupleSetIndex(const std::shared_ptr<TupleSetIndex>& tupleSetIndex);
@@ -45,6 +48,13 @@ private:
   [[nodiscard]] tl::expected<void, std::string> buffer(const std::shared_ptr<TupleSet2>& tupleSet);
   void bufferOutputSchema(const std::shared_ptr<TupleSetIndex> &tupleSetIndex, const std::shared_ptr<TupleSet2> &tupleSet);
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, HashJoinProbeKernel2& kernel) {
+    return f.object(kernel).fields(f.field("pred", kernel.pred_),
+                                   f.field("neededColumnNames", kernel.neededColumnNames_));
+  }
 };
 
 }

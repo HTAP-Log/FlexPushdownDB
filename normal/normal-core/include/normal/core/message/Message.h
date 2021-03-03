@@ -6,6 +6,7 @@
 #define NORMAL_NORMAL_NORMAL_CORE_SRC_MESSAGE_H
 
 #include <string>
+#include <caf/all.hpp>
 
 namespace normal::core::message {
 
@@ -20,10 +21,16 @@ private:
 
 public:
   explicit Message(std::string type, std::string sender);
+  Message() = default;
+  Message(const Message&) = default;
+  Message& operator=(const Message&) = default;
   virtual ~Message() = default;
   [[nodiscard]] std::string type() const;
   [[nodiscard]] std::string sender() const;
 
+  // caf inspector needs reference get function
+  std::string& type();
+  std::string& sender();
 };
 
 } // namespace

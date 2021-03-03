@@ -73,16 +73,15 @@ S3Get::S3Get(std::string name,
 						   std::vector<std::string> neededColumnNames,
 						   int64_t startOffset,
 						   int64_t finishOffset,
-               std::shared_ptr<arrow::Schema> schema,
-						   std::shared_ptr<Aws::S3::S3Client> s3Client,
+						   std::string tableName,
 						   bool scanOnStart,
                bool toCache,
                long queryId,
-               std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys) :
+               std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys) :
   S3SelectScan(std::move(name), "S3Get", std::move(s3Bucket), std::move(s3Object),
                std::move(returnedS3ColumnNames), std::move(neededColumnNames),
-               startOffset, finishOffset, std::move(schema),
-               std::move(s3Client), scanOnStart, toCache, queryId, std::move(weightedSegmentKeys)) {
+               startOffset, finishOffset, std::move(tableName), scanOnStart, toCache,
+               queryId, std::move(weightedSegmentKeys)) {
 }
 
 std::shared_ptr<S3Get> S3Get::make(const std::string& name,
@@ -92,12 +91,11 @@ std::shared_ptr<S3Get> S3Get::make(const std::string& name,
 												 const std::vector<std::string>& neededColumnNames,
 												 int64_t startOffset,
 												 int64_t finishOffset,
-                         const std::shared_ptr<arrow::Schema>& schema,
-												 const std::shared_ptr<Aws::S3::S3Client>& s3Client,
+                         const std::string tableName,
 												 bool scanOnStart,
 												 bool toCache,
 												 long queryId,
-                         const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>>& weightedSegmentKeys) {
+                         const std::vector<std::shared_ptr<normal::cache::SegmentKey>>& weightedSegmentKeys) {
   return std::make_shared<S3Get>(name,
 										s3Bucket,
 										s3Object,
@@ -105,8 +103,7 @@ std::shared_ptr<S3Get> S3Get::make(const std::string& name,
 										neededColumnNames,
 										startOffset,
 										finishOffset,
-										schema,
-										s3Client,
+										tableName,
 										scanOnStart,
 										toCache,
 										queryId,
@@ -150,7 +147,7 @@ tl::expected<void, std::string> S3Get::s3Get() {
   getObjectRequest.SetKey(Aws::String(s3Object_));
 
   std::chrono::steady_clock::time_point startTransferTime = std::chrono::steady_clock::now();
-  GetObjectOutcome getObjectOutcome = this->s3Client_->GetObject(getObjectRequest);
+  GetObjectOutcome getObjectOutcome = DefaultS3Client->GetObject(getObjectRequest);
   std::chrono::steady_clock::time_point stopTransferTime = std::chrono::steady_clock::now();
   auto transferTime = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTransferTime - startTransferTime).count();
   getTransferTimeNS_ += transferTime;
@@ -221,7 +218,7 @@ std::shared_ptr<TupleSet2> S3Get::readTuples() {
       requestStoreSegmentsInCache(readTupleSet);
     } else {
       // send segment filter weight
-      if (weightedSegmentKeys_ && processedBytes_ > 0) {
+      if (!weightedSegmentKeys_.empty() && processedBytes_ > 0) {
         sendSegmentWeight();
       }
     }

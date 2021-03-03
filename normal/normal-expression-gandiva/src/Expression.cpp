@@ -26,6 +26,10 @@ std::string Expression::showString() {
   return gandivaExpression_->ToString();
 }
 
+std::string Expression::expType() {
+  return expType_;
+}
+
 std::shared_ptr<std::string> normal::expression::gandiva::removePrefixInt(std::string str) {
   if (str.substr(0, prefixInt_.size()) == prefixInt_) {
     return std::make_shared<std::string>(str.substr(prefixInt_.size(), str.size() - prefixInt_.size()));

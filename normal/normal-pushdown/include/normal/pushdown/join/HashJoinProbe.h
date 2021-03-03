@@ -28,7 +28,10 @@ namespace normal::pushdown::join {
 class HashJoinProbe : public normal::core::Operator {
 
 public:
-  HashJoinProbe(const std::string &name, JoinPredicate pred, std::set<std::string> neededColumnNames, long queryId = 0);
+  explicit HashJoinProbe(const std::string &name, JoinPredicate pred, std::set<std::string> neededColumnNames, long queryId = 0);
+  HashJoinProbe() = default;
+  HashJoinProbe(const HashJoinProbe&) = default;
+  HashJoinProbe& operator=(const HashJoinProbe&) = default;
 
   void onReceive(const core::message::Envelope &msg) override;
 
@@ -42,6 +45,17 @@ private:
   void onComplete(const core::message::CompleteMessage &msg);
   void send(bool force);
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, HashJoinProbe& op) {
+    return f.object(op).fields(f.field("kernel", op.kernel_),
+                               f.field("name", op.name()),
+                               f.field("type", op.getType()),
+                               f.field("opContext", op.getOpContext()),
+                               f.field("producers", op.getProducers()),
+                               f.field("consumers", op.getConsumers()));
+  }
 };
 
 }

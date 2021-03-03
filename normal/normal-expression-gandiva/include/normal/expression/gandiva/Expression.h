@@ -27,8 +27,11 @@ public:
 
   std::string showString();
 
+  std::string expType();
+
 protected:
   ::gandiva::NodePtr gandivaExpression_;
+  std::string expType_;
 
 };
 

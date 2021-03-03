@@ -8,10 +8,16 @@
 
 namespace normal::pushdown::aggregate {
 
-AggregationFunction::AggregationFunction(std::string columnName) : alias_(std::move(columnName)) {}
+AggregationFunction::AggregationFunction(std::string columnName, std::string type) :
+  alias_(std::move(columnName)),
+  type_(type) {}
 
-const std::string &AggregationFunction::alias() const {
+std::string &AggregationFunction::alias() {
   return alias_;
+}
+
+std::string &AggregationFunction::type() {
+  return type_;
 }
 
 }

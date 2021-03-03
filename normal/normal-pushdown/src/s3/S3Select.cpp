@@ -75,23 +75,16 @@ S3Select::S3Select(std::string name,
 						   std::vector<std::string> neededColumnNames,
 						   int64_t startOffset,
 						   int64_t finishOffset,
-               std::shared_ptr<arrow::Schema> schema,
-						   std::shared_ptr<Aws::S3::S3Client> s3Client,
+               std::string tableName,
 						   bool scanOnStart,
                bool toCache,
                long queryId,
-               std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys) :
+               std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys) :
   S3SelectScan(std::move(name), "S3Select", std::move(s3Bucket), std::move(s3Object),
                std::move(returnedS3ColumnNames), std::move(neededColumnNames),
-               startOffset, finishOffset, std::move(schema),
-               std::move(s3Client), scanOnStart, toCache, queryId, std::move(weightedSegmentKeys)),
-	filterSql_(std::move(filterSql)) {
-  std::vector<std::shared_ptr<::arrow::Field>> fields;
-  for (auto const &columnName: returnedS3ColumnNames_) {
-    fields.emplace_back(schema_->GetFieldByName(columnName));
-  }
-  parser_ = S3CSVParser::make(returnedS3ColumnNames_, std::make_shared<::arrow::Schema>(fields));
-}
+               startOffset, finishOffset, std::move(tableName), scanOnStart, toCache,
+               queryId, std::move(weightedSegmentKeys)),
+	filterSql_(std::move(filterSql)) {}
 
 std::shared_ptr<S3Select> S3Select::make(const std::string& name,
 												 const std::string& s3Bucket,
@@ -101,12 +94,11 @@ std::shared_ptr<S3Select> S3Select::make(const std::string& name,
 												 const std::vector<std::string>& neededColumnNames,
 												 int64_t startOffset,
 												 int64_t finishOffset,
-                         const std::shared_ptr<arrow::Schema>& schema,
-												 const std::shared_ptr<Aws::S3::S3Client>& s3Client,
+                         const std::string tableName,
 												 bool scanOnstart,
 												 bool toCache,
 												 long queryId,
-                         const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>>& weightedSegmentKeys) {
+                         const std::vector<std::shared_ptr<normal::cache::SegmentKey>>& weightedSegmentKeys) {
   return std::make_shared<S3Select>(name,
 										s3Bucket,
 										s3Object,
@@ -115,13 +107,20 @@ std::shared_ptr<S3Select> S3Select::make(const std::string& name,
 										neededColumnNames,
 										startOffset,
 										finishOffset,
-										schema,
-										s3Client,
+										tableName,
 										scanOnstart,
 										toCache,
 										queryId,
 										weightedSegmentKeys);
 
+}
+
+void S3Select::makeParser() {
+  std::vector<std::shared_ptr<::arrow::Field>> fields;
+  for (auto const &columnName: returnedS3ColumnNames_) {
+    fields.emplace_back(schema_->GetFieldByName(columnName));
+  }
+  parser_ = S3CSVParser::make(returnedS3ColumnNames_, std::make_shared<::arrow::Schema>(fields));
 }
 
 InputSerialization S3Select::getInputSerialization() {
@@ -217,7 +216,7 @@ tl::expected<void, std::string> S3Select::s3Select() {
   selectObjectContentRequest.SetEventStreamHandler(handler);
 
   std::chrono::steady_clock::time_point startTransferConvertTime = std::chrono::steady_clock::now();
-  auto selectObjectContentOutcome = this->s3Client_->SelectObjectContent(selectObjectContentRequest);
+  auto selectObjectContentOutcome = DefaultS3Client->SelectObjectContent(selectObjectContentRequest);
   std::chrono::steady_clock::time_point stopTransferConvertTime = std::chrono::steady_clock::now();
   selectTransferAndConvertNS_ = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTransferConvertTime - startTransferConvertTime).count();
   numRequests_++;
@@ -267,7 +266,7 @@ std::shared_ptr<TupleSet2> S3Select::readTuples() {
       requestStoreSegmentsInCache(readTupleSet);
     } else {
       // send segment filter weight
-      if (weightedSegmentKeys_ && processedBytes_ > 0) {
+      if (!weightedSegmentKeys_.empty() && processedBytes_ > 0) {
         sendSegmentWeight();
       }
     }

@@ -161,8 +161,7 @@ Operators::makeDateS3SelectScanOperators(const std::string &s3ObjectDir,
 		dateColumns,
 		dateScanRanges[u].first,
 		dateScanRanges[u].second,
-    normal::connector::defaultMiniCatalogue->getSchema("date"),
-		client.defaultS3Client(),
+    "date",
 		true);
 	dateScanOperators.push_back(dateScan);
   }
@@ -195,8 +194,7 @@ Operators::makeDateS3SelectScanPushDownOperators(const std::string &s3ObjectDir,
 		dateColumns,
 		dateScanRanges[u].first,
 		dateScanRanges[u].second,
-    normal::connector::defaultMiniCatalogue->getSchema("date"),
-		client.defaultS3Client(),
+    "date",
 		true);
 	dateScanOperators.push_back(dateScan);
   }
@@ -337,8 +335,7 @@ Operators::makeLineOrderS3SelectScanOperators(const std::string &s3ObjectDir,
 		lineOrderColumns,
 		lineOrderScanRanges[u].first,
 		lineOrderScanRanges[u].second,
-    normal::connector::defaultMiniCatalogue->getSchema("lineorder"),
-		client.defaultS3Client(),
+    "lineorder",
 		true);
 	lineOrderScanOperators.push_back(lineOrderScan);
   }
@@ -377,8 +374,7 @@ Operators::makeLineOrderS3SelectScanPushdownOperators(const std::string &s3Objec
 		lineOrderColumns,
 		lineOrderScanRanges[u].first,
 		lineOrderScanRanges[u].second,
-    normal::connector::defaultMiniCatalogue->getSchema("lineorder"),
-		client.defaultS3Client(),
+    "lineorder",
 		true);
 	lineOrderScanOperators.push_back(lineOrderScan);
   }

@@ -101,8 +101,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
               *allNeededColumnNames,
               scanRange.first,
               scanRange.second,
-              miniCatalogue->getSchema(getName()),
-              DefaultS3Client,
+              getName(),
               true,
               false,
               queryId);
@@ -177,8 +176,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPushdown(int numRanges) {
               *projectedColumnNames_,
               scanRange.first,
               scanRange.second,
-              normal::connector::defaultMiniCatalogue->getSchema(getName()),
-              DefaultS3Client,
+              getName(),
               true,
               false,
               queryId);
@@ -258,8 +256,7 @@ S3SelectScanLogicalOperator::toOperatorsPullupCaching(int numRanges) {
               *projectedColumnNames_,
               scanRange.first,
               scanRange.second,
-              miniCatalogue->getSchema(getName()),
-              DefaultS3Client,
+              getName(),
               false,
               true,
               queryId);
@@ -299,7 +296,7 @@ S3SelectScanLogicalOperator::toOperatorsPullupCaching(int numRanges) {
                 fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
                 filterPredicate,
                 queryId,
-                weightedSegmentKeys);
+                *weightedSegmentKeys);
         operators->emplace_back(filter);
 
         merge->produce(filter);
@@ -412,8 +409,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
               *projectedColumnNames_,
               scanRange.first,
               scanRange.second,
-              normal::connector::defaultMiniCatalogue->getSchema(getName()),
-              DefaultS3Client,
+              getName(),
               false,
               true,
               queryId);
@@ -441,7 +437,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
                 fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
                 filterPredicate,
                 queryId,
-                weightedSegmentKeys);
+                *weightedSegmentKeys);
         operators->emplace_back(filter);
         leftOpOfMerge2 = filter;
 
@@ -461,12 +457,11 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
               *projectedColumnNames_,
               scanRange.first,
               scanRange.second,
-              normal::connector::defaultMiniCatalogue->getSchema(getName()),
-              DefaultS3Client,
+              getName(),
               false,
               false,
               queryId,
-              weightedSegmentKeys);
+              *weightedSegmentKeys);
       operators->emplace_back(s3Select);
 
       // merge2
@@ -575,8 +570,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
               *projectedColumnNames_,     // actually useless, will use columnNames from ScanMessage
               scanRange.first,
               scanRange.second,
-              normal::connector::defaultMiniCatalogue->getSchema(getName()),
-              DefaultS3Client,
+              getName(),
               false,
               true,
               queryId);
@@ -592,8 +586,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
               *projectedColumnNames_,
               scanRange.first,
               scanRange.second,
-              normal::connector::defaultMiniCatalogue->getSchema(getName()),
-              DefaultS3Client,
+              getName(),
               false,
               false,
               queryId);

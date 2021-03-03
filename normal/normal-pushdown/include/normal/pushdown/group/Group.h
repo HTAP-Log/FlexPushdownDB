@@ -16,6 +16,7 @@
 #include <normal/pushdown/aggregate/AggregationFunction.h>
 #include <normal/pushdown/group/GroupKernel.h>
 #include <normal/pushdown/group/GroupKernel2.h>
+#include <normal/pushdown/serialization/AggregationFunctionSer.h>
 
 namespace normal::pushdown::group {
 
@@ -38,6 +39,9 @@ public:
     const std::vector<std::string> &AggregateColumnNames,
 		const std::shared_ptr<std::vector<std::shared_ptr<aggregate::AggregationFunction>>> &AggregateFunctions,
 		long queryId = 0);
+  Group() = default;
+  Group(const Group&) = default;
+  Group& operator=(const Group&) = default;
 
   static std::shared_ptr<Group> make(const std::string &Name,
 									 const std::vector<std::string> &groupColumnNames,
@@ -49,8 +53,7 @@ public:
 
 private:
 
-//  std::unique_ptr<GroupKernel> kernel_;
-  std::unique_ptr<GroupKernel2> kernel2_;
+  std::shared_ptr<GroupKernel2> kernel2_;
 
   void onStart();
   void onTuple(const core::message::TupleMessage &msg);
@@ -60,6 +63,17 @@ private:
   long groupTime_ = 0;
   long numRows_ = 0;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Group& op) {
+    return f.object(op).fields(f.field("kernel2", op.kernel2_),
+                               f.field("name", op.name()),
+                               f.field("type", op.getType()),
+                               f.field("opContext", op.getOpContext()),
+                               f.field("producers", op.getProducers()),
+                               f.field("consumers", op.getConsumers()));
+  }
 };
 
 }

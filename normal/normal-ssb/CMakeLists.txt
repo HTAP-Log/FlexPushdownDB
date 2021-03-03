@@ -3,7 +3,7 @@ project(normal-ssb VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 # need to link libraries on mac
 if(${APPLE})
     message("MAC OS X")
-    LINK_DIRECTORIES(/usr/local/opt/llvm@7/lib)
+    LINK_DIRECTORIES(/usr/local/opt/llvm/lib)
     LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 else()
     message("NOT MAC OS X")

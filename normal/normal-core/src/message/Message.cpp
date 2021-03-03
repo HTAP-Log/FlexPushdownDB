@@ -20,4 +20,12 @@ std::string Message::sender() const {
   return sender_;
 }
 
+std::string& Message::type() {
+  return type_;
+}
+
+std::string& Message::sender() {
+  return sender_;
+}
+
 } // namespace

@@ -6,7 +6,7 @@
 #define NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_CACHE_SEGMENTCACHEACTOR_H
 
 #include <caf/all.hpp>
-
+#include <normal/util/CAFUtil.h>
 #include <normal/cache/SegmentCache.h>
 #include <normal/core/cache/LoadRequestMessage.h>
 #include <normal/core/cache/LoadResponseMessage.h>
@@ -15,9 +15,8 @@
 #include <normal/core/cache/CacheMetricsMessage.h>
 #include <normal/cache/CachingPolicy.h>
 #include <normal/core/Forward.h>
-#include <normal/core/Globals.h>
 
-CAF_BEGIN_TYPE_ID_BLOCK(SegmentCacheActor, normal::core::SegmentCacheActor_first_custom_type_id)
+CAF_BEGIN_TYPE_ID_BLOCK(SegmentCacheActor, normal::util::SegmentCacheActor_first_custom_type_id)
 CAF_ADD_ATOM(SegmentCacheActor, LoadAtom)
 CAF_ADD_ATOM(SegmentCacheActor, StoreAtom)
 CAF_ADD_ATOM(SegmentCacheActor, WeightAtom)
@@ -49,22 +48,6 @@ struct SegmentCacheActorState {
   std::string name = "segment-cache";
   std::shared_ptr<SegmentCache> cache;
 };
-
-//using LoadAtom = atom_constant<atom("Load")>;
-//using StoreAtom = atom_constant<atom("Store")>;
-//using WeightAtom = atom_constant<atom("Weight")>;
-//using GetNumHitsAtom = atom_constant<atom("NumHits")>;
-//using GetNumMissesAtom = atom_constant<atom("NumMisses")>;
-//using GetNumShardHitsAtom = atom_constant<atom("NumShrdHit")>;
-//using GetNumShardMissesAtom = atom_constant<atom("NumShrdMis")>;
-//using GetCrtQueryNumHitsAtom = atom_constant<atom("CNumHits")>;
-//using GetCrtQueryNumMissesAtom = atom_constant<atom("CNumMisses")>;
-//using GetCrtQueryNumShardHitsAtom = atom_constant<atom("CNmShrdHit")>;
-//using GetCrtQueryNumShardMissesAtom = atom_constant<atom("CNmShrdMis")>;
-//using ClearMetricsAtom = atom_constant<atom("ClrMetrics")>;
-//using ClearCrtQueryMetricsAtom = atom_constant<atom("ClrCMetric")>;
-//using ClearCrtQueryShardMetricsAtom = atom_constant<atom("ClrCShrMet")>;
-//using MetricsAtom = atom_constant<atom("Metrics")>;
 
 class SegmentCacheActor {
 

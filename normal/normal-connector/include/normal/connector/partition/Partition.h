@@ -24,6 +24,8 @@ public:
 
   virtual size_t hash() = 0;
 
+  virtual std::string type() = 0;
+
   [[nodiscard]] const long &getNumBytes() const;
   void setNumBytes(const long &NumBytes);
 

@@ -16,6 +16,9 @@ namespace normal::core {
 class OperatorConnection {
 public:
   OperatorConnection(std::string Name, caf::actor ActorHandle, OperatorRelationshipType ConnectionType);
+  OperatorConnection() = default;
+  OperatorConnection(const OperatorConnection&) = default;
+  OperatorConnection& operator=(const OperatorConnection&) = default;
 
   [[nodiscard]] const std::string &getName() const;
   [[nodiscard]] const caf::actor &getActorHandle() const;
@@ -26,6 +29,14 @@ private:
   caf::actor actorHandle_;
   OperatorRelationshipType connectionType_;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, OperatorConnection& con) {
+    return f.object(con).fields(f.field("name", con.name_),
+                                f.field("actorHandle", con.actorHandle_),
+                                f.field("connectionType", con.connectionType_));
+  }
 };
 
 }

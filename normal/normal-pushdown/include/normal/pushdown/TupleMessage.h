@@ -26,10 +26,21 @@ private:
 
 public:
   explicit TupleMessage(std::shared_ptr<TupleSet> tuples, std::string sender);
+  TupleMessage() = default;
+  TupleMessage(const TupleMessage&) = default;
+  TupleMessage& operator=(const TupleMessage&) = default;
   ~TupleMessage() override = default;
 
   [[nodiscard]] std::shared_ptr<TupleSet> tuples() const;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, TupleMessage& msg) {
+    return f.object(msg).fields(f.field("type", msg.type()),
+                                f.field("sender", msg.sender()),
+                                f.field("tuples", msg.tuples_));
+  }
 };
 
 }

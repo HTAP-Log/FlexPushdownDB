@@ -7,13 +7,14 @@
 
 #include <memory>
 #include <vector>
-
+#include <normal/util/CAFUtil.h>
 #include <arrow/api.h>
 #include <arrow/csv/api.h>
 #include <tl/expected.hpp>
 #include <normal/tuple/arrow/Arrays.h>
 #include <normal/tuple/arrow/TableHelper.h>
 #include "normal/tuple/Globals.h"
+#include <normal/tuple/serialization/TupleSetSer.h>
 
 namespace arrow { class Table; }
 namespace arrow::csv { class TableReader; }
@@ -136,8 +137,35 @@ public:
 
 //  tl::expected<std::shared_ptr<TupleSet>, std::string>
 //  evaluate(const std::shared_ptr<normal::expression::Projector> &projector);
+
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, TupleSet& tupleSet) {
+    auto toBytes = [&tupleSet]() -> decltype(auto) {
+      return table_to_bytes(tupleSet.table_);
+    };
+    auto fromBytes = [&tupleSet](const std::vector<std::uint8_t> &bytes) {
+      tupleSet.table_ = bytes_to_table(bytes);
+      return true;
+    };
+    return f.object(tupleSet).fields(f.field("table", toBytes, fromBytes));
+  }
 };
 
 }
+
+using TupleSetPtr = std::shared_ptr<normal::tuple::TupleSet>;
+
+CAF_BEGIN_TYPE_ID_BLOCK(TupleSet, normal::util::TupleSet_first_custom_type_id)
+CAF_ADD_TYPE_ID(TupleSet, (normal::tuple::TupleSet))
+CAF_END_TYPE_ID_BLOCK(TupleSet)
+
+namespace caf {
+template <>
+struct inspector_access<TupleSetPtr> : variant_inspector_access<TupleSetPtr> {
+    // nop
+};
+} // namespace caf
 
 #endif //NORMAL_NORMAL_NORMAL_CORE_SRC_TUPLESET_H

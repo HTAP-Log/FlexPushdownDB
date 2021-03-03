@@ -45,3 +45,7 @@ bool S3SelectPartition::equalTo(std::shared_ptr<Partition> other) {
 bool S3SelectPartition::operator==(const S3SelectPartition &other) {
   return bucket_ == other.bucket_ && object_ == other.object_;
 }
+
+std::string S3SelectPartition::type() {
+  return "S3SelectPartition";
+}

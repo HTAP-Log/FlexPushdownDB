@@ -28,6 +28,10 @@ private:
 
 
 public:
+  LocalOperatorDirectory() = default;
+  LocalOperatorDirectory(const LocalOperatorDirectory&) = default;
+  LocalOperatorDirectory& operator=(const LocalOperatorDirectory&) = default;
+
   void insert(const LocalOperatorDirectoryEntry &entry);
   void setComplete(const std::string &name);
 //  bool allComplete();
@@ -43,6 +47,16 @@ public:
   get(const OperatorRelationshipType &operatorRelationshipType);
   void destroyActorHandles();
 
+// caf inspect
+public:
+template <class Inspector>
+friend bool inspect(Inspector& f, LocalOperatorDirectory& directory) {
+  return f.object(directory).fields(f.field("entries", directory.entries_),
+                                    f.field("numProducers", directory.numProducers),
+                                    f.field("numConsumers", directory.numConsumers),
+                                    f.field("numProducersComplete", directory.numProducersComplete),
+                                    f.field("numConsumersComplete", directory.numConsumersComplete));
+}
 };
 
 }

@@ -11,28 +11,20 @@
 #include <normal/plan/mode/Modes.h>
 #include <normal/sql/Interpreter.h>
 #include <normal/core/OperatorActor.h>
-#include <normal/pushdown/collate/Collate.h>
-#include <normal/pushdown/s3/S3Select.h>
 
-using namespace normal::cache;
 using namespace normal::plan::operator_::mode;
 using namespace normal::sql;
 using namespace normal::core;
-using namespace normal::pushdown;
 
 namespace normal::frontend {
 
 class Client {
-
   struct config : actor_system_config {
     config(int port, std::string host, bool serverMode) :
     port_(port), host_(host), serverMode_(serverMode){
       load<io::middleman>();
       add_actor_type("display", display_fun);
-//      add_message_type<msg>("msg");
-//      add_actor_type<OperatorActor, S3Select&>("S3Select");
-//      add_message_type<S3Select>("S3SelectOperatorMessage");
-//      add_message_type<Collate>("CollateOperatorMessage");
+      add_actor_type<OperatorActor, OperatorPtr&>("OperatorActor");
       opt_group{custom_options_, "global"}
               .add(port, "port,p", "set port")
               .add(host, "host,H", "set node (ignored in server mode)")
@@ -44,8 +36,8 @@ class Client {
   };
 
   static void client_repl(function_view<display> f, std::string content) {
-//    msg newContent{content, false, std::make_shared<msg2>(content, 998)};
-    msg newContent{content, false, msg2(content, 998)};
+    auto subMsg = std::make_shared<msg2>(content, 111);
+    msg newContent{content, false, subMsg};
     std::cout << f(newContent) << std::endl;
   }
 

@@ -16,6 +16,8 @@ private:
 
 public:
   explicit Integer64Type() : Type("Int64") {}
+  Integer64Type(const Integer64Type&) = default;
+  Integer64Type& operator=(const Integer64Type&) = default;
 
   std::string asGandivaTypeString() override {
 	return "BIGINT";
@@ -23,6 +25,13 @@ public:
 
   std::shared_ptr<arrow::DataType> asArrowType() override {
 	return arrow::int64();
+  }
+
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Integer64Type& type) {
+    return f.apply(type.name());
   }
 
 };

@@ -11,7 +11,7 @@
 #include <normal/cache/LRUCachingPolicy.h>
 #include <normal/cache/FBRSCachingPolicy.h>
 #include <normal/cache/WFBRCachingPolicy.h>
-#include <normal/plan/Globals.h>
+#include <normal/pushdown/Globals.h>
 #include <normal/util/Util.h>
 
 using namespace normal::frontend;
@@ -25,6 +25,9 @@ Client::Client():
   ::caf::init_global_meta_objects<::caf::id_block::Client>();
   normal::core::init_caf_global_meta_objects();
   clientActorSystem_ = std::make_shared<caf::actor_system>(clientCfg_);
+//  auto logCfg = caf::logger::config();
+//  caf::logger(logCfg);
+//  std::cout << caf::logger::current_logger()->console_verbosity() << logCfg.console_verbosity << std::endl;
   serverActorSystem_ = std::make_shared<caf::actor_system>(serverCfg_);
 }
 
@@ -152,10 +155,10 @@ void Client::configureS3ConnectorSinglePartition(std::shared_ptr<Interpreter> &i
     auto s3Object = dir_prefix + tableName + ".tbl";
     s3Objects->emplace_back(s3Object);
   }
-  auto objectNumBytes_Map = normal::connector::s3::S3Util::listObjects(bucket_name, dir_prefix, *s3Objects, normal::plan::DefaultS3Client);
+  auto objectNumBytes_Map = normal::connector::s3::S3Util::listObjects(bucket_name, dir_prefix, *s3Objects, normal::pushdown::DefaultS3Client);
 
   // configure s3Connector
-  for (int tbl_id = 0; tbl_id < tableNames->size(); tbl_id++) {
+  for (size_t tbl_id = 0; tbl_id < tableNames->size(); tbl_id++) {
     auto &tableName = tableNames->at(tbl_id);
     auto &s3Object = s3Objects->at(tbl_id);
     auto numBytes = objectNumBytes_Map.find(s3Object)->second;
@@ -208,7 +211,7 @@ void Client::configureS3ConnectorMultiPartition(std::shared_ptr<Interpreter> &i,
     auto objects = s3ObjectPair.second;
     s3Objects->insert(s3Objects->end(), objects->begin(), objects->end());
   }
-  auto objectNumBytes_Map = normal::connector::s3::S3Util::listObjects(bucket_name, dir_prefix, *s3Objects, normal::plan::DefaultS3Client);
+  auto objectNumBytes_Map = normal::connector::s3::S3Util::listObjects(bucket_name, dir_prefix, *s3Objects, normal::pushdown::DefaultS3Client);
 
   // configure s3Connector
   for (auto const &s3ObjectPair: *s3ObjectsMap) {

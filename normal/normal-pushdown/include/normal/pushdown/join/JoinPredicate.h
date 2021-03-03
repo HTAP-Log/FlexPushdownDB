@@ -18,6 +18,9 @@ class JoinPredicate {
   
 public:
   JoinPredicate(std::string leftColumnName, std::string rightColumnName);
+  JoinPredicate() = default;
+  JoinPredicate(const JoinPredicate&) = default;
+  JoinPredicate& operator=(const JoinPredicate&) = default;
   const std::string &getLeftColumnName() const;
   const std::string &getRightColumnName() const;
   static JoinPredicate create(const std::string &leftColumnName, const std::string &rightColumnName);
@@ -26,6 +29,13 @@ private:
   std::string leftColumnName_;
   std::string rightColumnName_;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, JoinPredicate& pred) {
+    return f.object(pred).fields(f.field("leftColumnName", pred.leftColumnName_),
+                                 f.field("rightColumnName", pred.rightColumnName_));
+  }
 };
 
 }

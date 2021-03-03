@@ -16,7 +16,7 @@
 namespace normal::pushdown::aggregate {
 
 Sum::Sum(std::string columnName, std::shared_ptr<normal::expression::gandiva::Expression> expression) :
-    AggregationFunction(std::move(columnName)),
+    AggregationFunction(std::move(columnName), "Sum"),
     expression_(std::move(expression)) {}
 
 

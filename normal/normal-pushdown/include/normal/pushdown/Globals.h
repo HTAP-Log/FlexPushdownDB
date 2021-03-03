@@ -13,15 +13,16 @@
 
 namespace normal::pushdown {
 
-/**
- * Default number of tuples operators should buffer before sending to consumers
- */
-inline constexpr int DefaultBufferSize = 10000;
-inline constexpr int DefaultS3ScanBufferSize = 100000;
-inline constexpr bool RefinedWeightFunction = true;
-inline constexpr double vNetwork = 0.24419;     // unit: GB/s
-inline constexpr double vS3Scan = 3.88424;      // unit: GB/s
-inline constexpr double vS3Filter = 0.084907;   // unit: GPred/s
+  /**
+   * Default number of tuples operators should buffer before sending to consumers
+   */
+  inline constexpr int DefaultBufferSize = 10000;
+  inline constexpr int DefaultS3ScanBufferSize = 100000;
+  inline constexpr bool RefinedWeightFunction = true;
+  inline constexpr double vNetwork = 0.24419;     // unit: GB/s
+  inline constexpr double vS3Scan = 3.88424;      // unit: GB/s
+  inline constexpr double vS3Filter = 0.084907;   // unit: GPred/s
+  inline const std::shared_ptr<Aws::S3::S3Client> DefaultS3Client = normal::pushdown::AWSClient::defaultS3Client();
 }
 
 #endif //NORMAL_NORMAL_PUSHDOWN_INCLUDE_NORMAL_PUSHDOWN_GLOBALS_H

@@ -14,8 +14,7 @@ Group::Group(const std::string &Name,
 			 const std::shared_ptr<std::vector<std::shared_ptr<aggregate::AggregationFunction>>> &AggregateFunctions,
 			 long queryId) :
 	Operator(Name, "Group", queryId),
-//	kernel_(std::make_unique<GroupKernel>(ColumnNames, *AggregateFunctions)),
-			kernel2_(std::make_unique<GroupKernel2>(GroupColumnNames, AggregateColumnNames, *AggregateFunctions)) {
+  kernel2_(std::make_shared<GroupKernel2>(GroupColumnNames, AggregateColumnNames, *AggregateFunctions)) {
 }
 
 std::shared_ptr<Group> Group::make(const std::string &Name,

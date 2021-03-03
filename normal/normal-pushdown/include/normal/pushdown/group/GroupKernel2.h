@@ -10,8 +10,9 @@
 #include <memory>
 #include <unordered_map>
 
+#include <caf/all.hpp>
+#include <normal/util/CAFUtil.h>
 #include <normal/tuple/TupleSet2.h>
-
 #include <normal/pushdown/aggregate/AggregationFunction.h>
 #include <normal/pushdown/group/GroupKey.h>
 #include <normal/tuple/ArrayAppender.h>
@@ -46,6 +47,9 @@ public:
   GroupKernel2(const std::vector<std::string>& groupColumnNames,
          const std::vector<std::string>& aggregateColumnNames,
 			   std::vector<std::shared_ptr<AggregationFunction>> aggregateFunctions);
+  GroupKernel2() = default;
+  GroupKernel2(const GroupKernel2&) = default;
+  GroupKernel2& operator=(const GroupKernel2&) = default;
 
   /**
    * Groups the input tuple set and computes intermediate aggregates
@@ -120,8 +124,30 @@ private:
    * @param table
    */
   void computeGroupAggregates();
+
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, GroupKernel2& kernel) {
+    return f.object(kernel).fields(f.field("groupColumnNames", kernel.groupColumnNames_),
+                                   f.field("aggregateColumnNames", kernel.aggregateColumnNames_),
+                                   f.field("aggregateFunctions", kernel.aggregateFunctions_));
+  }
 };
 
 }
+
+using GroupKernel2Ptr = std::shared_ptr<normal::pushdown::group::GroupKernel2>;
+
+CAF_BEGIN_TYPE_ID_BLOCK(GroupKernel2, normal::util::GroupKernel2_first_custom_type_id)
+CAF_ADD_TYPE_ID(GroupKernel2, (normal::pushdown::group::GroupKernel2))
+CAF_END_TYPE_ID_BLOCK(GroupKernel2)
+
+namespace caf {
+template <>
+struct inspector_access<GroupKernel2Ptr> : variant_inspector_access<GroupKernel2Ptr> {
+    // nop
+};
+} // namespace caf
 
 #endif //NORMAL_NORMAL_PUSHDOWN_INCLUDE_NORMAL_PUSHDOWN_GROUP_GROUPKERNEL2_H

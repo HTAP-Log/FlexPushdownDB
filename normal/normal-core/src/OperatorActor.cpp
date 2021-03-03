@@ -11,6 +11,7 @@
 #include "normal/core/Globals.h"
 #include "normal/core/message/Envelope.h"
 #include <normal/pushdown/s3/S3Select.h>
+#include <normal/pushdown/s3/S3Get.h>
 
 using namespace normal::pushdown;
 using namespace ::caf;
@@ -21,15 +22,16 @@ OperatorActor::OperatorActor(actor_config &cfg, std::shared_ptr<Operator> opBeha
 	event_based_actor(cfg),
 	opBehaviour_(std::move(opBehaviour)) {
   name_ = opBehaviour_->name();
-}
 
-OperatorActor::OperatorActor(actor_config &cfg, Operator& opBehaviour) :
-  event_based_actor(cfg) {
-  name_ = opBehaviour.name();
-  if (opBehaviour.getType() == "S3Select") {
-    opBehaviour_ = std::make_shared<S3Select>(dynamic_cast<S3Select&>(opBehaviour));
-  } else {
-    throw std::runtime_error(fmt::format("Unimplemented operator for remote_spawn: {}", opBehaviour.getType()));
+  // Something has to be done after Operator created to avoid serialization, e.g. parser for S3Select
+  if (opBehaviour_->getType() == "S3Select" || opBehaviour_->getType() == "S3Get") {
+    auto S3SelectScanOp = std::static_pointer_cast<S3SelectScan>(opBehaviour_);
+    S3SelectScanOp->makeSchema();
+    S3SelectScanOp->reserveColumnsReadFromS3();
+    if (opBehaviour_->getType() == "S3Select") {
+      auto S3SelectOp = std::static_pointer_cast<S3Select>(opBehaviour_);
+      S3SelectOp->makeParser();
+    }
   }
 }
 

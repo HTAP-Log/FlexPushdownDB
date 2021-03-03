@@ -29,6 +29,9 @@ class HashJoinBuild : public normal::core::Operator {
 
 public:
   explicit HashJoinBuild(const std::string &name, std::string columnName, long queryId = 0);
+  HashJoinBuild() = default;
+  HashJoinBuild(const HashJoinBuild&) = default;
+  HashJoinBuild& operator=(const HashJoinBuild&) = default;
 
   static std::shared_ptr<HashJoinBuild> create(const std::string &name, const std::string &columnName);
 
@@ -54,6 +57,18 @@ private:
   long joinBuildTime_ = 0;
   long numRows_ = 0;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, HashJoinBuild& op) {
+    return f.object(op).fields(f.field("columnName", op.columnName_),
+                               f.field("kernel", op.kernel_),
+                               f.field("name", op.name()),
+                               f.field("type", op.getType()),
+                               f.field("opContext", op.getOpContext()),
+                               f.field("producers", op.getProducers()),
+                               f.field("consumers", op.getConsumers()));
+  }
 };
 
 }

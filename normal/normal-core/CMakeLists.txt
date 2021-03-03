@@ -38,8 +38,11 @@ add_library(normal-core STATIC
         include/normal/core/Forward.h
         src/OperatorActor2.cpp include/normal/core/OperatorActor2.h
         src/OperatorConnection.cpp include/normal/core/OperatorConnection.h
-        include/normal/core/message/ConnectMessage.cpp include/normal/core/message/ConnectMessage.h
-        src/cache/CacheMetricsMessage.cpp include/normal/core/cache/CacheMetricsMessage.h)
+        src/message/ConnectMessage.cpp include/normal/core/message/ConnectMessage.h
+        src/cache/CacheMetricsMessage.cpp include/normal/core/cache/CacheMetricsMessage.h
+        include/normal/core/serialization/MessageSer.h
+        include/normal/core/serialization/OperatorSer.h
+        include/normal/core/serialization/TypeSer.h)
 
 
 target_include_directories(normal-core PUBLIC include)
@@ -47,8 +50,6 @@ target_include_directories(normal-core PUBLIC include)
 target_link_libraries(normal-core PRIVATE LLVM-filesystem)
 target_link_libraries(normal-core PRIVATE spdlog::spdlog)
 target_link_libraries(normal-core PRIVATE fmt::fmt)
-target_link_libraries(normal-core PUBLIC caf::libcaf_core_shared)
-target_link_libraries(normal-core PUBLIC caf::libcaf_io_shared)
 target_link_libraries(normal-core PUBLIC arrow_static)
 target_link_libraries(normal-core PUBLIC gandiva_static)
 target_link_libraries(normal-core PUBLIC graphviz_gvc_shared)

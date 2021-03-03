@@ -27,6 +27,7 @@ target_link_libraries(normal-cache PRIVATE fmt::fmt)
 target_link_libraries(normal-cache PUBLIC arrow_static)
 target_link_libraries(normal-cache PUBLIC normal-connector)
 target_link_libraries(normal-cache PUBLIC normal-tuple)
+target_link_libraries(normal-cache PUBLIC normal-util)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

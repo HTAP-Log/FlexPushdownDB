@@ -10,8 +10,7 @@
 
 #include <caf/all.hpp>
 #include <boost/callable_traits.hpp>
-
-#include <normal/core/Globals.h>
+#include <normal/util/CAFUtil.h>
 #include <normal/core/LocalOperatorDirectory.h>
 #include <normal/core/message/Envelope.h>
 #include <normal/core/message/StartMessage.h>
@@ -26,11 +25,9 @@ using namespace normal::core::message;
 using namespace boost::callable_traits;
 
 using ExpectedVoidString = tl::expected<void, std::string>;
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::vector<normal::core::OperatorConnection>);
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(ExpectedVoidString);
 
-// FIXME: unsure how to deal with "first_id", if still using "first_custom_type_id" will raise a redefinition error
-CAF_BEGIN_TYPE_ID_BLOCK(OperatorActor2, normal::core::OperatorActor2_first_custom_type_id)
+CAF_BEGIN_TYPE_ID_BLOCK(OperatorActor2, normal::util::OperatorActor2_first_custom_type_id)
 CAF_ADD_ATOM(OperatorActor2, ConnectAtom)
 CAF_ADD_ATOM(OperatorActor2, StartAtom)
 CAF_ADD_ATOM(OperatorActor2, StopAtom)

@@ -20,10 +20,21 @@ class Subtract : public BinaryExpression {
 
 public:
   Subtract(std::shared_ptr<Expression> left, std::shared_ptr<Expression> right);
+  Subtract() = default;
+  Subtract(const Subtract&) = default;
+  Subtract& operator=(const Subtract&) = default;
 
   void compile(std::shared_ptr<arrow::Schema> schema) override;
   std::string alias() override;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Subtract& exp) {
+    return f.object(exp).fields(f.field("left", exp.left_),
+                                f.field("right", exp.right_),
+                                f.field("expType", exp.expType_));
+  }
 };
 
 std::shared_ptr<Expression> minus(std::shared_ptr<Expression> left, std::shared_ptr<Expression> right);

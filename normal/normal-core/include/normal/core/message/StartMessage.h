@@ -7,10 +7,9 @@
 
 #include <vector>
 
-#include <caf/all.hpp>
 #include <normal/core/OperatorConnection.h>
 
-#include "normal/core/message/Message.h"
+#include <normal/core/message/Message.h>
 
 namespace normal::core::message {
 
@@ -21,7 +20,17 @@ class StartMessage : public Message {
 
 public:
   explicit StartMessage(std::string from);
+  StartMessage() = default;
+  StartMessage(const StartMessage&) = default;
+  StartMessage& operator=(const StartMessage&) = default;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, StartMessage& msg) {
+    return f.object(msg).fields(f.field("type", msg.type()),
+                                f.field("sender", msg.sender()));
+  }
 };
 
 }

@@ -7,9 +7,6 @@
 
 #include <normal/connector/Connector.h>
 
-#include <normal/pushdown/AWSClient.h>
-#include <normal/connector/Connector.h>
-
 namespace normal::connector::s3 {
 
 class S3SelectConnector : public normal::connector::Connector {

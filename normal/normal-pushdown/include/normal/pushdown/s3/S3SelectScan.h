@@ -31,7 +31,8 @@ namespace normal::pushdown {
 class S3SelectScan : public normal::core::Operator {
 public:
   S3SelectScan() = default;
-  S3SelectScan(const S3SelectScan& other) = default;
+  S3SelectScan(const S3SelectScan&) = default;
+  S3SelectScan& operator=(const S3SelectScan&) = default;
   S3SelectScan(std::string name,
 			   std::string type,
 			   std::string s3Bucket,
@@ -40,12 +41,15 @@ public:
 			   std::vector<std::string> neededColumnNames,
 			   int64_t startOffset,
 			   int64_t finishOffset,
-         std::shared_ptr<arrow::Schema> schema,
-			   std::shared_ptr<Aws::S3::S3Client> s3Client,
+         std::string tableName,
 			   bool scanOnStart,
 			   bool toCache,
 			   long queryId,
-         std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys);
+         std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys);
+
+  // Something has to be done after Operator created to avoid serialization
+  void makeSchema();
+  void reserveColumnsReadFromS3();
 
   [[nodiscard]] size_t getProcessedBytes() const;
   [[nodiscard]] size_t getReturnedBytes() const;
@@ -64,10 +68,9 @@ public:
   const int64_t& getStartOffset() const;
   const int64_t& getFinishOffset() const;
   const std::shared_ptr<arrow::Schema> &getSchema() const;
-  const std::shared_ptr<Aws::S3::S3Client> &getS3Client() const;
   const bool& isScanOnStart() const;
   const bool& isToCache() const;
-  const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> &getWeightedSegmentKeys() const;
+  const std::vector<std::shared_ptr<normal::cache::SegmentKey>> &getWeightedSegmentKeys() const;
 
 protected:
   std::string s3Bucket_;
@@ -76,8 +79,8 @@ protected:
 	std::vector<std::string> neededColumnNames_;
   int64_t startOffset_;
   int64_t finishOffset_;
+  std::string tableName_;
   std::shared_ptr<arrow::Schema> schema_;
-  std::shared_ptr<Aws::S3::S3Client> s3Client_;
   // the columns that are read from s3 (SELECT vs GET will differ depending on the projection for Select)
   std::vector<std::shared_ptr<std::pair<std::string, ::arrow::ArrayVector>>> columnsReadFromS3_;
   size_t processedBytes_ = 0;
@@ -114,7 +117,7 @@ protected:
   /**
    * used to compute filter weight
    */
-  std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys_;
+  std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys_;
 };
 
 }

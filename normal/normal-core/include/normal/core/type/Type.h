@@ -19,13 +19,17 @@ private:
 
 public:
   explicit Type(std::string name) : name_(std::move(name)) {}
+  Type() = default;
+  Type(const Type&) = default;
+  Type& operator=(const Type&) = default;
+
   virtual ~Type() = default;
 
   virtual std::shared_ptr<arrow::DataType> asArrowType() = 0;
 
   virtual std::string asGandivaTypeString() = 0;
 
-  [[nodiscard]] const std::string &name() const {
+  [[nodiscard]] std::string &name() {
     return name_;
   }
 

@@ -7,8 +7,6 @@
 
 #include <vector>
 
-#include <caf/all.hpp>
-
 #include "normal/core/message/Message.h"
 
 namespace normal::core::message {
@@ -19,7 +17,17 @@ class CompleteMessage : public Message {
 
 public:
   explicit CompleteMessage(std::string sender);
+  CompleteMessage() = default;
+  CompleteMessage(const CompleteMessage&) = default;
+  CompleteMessage& operator=(const CompleteMessage&) = default;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, CompleteMessage& msg) {
+    return f.object(msg).fields(f.field("type", msg.type()),
+                                f.field("sender", msg.sender()));
+  }
 };
 
 }

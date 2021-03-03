@@ -6,12 +6,12 @@
 #define NORMAL_NORMAL_CACHE_INCLUDE_NORMAL_CACHE_SEGMENTKEY_H
 
 #include <memory>
-
-#include <normal/connector/partition/Partition.h>
 #include <caf/io/all.hpp>
-
+#include <normal/util/CAFUtil.h>
+#include <normal/connector/partition/Partition.h>
 #include "SegmentRange.h"
 #include "SegmentMetadata.h"
+#include <normal/connector/serialization/PartitionSer.h>
 
 namespace normal::cache {
 
@@ -26,6 +26,10 @@ public:
              std::string columnName,
              SegmentRange Range,
              std::shared_ptr<SegmentMetadata> metadata);
+
+  SegmentKey() = default;
+  SegmentKey(const SegmentKey&) = default;
+  SegmentKey& operator=(const SegmentKey&) = default;
 
   static std::shared_ptr<SegmentKey> make(const std::shared_ptr<Partition> &Partition,
                                           std::string columnName,
@@ -57,6 +61,16 @@ private:
 
   // FIXME: maybe not a good way to store metadata inside the SegmentKey
   std::shared_ptr<SegmentMetadata> metadata_;
+
+// caf inspect
+public:
+template <class Inspector>
+friend bool inspect(Inspector& f, SegmentKey& key) {
+  return f.object(key).fields(f.field("partition", key.partition_),
+                              f.field("columnName", key.columnName_),
+                              f.field("range", key.range_),
+                              f.field("metadata", key.metadata_));
+}
 };
 
 struct SegmentKeyPointerHash {
@@ -71,11 +85,19 @@ struct SegmentKeyPointerPredicate {
   }
 };
 
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, SegmentKey& segmentKey) {
-//  return f(caf::meta::type_name("SegmentKey"),
-//          segmentKey.getPartition(), segmentKey.getColumnName());
-//}
 }
+
+using SegmentKeyPtr = std::shared_ptr<normal::cache::SegmentKey>;
+
+CAF_BEGIN_TYPE_ID_BLOCK(SegmentKey, normal::util::SegmentKey_first_custom_type_id)
+CAF_ADD_TYPE_ID(SegmentKey, (normal::cache::SegmentKey))
+CAF_END_TYPE_ID_BLOCK(SegmentKey)
+
+namespace caf {
+template <>
+struct inspector_access<SegmentKeyPtr> : variant_inspector_access<SegmentKeyPtr> {
+    // nop
+};
+} // namespace caf
 
 #endif //NORMAL_NORMAL_CACHE_INCLUDE_NORMAL_CACHE_SEGMENTKEY_H
