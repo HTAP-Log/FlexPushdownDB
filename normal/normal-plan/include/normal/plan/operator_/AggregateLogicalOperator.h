@@ -22,10 +22,9 @@ public:
   explicit AggregateLogicalOperator(std::shared_ptr<std::vector<std::shared_ptr<function::AggregateLogicalFunction>>> functions,
                                     std::shared_ptr<LogicalOperator> producer);
 
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperators();
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int> > toOperatorsWithPlacementsUniHash(int numNodes) override;
 
   const std::shared_ptr<LogicalOperator> &getProducer() const;
-
 
   void setNumConcurrentUnits(int numConcurrentUnits);
 

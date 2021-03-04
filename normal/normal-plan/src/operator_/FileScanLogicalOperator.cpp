@@ -13,18 +13,22 @@ FileScanLogicalOperator::FileScanLogicalOperator(
 	const std::shared_ptr<LocalFilePartitioningScheme> &partitioningScheme) :
 	ScanLogicalOperator(partitioningScheme) {}
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> FileScanLogicalOperator::toOperators() {
-  auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
+// TODO: need to create subsequent filters, like S3SelectScanLogicalOperator
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+FileScanLogicalOperator::toOperatorsWithPlacementsUniHash(int numNodes) {
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
+  int index = 0;
   for (const auto &partition: *getPartitioningScheme()->partitions()) {
-	auto localFilePartition = std::static_pointer_cast<LocalFilePartition>(partition);
+    auto localFilePartition = std::static_pointer_cast<LocalFilePartition>(partition);
 
-	const std::shared_ptr<pushdown::FileScan> &fileScanOperator =
-		std::make_shared<normal::pushdown::FileScan>(localFilePartition->getPath(),
-													 localFilePartition->getPath(),
-													 getQueryId());
+    const std::shared_ptr<pushdown::FileScan> &fileScanOperator =
+      std::make_shared<normal::pushdown::FileScan>(localFilePartition->getPath(),
+                             localFilePartition->getPath(),
+                             getQueryId());
 
 
-	operators->push_back(fileScanOperator);
+    operatorsWithPlacements.emplace_back(fileScanOperator, index % numNodes);
+    index++;
   }
-  return operators;
+  return operatorsWithPlacements;
 }

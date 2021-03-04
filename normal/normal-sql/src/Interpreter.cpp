@@ -64,7 +64,7 @@ void Interpreter::plan(int numNodes) {
   // Create physical plan
   auto queryId = operatorGraph_->getId();
   plan::Planner::setQueryId(queryId);
-  auto physicalPlan = plan::Planner::generate(*logicalPlan_, mode_, numNodes);
+  auto physicalPlan = plan::Planner::generate(*logicalPlan_, numNodes);
   SPDLOG_INFO("Total {} physical operators", physicalPlan->getPlacements().size());
 
   // Add the plan to the operatorGraph

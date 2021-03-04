@@ -3,6 +3,7 @@
 //
 
 #include <normal/plan/operator_/LogicalOperator.h>
+#include <normal/plan/Globals.h>
 
 using namespace normal::plan::operator_;
 
@@ -46,4 +47,14 @@ void LogicalOperator::setQueryId(long queryId) {
 
 long LogicalOperator::getQueryId() const {
   return queryId_;
+}
+
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+LogicalOperator::toOperatorsWithPlacements(int numNodes) {
+  switch (PMStrategy) {
+    case normal::plan::placement::UNIFORM_HASH:
+      return toOperatorsWithPlacementsUniHash(numNodes);
+    default:
+      throw std::runtime_error(fmt::format("Unknown placement strategy"));
+  }
 }

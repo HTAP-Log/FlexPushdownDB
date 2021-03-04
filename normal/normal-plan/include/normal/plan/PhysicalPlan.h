@@ -26,6 +26,7 @@ public:
 
   void put(std::shared_ptr<core::Operator> operator_, int placement);
 
+
   [[nodiscard]] const std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> &
   getPlacements() const;
 

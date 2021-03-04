@@ -18,7 +18,7 @@ public:
           const std::shared_ptr<LogicalOperator> &leftProducer,
           const std::shared_ptr<LogicalOperator> &rightProducer);
 
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperators() override;
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int> > toOperatorsWithPlacementsUniHash(int numNodes) override;
 
   const std::string &getLeftColumnName() const;
   const std::string &getRightColumnName() const;

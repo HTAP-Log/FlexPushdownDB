@@ -23,7 +23,14 @@ public:
 
   std::shared_ptr<type::OperatorType> type();
 
-  virtual std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperators() = 0;
+  /**
+   * Main entry point of genearting physical operators
+   */
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsWithPlacements(int numNodes);
+  /**
+   * Generate physical operators and their placements, using uniform hashing
+   */
+  virtual std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsWithPlacementsUniHash(int numNodes) = 0;
 
   virtual std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> extractSegmentKeys();
 

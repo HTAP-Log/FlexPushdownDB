@@ -20,8 +20,9 @@ normal::plan::operator_::GroupLogicalOperator::GroupLogicalOperator(const std::s
         projectExpression_(std::move(projectExpression)),
         producer_(std::move(producer)) {}
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> GroupLogicalOperator::toOperators() {
-  auto operators = std::make_shared<std::vector<std::shared_ptr<core::Operator>>>();
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+        GroupLogicalOperator::toOperatorsWithPlacementsUniHash(int numNodes) {
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
 
   for (auto index = 0; index < numConcurrentUnits_; index++) {
     auto expressions = std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
@@ -35,7 +36,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> GroupLogic
                                                                   *aggregateColumnNames_,
                                                                   expressions,
                                                                   getQueryId());
-    operators->emplace_back(group);
+    operatorsWithPlacements.emplace_back(group, index % numNodes);
   }
 
   // add group reduce if needed
@@ -54,14 +55,14 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> GroupLogic
                                                                         getQueryId());
 
     // wire up internally
-    for (const auto &group: *operators) {
-      group->produce(groupReduce);
-      groupReduce->consume(group);
+    for (const auto &groupWithPlacement: operatorsWithPlacements) {
+      groupWithPlacement.first->produce(groupReduce);
+      groupReduce->consume(groupWithPlacement.first);
     }
-    operators->emplace_back(groupReduce);
+    operatorsWithPlacements.emplace_back(groupReduce, 0);
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
 void GroupLogicalOperator::setNumConcurrentUnits(int numConcurrentUnits) {

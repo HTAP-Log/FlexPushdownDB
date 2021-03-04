@@ -15,10 +15,11 @@ CollateLogicalOperator::CollateLogicalOperator()
 	: LogicalOperator(type::OperatorTypes::collateOperatorType()) {}
 
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> CollateLogicalOperator::toOperators() {
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+        CollateLogicalOperator::toOperatorsWithPlacementsUniHash(int numNodes) {
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
   auto collate = std::make_shared<normal::pushdown::Collate>("collate", getQueryId());
-  auto operators = std::make_shared<std::vector<std::shared_ptr<core::Operator>>>();
-  operators->push_back(collate);
-  return operators;
+  operatorsWithPlacements.emplace_back(collate, 0);
+  return operatorsWithPlacements;
 }
 

@@ -22,18 +22,19 @@ const std::shared_ptr<std::vector<std::shared_ptr<normal::expression::gandiva::E
 }
 
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> ProjectLogicalOperator::toOperators() {
-  auto operators = std::make_shared<std::vector<std::shared_ptr<core::Operator>>>();
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+ProjectLogicalOperator::toOperatorsWithPlacementsUniHash(int numNodes) {
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
 
   for (auto index = 0; index < numConcurrentUnits_; index++) {
     // FIXME: Defaulting to name -> proj
     auto project = std::make_shared<normal::pushdown::Project>(fmt::format("proj-{}", index),
                                                                *expressions_,
                                                                getQueryId());
-    operators->emplace_back(project);
+    operatorsWithPlacements.emplace_back(project, index % numNodes);
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
 const std::shared_ptr<LogicalOperator> &ProjectLogicalOperator::getProducer() const {

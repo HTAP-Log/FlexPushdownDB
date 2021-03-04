@@ -17,9 +17,11 @@ JoinLogicalOperator::JoinLogicalOperator(const std::string &leftColumnName, cons
           leftColumnName_(leftColumnName), rightColumnName_(rightColumnName),
           leftProducer_(leftProducer), rightProducer_(rightProducer){}
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> JoinLogicalOperator::toOperators() {
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+JoinLogicalOperator::toOperatorsWithPlacementsUniHash(int numNodes) {
   const int numConcurrentUnits = JoinParallelDegree;
-  auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
+  std::vector<std::shared_ptr<normal::core::Operator>> joinBuilds, joinProbes;
 
   // join build
   for (auto index = 0; index < numConcurrentUnits; index++) {
@@ -27,7 +29,8 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> JoinLogica
             fmt::format("join-build-{}-{}-{}", leftColumnName_, rightColumnName_, index),
             leftColumnName_,
             getQueryId());
-    operators->emplace_back(joinBuild);
+    operatorsWithPlacements.emplace_back(joinBuild, index % numNodes);
+    joinBuilds.emplace_back(joinBuild);
   }
 
   // join probe
@@ -37,17 +40,17 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> JoinLogica
             normal::pushdown::join::JoinPredicate::create(leftColumnName_,rightColumnName_),
             neededColumnNames_,
             getQueryId());
-    operators->emplace_back(joinProbe);
+    operatorsWithPlacements.emplace_back(joinProbe, index % numNodes);
+    joinProbes.emplace_back(joinProbe);
   }
 
   // wire up internally
-  int size = operators->size();
-  for (auto index = 0; index < size / 2; index++) {
-    operators->at(index)->produce(operators->at(index + size / 2));
-    operators->at(index + size / 2)->consume(operators->at(index));
+  for (size_t i = 0; i < joinBuilds.size(); i++) {
+    joinBuilds[i]->produce(joinProbes[i]);
+    joinProbes[i]->consume(joinBuilds[i]);
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
 const std::shared_ptr<LogicalOperator> &JoinLogicalOperator::getLeftProducer() const {

@@ -19,7 +19,7 @@ class FileScanLogicalOperator: public ScanLogicalOperator {
 public:
   explicit FileScanLogicalOperator(const std::shared_ptr<LocalFilePartitioningScheme>& partitioningScheme);
 
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperators() override;
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsWithPlacementsUniHash(int numNodes) override;
 
 };
 

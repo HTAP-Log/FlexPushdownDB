@@ -31,35 +31,35 @@ std::string genFilterSql(std::shared_ptr<normal::expression::gandiva::Expression
   }
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectScanLogicalOperator::toOperators() {
-//  validPartitions_ = (!predicate_) ? getPartitioningScheme()->partitions() : getValidPartitions(predicate_);
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+S3SelectScanLogicalOperator::toOperatorsWithPlacementsUniHash(int numNodes) {
 
   // construct physical operators
   auto mode = getMode();
   switch (mode->id()) {
-    case plan::operator_::mode::FullPullup: return toOperatorsFullPullup(NumRanges);
-    case plan::operator_::mode::FullPushdown: return toOperatorsFullPushdown(NumRanges);
-    case plan::operator_::mode::PullupCaching: return toOperatorsPullupCaching(NumRanges);
-    case plan::operator_::mode::HybridCaching: return toOperatorsHybridCaching(NumRanges);
-    case plan::operator_::mode::HybridCachingLast: return toOperatorsHybridCachingLast(NumRanges);
+    case plan::operator_::mode::FullPullup: return toOperatorsFullPullupUniHash(numNodes, NumRanges);
+    case plan::operator_::mode::FullPushdown: return toOperatorsFullPushdownUniHash(numNodes, NumRanges);
+    case plan::operator_::mode::PullupCaching: return toOperatorsPullupCachingUniHash(numNodes, NumRanges);
+    case plan::operator_::mode::HybridCaching: return toOperatorsHybridCachingUniHash(numNodes, NumRanges);
+    case plan::operator_::mode::HybridCachingLast: return toOperatorsHybridCachingLastUniHash(numNodes, NumRanges);
     default:
       throw std::runtime_error(fmt::format("Unrecognized mode: '{}'", mode->toString()));
   }
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
-S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+S3SelectScanLogicalOperator::toOperatorsFullPullupUniHash(int numNodes, int numRanges) {
   auto miniCatalogue = normal::connector::defaultMiniCatalogue;
   auto allColumnNames = miniCatalogue->getColumnsOfTable(getName());
 
-  auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
 
   /**
    * For each range of each valid partition, create a s3scan (and a filter if needed)
    */
-  streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
   auto queryId = getQueryId();
 
+  int partitionRangeIndex = 0;
   for (const auto &partition: *getPartitioningScheme()->partitions()) {
     // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
     auto validPair = checkPartitionValid(partition);
@@ -105,7 +105,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
               true,
               false,
               queryId);
-      operators->emplace_back(scanOp);
+      operatorsWithPlacements.emplace_back(scanOp, partitionRangeIndex % numNodes);
 
       std::shared_ptr<Operator> upStreamOfProj;
       // Filter if it has filterPredicate
@@ -114,7 +114,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
                 filterPredicate,
                 queryId);
-        operators->emplace_back(filter);
+        operatorsWithPlacements.emplace_back(filter, partitionRangeIndex % numNodes);
 
         scanOp->produce(filter);
         filter->consume(scanOp);
@@ -130,26 +130,28 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
       }
       auto project = std::make_shared<Project>(
               fmt::format("project-{}/{}-{}", s3Bucket, s3Object, rangeId), *projectExpressions, queryId);
-      operators->emplace_back(project);
+      operatorsWithPlacements.emplace_back(project, partitionRangeIndex % numNodes);
 
       upStreamOfProj->produce(project);
       project->consume(upStreamOfProj);
 
-      streamOutPhysicalOperators_->emplace_back(project);
+      streamOutPhysicalOperators_.emplace_back(project, partitionRangeIndex % numNodes);
 
       rangeId++;
+      partitionRangeIndex++;
     }
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
-S3SelectScanLogicalOperator::toOperatorsFullPushdown(int numRanges) {
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+S3SelectScanLogicalOperator::toOperatorsFullPushdownUniHash(int numNodes, int numRanges) {
 
-  auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
   auto queryId = getQueryId();
 
+  int partitionRangeIndex = 0;
   for (const auto &partition: *getPartitioningScheme()->partitions()) {
     // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
     auto validPair = checkPartitionValid(partition);
@@ -167,7 +169,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPushdown(int numRanges) {
 
     int rangeId = 0;
     for (const auto &scanRange: scanRanges) {
-      auto scanOp = S3Select::make(
+      auto selectOp = S3Select::make(
               "s3select - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
               s3Partition->getBucket(),
               s3Object,
@@ -180,28 +182,30 @@ S3SelectScanLogicalOperator::toOperatorsFullPushdown(int numRanges) {
               true,
               false,
               queryId);
-      operators->emplace_back(scanOp);
+      operatorsWithPlacements.emplace_back(selectOp, partitionRangeIndex % numNodes);
+      streamOutPhysicalOperators_.emplace_back(selectOp, partitionRangeIndex % numNodes);
       rangeId++;
+      partitionRangeIndex++;
     }
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
-S3SelectScanLogicalOperator::toOperatorsPullupCaching(int numRanges) {
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+S3SelectScanLogicalOperator::toOperatorsPullupCachingUniHash(int numNodes, int numRanges) {
   auto miniCatalogue = normal::connector::defaultMiniCatalogue;
   auto allColumnNames = miniCatalogue->getColumnsOfTable(getName());
 
-  auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
 
   /**
    * For each range in each partition, construct:
    * a CacheLoad, a S3SelectScan, a Merge, a Filter if needed
    */
-  streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
   auto queryId = getQueryId();
 
+  int partitionRangeIndex;
   for (const auto &partition: *getPartitioningScheme()->partitions()) {
     // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
     auto validPair = checkPartitionValid(partition);
@@ -260,7 +264,7 @@ S3SelectScanLogicalOperator::toOperatorsPullupCaching(int numRanges) {
               false,
               true,
               queryId);
-      operators->emplace_back(scanOp);
+      operatorsWithPlacements.emplace_back(scanOp, partitionRangeIndex % numNodes);
 
       // CacheLoad
       auto cacheLoad = pushdown::cache::CacheLoad::make(
@@ -272,12 +276,12 @@ S3SelectScanLogicalOperator::toOperatorsPullupCaching(int numRanges) {
               scanRange.second,
               true,
               queryId);
-      operators->emplace_back(cacheLoad);
+      operatorsWithPlacements.emplace_back(cacheLoad, partitionRangeIndex % numNodes);
 
       // Merge
       auto merge = merge::Merge::make(
               fmt::format("merge-{}/{}-{}", s3Bucket, s3Object, rangeId), queryId);
-      operators->emplace_back(merge);
+      operatorsWithPlacements.emplace_back(merge, partitionRangeIndex % numNodes);
 
       // wire up internally
       cacheLoad->setHitOperator(merge);
@@ -297,7 +301,7 @@ S3SelectScanLogicalOperator::toOperatorsPullupCaching(int numRanges) {
                 filterPredicate,
                 queryId,
                 *weightedSegmentKeys);
-        operators->emplace_back(filter);
+        operatorsWithPlacements.emplace_back(filter, partitionRangeIndex % numNodes);
 
         merge->produce(filter);
         filter->consume(merge);
@@ -313,24 +317,25 @@ S3SelectScanLogicalOperator::toOperatorsPullupCaching(int numRanges) {
       }
       auto project = std::make_shared<Project>(
           fmt::format("project-{}/{}-{}", s3Bucket, s3Object, rangeId), *projectExpressions, queryId);
-      operators->emplace_back(project);
+      operatorsWithPlacements.emplace_back(project, partitionRangeIndex % numNodes);
 
       // wire up merge2 and project
       upStreamOfProj->produce(project);
       project->consume(upStreamOfProj);
 
-      streamOutPhysicalOperators_->emplace_back(project);
+      streamOutPhysicalOperators_.emplace_back(project, partitionRangeIndex % numNodes);
       rangeId++;
+      partitionRangeIndex++;
     }
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
-S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+S3SelectScanLogicalOperator::toOperatorsHybridCachingUniHash(int numNodes, int numRanges) {
 
-  auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
 
   /**
    * For each range in each partition, construct:
@@ -338,9 +343,9 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
    * a S3Select, a second Merge for local filtered segments + S3Select result
    * a Project to make all tupleSets have the same schema
    */
-  streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
   auto queryId = getQueryId();
 
+  int partitionRangeIndex = 0;
   for (const auto &partition: *getPartitioningScheme()->partitions()) {
     // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
     auto validPair = checkPartitionValid(partition);
@@ -396,7 +401,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
               scanRange.second,
               true,
               queryId);
-      operators->emplace_back(cacheLoad);
+      operatorsWithPlacements.emplace_back(cacheLoad, partitionRangeIndex % numNodes);
 
       auto miniCatalogue = normal::connector::defaultMiniCatalogue;
       auto allColumnNames = miniCatalogue->getColumnsOfTable(getName());
@@ -413,12 +418,12 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
               false,
               true,
               queryId);
-      operators->emplace_back(s3Scan);
+      operatorsWithPlacements.emplace_back(s3Scan, partitionRangeIndex % numNodes);
 
       // merge1
       auto merge1 = merge::Merge::make(
               fmt::format("merge1-{}/{}-{}", s3Bucket, s3Object, rangeId), queryId);
-      operators->emplace_back(merge1);
+      operatorsWithPlacements.emplace_back(merge1, partitionRangeIndex % numNodes);
 
       // wire up cacheLoad, s3Scan, merge1
       cacheLoad->setHitOperator(merge1);
@@ -438,7 +443,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
                 filterPredicate,
                 queryId,
                 *weightedSegmentKeys);
-        operators->emplace_back(filter);
+        operatorsWithPlacements.emplace_back(filter, partitionRangeIndex % numNodes);
         leftOpOfMerge2 = filter;
 
         merge1->produce(filter);
@@ -462,12 +467,12 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
               false,
               queryId,
               *weightedSegmentKeys);
-      operators->emplace_back(s3Select);
+      operatorsWithPlacements.emplace_back(s3Select, partitionRangeIndex % numNodes);
 
       // merge2
       auto merge2 = merge::Merge::make(
               fmt::format("merge2-{}/{}-{}", s3Bucket, s3Object, rangeId), queryId);
-      operators->emplace_back(merge2);
+      operatorsWithPlacements.emplace_back(merge2, partitionRangeIndex % numNodes);
 
       // wire up leftOpOfMerge2, s3Select, merge2 with the part before
       cacheLoad->setMissOperatorToPushdown(s3Select);
@@ -486,26 +491,27 @@ S3SelectScanLogicalOperator::toOperatorsHybridCaching(int numRanges) {
       }
       auto project = std::make_shared<Project>(
               fmt::format("project-{}/{}-{}", s3Bucket, s3Object, rangeId), *projectExpressions, queryId);
-      operators->emplace_back(project);
+      operatorsWithPlacements.emplace_back(project, partitionRangeIndex % numNodes);
 
       // wire up merge2 and project
       merge2->produce(project);
       project->consume(merge2);
 
       // project is the stream-out physical operator
-      streamOutPhysicalOperators_->emplace_back(project);
+      streamOutPhysicalOperators_.emplace_back(project, partitionRangeIndex % numNodes);
 
       rangeId++;
+      partitionRangeIndex++;
     }
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
-S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+S3SelectScanLogicalOperator::toOperatorsHybridCachingLastUniHash(int numNodes, int numRanges) {
 
-  auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
 
   /**
    * For each range in each partition, construct:
@@ -513,9 +519,9 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
    * a S3Select, a Merge for filtered hit segments + S3Select result
    * a Project to make all tupleSets have the same schema
    */
-  streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
   auto queryId = getQueryId();
 
+  int partitionRangeIndex = 0;
   for (const auto &partition: *getPartitioningScheme()->partitions()) {
     // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
     auto validPair = checkPartitionValid(partition);
@@ -557,7 +563,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
               scanRange.second,
               false,
               queryId);
-      operators->emplace_back(cacheLoad);
+      operatorsWithPlacements.emplace_back(cacheLoad, partitionRangeIndex % numNodes);
 
       auto miniCatalogue = normal::connector::defaultMiniCatalogue;
       auto allColumnNames = miniCatalogue->getColumnsOfTable(getName());
@@ -574,7 +580,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
               false,
               true,
               queryId);
-      operators->emplace_back(s3Scan);
+      operatorsWithPlacements.emplace_back(s3Scan, partitionRangeIndex % numNodes);
 
       // s3Select
       auto s3Select = S3Select::make(
@@ -590,12 +596,12 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
               false,
               false,
               queryId);
-      operators->emplace_back(s3Select);
+      operatorsWithPlacements.emplace_back(s3Select, partitionRangeIndex % numNodes);
 
       // merge
       auto merge = merge::Merge::make(
               fmt::format("merge-{}/{}-{}", s3Bucket, s3Object, rangeId), queryId);
-      operators->emplace_back(merge);
+      operatorsWithPlacements.emplace_back(merge, partitionRangeIndex % numNodes);
 
       // wire up cacheLoad, s3Scan, s3Select and merge
       cacheLoad->setMissOperatorToCache(s3Scan);
@@ -613,7 +619,7 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
                 fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
                 filterPredicate,
                 queryId);
-        operators->emplace_back(filter);
+        operatorsWithPlacements.emplace_back(filter, partitionRangeIndex % numNodes);
 
         // wire up cacheLoad, filter and merge
         cacheLoad->setHitOperator(filter);
@@ -634,20 +640,21 @@ S3SelectScanLogicalOperator::toOperatorsHybridCachingLast(int numRanges) {
       }
       auto project = std::make_shared<Project>(
               fmt::format("project-{}/{}-{}", s3Bucket, s3Object, rangeId), *projectExpressions, queryId);
-      operators->emplace_back(project);
+      operatorsWithPlacements.emplace_back(project, partitionRangeIndex % numNodes);
 
       // wire up merge and project
       merge->produce(project);
       project->consume(merge);
 
       // project is the stream-out physical operator
-      streamOutPhysicalOperators_->emplace_back(project);
+      streamOutPhysicalOperators_.emplace_back(project, partitionRangeIndex % numNodes);
 
       rangeId++;
+      partitionRangeIndex++;
     }
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
 // Extract the segmentKeys that are to be scanned in this query, this information is needed for the
@@ -696,38 +703,3 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> S3Selec
 
   return involvedSegmentKeys;
 }
-
-//    int rangeId = 0;
-//    for (const auto &scanRange: scanRanges) {
-//      // S3Scan
-//      auto scanOp = S3SelectScan::make(
-//              "s3scan - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
-//              s3Partition->getBucket(),
-//              s3Object,
-//              "",
-//              *allColumnNames,
-//              scanRange.first,
-//              scanRange.second,
-//              S3SelectCSVParseOptions(",", "\n"),
-//              DefaultS3Client,
-//              true,
-//              false);
-//      operators->emplace_back(scanOp);
-//
-//      // Filter if it has filterPredicate
-//      if (predicate_) {
-//        auto filter = filter::Filter::make(
-//                fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
-//                filterPredicate);
-//        operators->emplace_back(filter);
-//        streamOutPhysicalOperators_->emplace_back(filter);
-//
-//        scanOp->produce(filter);
-//        filter->consume(scanOp);
-//      } else {
-//        streamOutPhysicalOperators_->emplace_back(scanOp);
-//      }
-//
-//      rangeId++;
-//    }
-//  }

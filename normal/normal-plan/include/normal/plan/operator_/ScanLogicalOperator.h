@@ -25,7 +25,7 @@ public:
 
   void setProjectedColumnNames(const std::shared_ptr<std::vector<std::string>> &projectedColumnNames);
 
-  const std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> &streamOutPhysicalOperators() const;
+  const std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> &streamOutPhysicalOperators() const;
 
 protected:
   std::pair<bool, std::shared_ptr<expression::gandiva::Expression>> checkPartitionValid(const std::shared_ptr<Partition>& partition);
@@ -38,7 +38,7 @@ protected:
   // conjunctive predicates
   std::shared_ptr<std::vector<std::shared_ptr<expression::gandiva::Expression>>> predicates_;
 
-  std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> streamOutPhysicalOperators_;
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> streamOutPhysicalOperators_;
 
 private:
   std::shared_ptr<PartitioningScheme> partitioningScheme_;

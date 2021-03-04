@@ -23,14 +23,14 @@ class S3SelectScanLogicalOperator : public ScanLogicalOperator {
 public:
   S3SelectScanLogicalOperator(const std::shared_ptr<S3SelectPartitioningScheme> &partitioningScheme);
 
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperators() override;
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsWithPlacementsUniHash(int numNodes) override;
   std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> extractSegmentKeys() override;
 
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperatorsFullPullup(int numRanges);
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperatorsFullPushdown(int numRanges);
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperatorsPullupCaching(int numRanges);
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperatorsHybridCaching(int numRanges);
-  std::shared_ptr<std::vector<std::shared_ptr<core::Operator>>> toOperatorsHybridCachingLast(int numRanges);
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsFullPullupUniHash(int numNodes, int numRanges);
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsFullPushdownUniHash(int numNodes, int numRanges);
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsPullupCachingUniHash(int numNodes, int numRanges);
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsHybridCachingUniHash(int numNodes, int numRanges);
+  std::vector<std::pair<std::shared_ptr<core::Operator>, int>> toOperatorsHybridCachingLastUniHash(int numNodes, int numRanges);
 
 };
 

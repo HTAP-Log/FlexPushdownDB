@@ -32,9 +32,13 @@ add_library(normal-plan STATIC
         src/operator_/type/GroupOperatorType.cpp include/normal/plan/operator_/type/GroupOperatorType.h
         include/normal/plan/mode/ModeId.h
         src/mode/Mode.cpp include/normal/plan/mode/Mode.h
+        src/mode/Modes.cpp include/normal/plan/mode/Modes.h
+        src/mode/FullPullupMode.cpp include/normal/plan/mode/FullPullupMode.h
         src/mode/FullPushdownMode.cpp include/normal/plan/mode/FullPushdownMode.h
         src/mode/PullupCachingMode.cpp include/normal/plan/mode/PullupCachingMode.h
-        src/mode/HybridCachingMode.cpp include/normal/plan/mode/HybridCachingMode.h src/mode/Modes.cpp include/normal/plan/mode/Modes.h src/mode/FullPullupMode.cpp include/normal/plan/mode/FullPullupMode.h src/mode/HybridCachingLastMode.cpp include/normal/plan/mode/HybridCachingLastMode.h)
+        src/mode/HybridCachingMode.cpp include/normal/plan/mode/HybridCachingMode.h
+        src/mode/HybridCachingLastMode.cpp include/normal/plan/mode/HybridCachingLastMode.h
+        include/normal/plan/placement/PlacementStrategy.h)
 
 target_include_directories(normal-plan PUBLIC include)
 

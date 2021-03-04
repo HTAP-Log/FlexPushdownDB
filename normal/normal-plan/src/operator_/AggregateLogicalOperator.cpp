@@ -27,8 +27,9 @@ AggregateLogicalOperator::AggregateLogicalOperator(
     producer_(std::move(producer)) {}
 
 
-std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> AggregateLogicalOperator::toOperators() {
-  auto operators = std::make_shared<std::vector<std::shared_ptr<core::Operator>>>();
+std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>>
+        AggregateLogicalOperator::toOperatorsWithPlacementsUniHash(int numNodes) {
+  std::vector<std::pair<std::shared_ptr<normal::core::Operator>, int>> operatorsWithPlacements;
 
   for (auto index = 0; index < numConcurrentUnits_; index++) {
     auto expressions = std::make_shared<std::vector<std::shared_ptr<normal::pushdown::aggregate::AggregationFunction>>>();
@@ -40,7 +41,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> AggregateL
     auto aggregate = std::make_shared<normal::pushdown::Aggregate>(fmt::format("aggregate-{}", index),
                                                                    expressions,
                                                                    getQueryId());
-    operators->emplace_back(aggregate);
+    operatorsWithPlacements.emplace_back(aggregate, index % numNodes);
   }
 
   // add aggregate reduce if needed
@@ -52,14 +53,14 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> AggregateL
     auto aggregateReduce = std::make_shared<normal::pushdown::Aggregate>("aggregateReduce", reduceExpressions, getQueryId());
 
     // wire up internally
-    for (const auto &aggregate: *operators) {
-      aggregate->produce(aggregateReduce);
-      aggregateReduce->consume(aggregate);
+    for (const auto &aggregateWithPlacement: operatorsWithPlacements) {
+      aggregateWithPlacement.first->produce(aggregateReduce);
+      aggregateReduce->consume(aggregateWithPlacement.first);
     }
-    operators->emplace_back(aggregateReduce);
+    operatorsWithPlacements.emplace_back(aggregateReduce, 0);
   }
 
-  return operators;
+  return operatorsWithPlacements;
 }
 
 const std::shared_ptr<LogicalOperator> &AggregateLogicalOperator::getProducer() const {
