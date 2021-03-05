@@ -13,6 +13,11 @@
 #include <normal/pushdown/join/HashJoinProbe.h>
 #include <normal/pushdown/group/Group.h>
 #include <normal/pushdown/shuffle/Shuffle.h>
+#include <normal/pushdown/cache/CacheLoad.h>
+#include <normal/pushdown/merge/Merge.h>
+#include <normal/pushdown/s3/S3Get.h>
+#include <normal/pushdown/Project.h>
+#include <normal/pushdown/filter/Filter.h>
 
 using namespace normal::pushdown;
 
@@ -25,6 +30,11 @@ CAF_ADD_TYPE_ID(Operator, (join::HashJoinBuild))
 CAF_ADD_TYPE_ID(Operator, (join::HashJoinProbe))
 CAF_ADD_TYPE_ID(Operator, (normal::pushdown::group::Group))
 CAF_ADD_TYPE_ID(Operator, (shuffle::Shuffle))
+CAF_ADD_TYPE_ID(Operator, (normal::pushdown::cache::CacheLoad))
+CAF_ADD_TYPE_ID(Operator, (merge::Merge))
+CAF_ADD_TYPE_ID(Operator, (S3Get))
+CAF_ADD_TYPE_ID(Operator, (Project))
+CAF_ADD_TYPE_ID(Operator, (filter::Filter))
 CAF_END_TYPE_ID_BLOCK(Operator)
 
 // Variant-based approach on OperatorPtr
@@ -41,7 +51,12 @@ struct variant_inspector_traits<OperatorPtr> {
           type_id_v<join::HashJoinBuild>,
           type_id_v<join::HashJoinProbe>,
           type_id_v<normal::pushdown::group::Group>,
-          type_id_v<shuffle::Shuffle>
+          type_id_v<shuffle::Shuffle>,
+          type_id_v<normal::pushdown::cache::CacheLoad>,
+          type_id_v<merge::Merge>,
+          type_id_v<S3Get>,
+          type_id_v<Project>,
+          type_id_v<filter::Filter>
   };
 
   // Returns which type in allowed_types corresponds to x.
@@ -58,6 +73,16 @@ struct variant_inspector_traits<OperatorPtr> {
       return 4;
     else if (x->getType() == "Shuffle")
       return 5;
+    else if (x->getType() == "CacheLoad")
+      return 6;
+    else if (x->getType() == "Merge")
+      return 7;
+    else if (x->getType() == "S3Get")
+      return 8;
+    else if (x->getType() == "Project")
+      return 9;
+    else if (x->getType() == "Filter")
+      return 10;
     else return -1;
   }
 
@@ -75,6 +100,16 @@ struct variant_inspector_traits<OperatorPtr> {
         return f(static_cast<normal::pushdown::group::Group &>(*x));
       case 5:
         return f(static_cast<shuffle::Shuffle &>(*x));
+      case 6:
+        return f(static_cast<normal::pushdown::cache::CacheLoad &>(*x));
+      case 7:
+        return f(static_cast<merge::Merge &>(*x));
+      case 8:
+        return f(static_cast<S3Get &>(*x));
+      case 9:
+        return f(static_cast<Project &>(*x));
+      case 10:
+        return f(static_cast<filter::Filter &>(*x));
       default: {
         none_t dummy;
         return f(dummy);
@@ -125,6 +160,31 @@ struct variant_inspector_traits<OperatorPtr> {
       }
       case type_id_v<shuffle::Shuffle>: {
         auto tmp = shuffle::Shuffle{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<normal::pushdown::cache::CacheLoad>: {
+        auto tmp = normal::pushdown::cache::CacheLoad{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<merge::Merge>: {
+        auto tmp = merge::Merge{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<S3Get>: {
+        auto tmp = S3Get{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<Project>: {
+        auto tmp = Project{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<filter::Filter>: {
+        auto tmp = filter::Filter{};
         continuation(tmp);
         return true;
       }

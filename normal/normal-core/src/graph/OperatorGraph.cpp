@@ -269,7 +269,7 @@ std::string graph::OperatorGraph::showMetrics() {
 
   long totalProcessingTime = 0;
   for (auto &entry : operatorDirectory_) {
-//	auto processingTime = entry.second.getOperatorContext().lock()->operatorActor()->getProcessingTime();
+
 	(*rootActor_)->request(entry.second.getActorHandle(), caf::infinite, GetProcessingTimeAtom_v).receive(
 		[&](long processingTime) {
 		  totalProcessingTime += processingTime;
@@ -411,21 +411,20 @@ std::pair<size_t, size_t> graph::OperatorGraph::getBytesTransferred() {
   size_t processedBytes = 0;
   size_t returnedBytes = 0;
   for (const auto &entry: operatorDirectory_) {
-    if (typeid(*entry.second.getDef()) == typeid(normal::pushdown::S3Select) ||
-        typeid(*entry.second.getDef()) == typeid(normal::pushdown::S3Get)) {
-//	  (*rootActor_)->request(entry.second.getActorHandle(), caf::infinite, GetMetricsAtom::value).receive(
-//	  	[&](std::pair<size_t, size_t> metrics) {
-//		  processedBytes += metrics.first;
-//		  returnedBytes += metrics.second;
-//		},
-//		[&](const caf::error&  error){
-//	  	  throw std::runtime_error(to_string(error));
-//	  	});
+    if (entry.second.getDef()->getType() == "S3Select" || entry.second.getDef()->getType() == "S3Get") {
+	  (*rootActor_)->request(entry.second.getActorHandle(), caf::infinite, GetMetricsAtom_v).receive(
+	  	[&](std::pair<size_t, size_t> metrics) {
+		  processedBytes += metrics.first;
+		  returnedBytes += metrics.second;
+		},
+		[&](const caf::error&  error){
+	  	  throw std::runtime_error(to_string(error));
+	  	});
 
-	  // FIXME: Really need to get metrics with a message as above (just interrogating the operator directly is unsafe).
-      auto s3ScanOp = std::static_pointer_cast<normal::pushdown::S3SelectScan>(entry.second.getDef());
-      processedBytes += s3ScanOp->getProcessedBytes();
-      returnedBytes += s3ScanOp->getReturnedBytes();
+//	  // FIXME: Really need to get metrics with a message as above (just interrogating the operator directly is unsafe).
+//      auto s3ScanOp = std::static_pointer_cast<normal::pushdown::S3SelectScan>(entry.second.getDef());
+//      processedBytes += s3ScanOp->getProcessedBytes();
+//      returnedBytes += s3ScanOp->getReturnedBytes();
 	}
   }
   return std::pair<size_t, size_t>(processedBytes, returnedBytes);

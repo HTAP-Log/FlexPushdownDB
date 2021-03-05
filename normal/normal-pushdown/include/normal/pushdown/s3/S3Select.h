@@ -41,7 +41,7 @@ class S3Select: public S3SelectScan {
                         long queryId = 0,
                         const std::vector<std::shared_ptr<normal::cache::SegmentKey>>& weightedSegmentKeys = std::vector<std::shared_ptr<normal::cache::SegmentKey>>());
 
-    // Something has to be done after Operator created to avoid serialization
+    // Something has to be done after Operator created to avoid unnecessary serialization
     void makeParser();
 
     // A series of get functions

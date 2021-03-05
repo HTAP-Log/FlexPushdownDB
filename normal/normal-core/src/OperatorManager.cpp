@@ -61,6 +61,7 @@ void OperatorManager::boot() {
   } else {
     segmentCacheActor_ = actorSystem->spawn(SegmentCacheActor::makeBehaviour, std::nullopt);
   }
+  normal::core::GlobalSegmentCacheActor_ = segmentCacheActor_;
 }
 
 std::string OperatorManager::showCacheMetrics() {

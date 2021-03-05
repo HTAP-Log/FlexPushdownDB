@@ -14,19 +14,21 @@
 
 #include <normal/pushdown/serialization/AggregationFunctionSer.h>
 #include <normal/pushdown/collate/Collate2.h>
-#include <normal/pushdown/s3/S3SelectScan2.h>
 #include <normal/pushdown/ScanOperator.h>
 #include <normal/pushdown/file/FileScan2.h>
 #include <normal/pushdown/group/GroupKernel2.h>
+#include <normal/pushdown/filter/FilterPredicate.h>
 
 #include <normal/cache/SegmentKey.h>
 #include <normal/cache/SegmentMetadata.h>
+#include <normal/cache/SegmentData.h>
 
 #include <normal/connector/serialization/PartitionSer.h>
 
 #include <normal/expression/gandiva/serialization/ExpressionSer.h>
 
 #include <normal/tuple/TupleSet.h>
+#include <normal/tuple/Column.h>
 
 void normal::core::init_caf_global_meta_objects() {
   ::caf::init_global_meta_objects<::caf::id_block::Operator>();
@@ -40,19 +42,21 @@ void normal::core::init_caf_global_meta_objects() {
 
   ::caf::init_global_meta_objects<::caf::id_block::AggregationFunction>();
   ::caf::init_global_meta_objects<::caf::id_block::Collate2>();
-  ::caf::init_global_meta_objects<::caf::id_block::S3SelectScan2>();
   ::caf::init_global_meta_objects<::caf::id_block::ScanOperator>();
   ::caf::init_global_meta_objects<::caf::id_block::FileScan2>();
   ::caf::init_global_meta_objects<::caf::id_block::GroupKernel2>();
+  ::caf::init_global_meta_objects<::caf::id_block::FilterPredicate>();
 
   ::caf::init_global_meta_objects<::caf::id_block::SegmentKey>();
   ::caf::init_global_meta_objects<::caf::id_block::SegmentMetadata>();
+  ::caf::init_global_meta_objects<::caf::id_block::SegmentData>();
 
   ::caf::init_global_meta_objects<::caf::id_block::Partition>();
 
   ::caf::init_global_meta_objects<::caf::id_block::Expression>();
 
   ::caf::init_global_meta_objects<::caf::id_block::TupleSet>();
+  ::caf::init_global_meta_objects<::caf::id_block::Column>();
 
   ::caf::core::init_global_meta_objects();
   ::caf::io::middleman::init_global_meta_objects();

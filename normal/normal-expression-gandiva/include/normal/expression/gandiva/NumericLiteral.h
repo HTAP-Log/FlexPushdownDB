@@ -21,8 +21,11 @@ class NumericLiteral : public Expression {
 
 public:
   explicit NumericLiteral(C_TYPE value) : value_(value) {
-    expType_ = "NumericLiteral";
+    expType_ = "NumericLiteral-" + std::string(ARROW_TYPE::type_name());
   }
+  NumericLiteral() = default;
+  NumericLiteral(const NumericLiteral&) = default;
+  NumericLiteral& operator=(const NumericLiteral&) = default;
 
   void compile(std::shared_ptr<arrow::Schema>) override {
     auto literal = ::gandiva::TreeExprBuilder::MakeLiteral(value_);
@@ -52,6 +55,13 @@ public:
 private:
   C_TYPE value_;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, NumericLiteral& exp) {
+    return f.object(exp).fields(f.field("value", exp.value_),
+                                f.field("expType", exp.expType_));
+  }
 };
 
 template<typename ARROW_TYPE, typename C_TYPE = typename ARROW_TYPE::c_type>

@@ -32,6 +32,8 @@ CAF_ADD_ATOM(SegmentCacheActor, ClearMetricsAtom)
 CAF_ADD_ATOM(SegmentCacheActor, ClearCrtQueryMetricsAtom)
 CAF_ADD_ATOM(SegmentCacheActor, ClearCrtQueryShardMetricsAtom)
 CAF_ADD_ATOM(SegmentCacheActor, MetricsAtom)
+// The following are explicit message types, so have to implement `inspect` for concrete derived shared_ptr type,
+// implementing for base share_ptr type in this variant-based scheme doesn't work
 CAF_ADD_TYPE_ID(SegmentCacheActor, (std::shared_ptr<normal::core::cache::LoadResponseMessage>))
 CAF_ADD_TYPE_ID(SegmentCacheActor, (std::shared_ptr<normal::core::cache::LoadRequestMessage>))
 CAF_ADD_TYPE_ID(SegmentCacheActor, (std::shared_ptr<normal::core::cache::StoreRequestMessage>))
@@ -64,11 +66,5 @@ public:
 };
 
 }
-
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::core::cache::LoadResponseMessage>);
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::core::cache::LoadRequestMessage>);
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::core::cache::StoreRequestMessage>);
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::core::cache::WeightRequestMessage>);
-CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::core::cache::CacheMetricsMessage>);
 
 #endif //NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_CACHE_SEGMENTCACHEACTOR_H

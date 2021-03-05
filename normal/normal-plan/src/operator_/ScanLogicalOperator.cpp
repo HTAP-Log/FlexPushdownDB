@@ -18,6 +18,8 @@
 
 using namespace normal::plan::operator_;
 using namespace normal::expression::gandiva;
+// FIXME: unsure why there is a ambiguous namespace lookup with tuple::Column, as it's not included
+using ExpressionColumn = normal::expression::gandiva::Column;
 
 ScanLogicalOperator::ScanLogicalOperator(
 	std::shared_ptr<PartitioningScheme> partitioningScheme) :
@@ -85,11 +87,11 @@ bool checkPartitionValid(const std::shared_ptr<Partition>& partition,
     std::shared_ptr<Expression> colExpr, valExpr;
     bool reverse;
 
-    if (typeid(*biExpr->getLeft()) == typeid(Column)) {
+    if (typeid(*biExpr->getLeft()) == typeid(ExpressionColumn)) {
       colExpr = biExpr->getLeft();
       valExpr = biExpr->getRight();
       reverse = false;
-    } else if (typeid(*biExpr->getRight()) == typeid(Column)) {
+    } else if (typeid(*biExpr->getRight()) == typeid(ExpressionColumn)) {
       colExpr = biExpr->getRight();
       valExpr = biExpr->getLeft();
       reverse = true;
@@ -97,7 +99,7 @@ bool checkPartitionValid(const std::shared_ptr<Partition>& partition,
       return true;
     }
 
-    auto columnName = std::static_pointer_cast<Column>(colExpr)->getColumnName();
+    auto columnName = std::static_pointer_cast<ExpressionColumn>(colExpr)->getColumnName();
     auto sortedColumnValuesIt = sortedColumns->find(columnName);
     if (sortedColumnValuesIt == sortedColumns->end()) {
       return true;
@@ -199,11 +201,11 @@ bool checkPredicateNeeded(const std::shared_ptr<Partition>& partition,
     std::shared_ptr<Expression> colExpr, valExpr;
     bool reverse;
 
-    if (typeid(*biExpr->getLeft()) == typeid(Column)) {
+    if (typeid(*biExpr->getLeft()) == typeid(ExpressionColumn)) {
       colExpr = biExpr->getLeft();
       valExpr = biExpr->getRight();
       reverse = false;
-    } else if (typeid(*biExpr->getRight()) == typeid(Column)) {
+    } else if (typeid(*biExpr->getRight()) == typeid(ExpressionColumn)) {
       colExpr = biExpr->getRight();
       valExpr = biExpr->getLeft();
       reverse = true;
@@ -211,7 +213,7 @@ bool checkPredicateNeeded(const std::shared_ptr<Partition>& partition,
       return true;
     }
 
-    auto columnName = std::static_pointer_cast<Column>(colExpr)->getColumnName();
+    auto columnName = std::static_pointer_cast<ExpressionColumn>(colExpr)->getColumnName();
     auto sortedColumnValuesIt = sortedColumns->find(columnName);
     if (sortedColumnValuesIt == sortedColumns->end()) {
       return true;

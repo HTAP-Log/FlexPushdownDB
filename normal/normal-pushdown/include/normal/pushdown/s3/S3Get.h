@@ -22,6 +22,9 @@ class S3Get : public S3SelectScan {
              bool toCache,
              long queryId,
              std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys);
+    S3Get() = default;
+    S3Get(const S3Get&) = default;
+    S3Get& operator=(const S3Get&) = default;
 
     static std::shared_ptr<S3Get> make(const std::string& name,
                                        const std::string& s3Bucket,
@@ -44,6 +47,27 @@ class S3Get : public S3SelectScan {
 
     std::shared_ptr<TupleSet2> readTuples() override;
     int getPredicateNum() override;
+
+  // caf inspect
+  public:
+    template <class Inspector>
+    friend bool inspect(Inspector& f, S3Get& op) {
+      return f.object(op).fields(f.field("s3Bucket", op.s3Bucket_),
+                                 f.field("s3Object", op.s3Object_),
+                                 f.field("returnedS3ColumnNames", op.returnedS3ColumnNames_),
+                                 f.field("neededColumnNames", op.neededColumnNames_),
+                                 f.field("startOffset", op.startOffset_),
+                                 f.field("finishOffset", op.finishOffset_),
+                                 f.field("tableName", op.tableName_),
+                                 f.field("scanOnStart", op.scanOnStart_),
+                                 f.field("toCache", op.toCache_),
+                                 f.field("weightedSegmentKeys", op.weightedSegmentKeys_),
+                                 f.field("name", op.name()),
+                                 f.field("type", op.getType()),
+                                 f.field("opContext", op.getOpContext()),
+                                 f.field("producers", op.getProducers()),
+                                 f.field("consumers", op.getConsumers()));
+    }
 };
 
 }

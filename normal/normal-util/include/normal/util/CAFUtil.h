@@ -20,19 +20,24 @@ namespace normal::util {
 
   inline constexpr ::caf::type_id_t AggregationFunction_first_custom_type_id = ::caf::first_custom_type_id + 800;
   inline constexpr ::caf::type_id_t Collate2_first_custom_type_id = ::caf::first_custom_type_id + 900;
-  inline constexpr ::caf::type_id_t S3SelectScan2_first_custom_type_id = ::caf::first_custom_type_id + 1000;
   inline constexpr ::caf::type_id_t ScanOperator_first_custom_type_id = ::caf::first_custom_type_id + 1100;
   inline constexpr ::caf::type_id_t FileScan2_first_custom_type_id = ::caf::first_custom_type_id + 1200;
   inline constexpr ::caf::type_id_t GroupKernel2_first_custom_type_id = ::caf::first_custom_type_id + 1300;
+  inline constexpr ::caf::type_id_t FilterPredicate_first_custom_type_id = ::caf::first_custom_type_id + 1400;
 
-  inline constexpr ::caf::type_id_t SegmentKey_first_custom_type_id = ::caf::first_custom_type_id + 1400;
-  inline constexpr ::caf::type_id_t SegmentMetadata_first_custom_type_id = ::caf::first_custom_type_id + 1500;
+  inline constexpr ::caf::type_id_t SegmentKey_first_custom_type_id = ::caf::first_custom_type_id + 1500;
+  inline constexpr ::caf::type_id_t SegmentMetadata_first_custom_type_id = ::caf::first_custom_type_id + 1600;
 
-  inline constexpr ::caf::type_id_t Partition_first_custom_type_id = ::caf::first_custom_type_id + 1600;
+  inline constexpr ::caf::type_id_t Partition_first_custom_type_id = ::caf::first_custom_type_id + 1700;
 
-  inline constexpr ::caf::type_id_t Expression_first_custom_type_id = ::caf::first_custom_type_id + 1700;
+  inline constexpr ::caf::type_id_t Expression_first_custom_type_id = ::caf::first_custom_type_id + 1800;
 
-  inline constexpr ::caf::type_id_t TupleSet_first_custom_type_id = ::caf::first_custom_type_id + 1800;
+  inline constexpr ::caf::type_id_t TupleSet_first_custom_type_id = ::caf::first_custom_type_id + 1900;
+
+
+
+    inline constexpr ::caf::type_id_t SegmentData_first_custom_type_id = ::caf::first_custom_type_id + 2000;
+    inline constexpr ::caf::type_id_t Column_first_custom_type_id = ::caf::first_custom_type_id + 2100;
 }
 
 // A template to serialize any shared_ptr
@@ -63,8 +68,9 @@ struct variant_inspector_traits<std::shared_ptr<T>> {
         none_t dummy;
         return f(dummy);
       }
-      default:
-        return f(static_cast<T&>(*x));
+      default:{
+        auto a = f(static_cast<T&>(*x));
+        return a;}
     }
   }
 

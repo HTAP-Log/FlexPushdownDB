@@ -6,7 +6,7 @@
 #define NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_CACHE_LOADRESPONSEMESSAGE_H
 
 #include <normal/core/message/Message.h>
-
+#include <normal/util/CAFUtil.h>
 #include <normal/cache/SegmentKey.h>
 #include <normal/cache/SegmentData.h>
 
@@ -25,6 +25,9 @@ public:
   LoadResponseMessage(std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>, SegmentKeyPointerHash, SegmentKeyPointerPredicate> segments,
 					            const std::string &sender,
                       std::vector<std::shared_ptr<SegmentKey>> segmentKeysToCache);
+  LoadResponseMessage() = default;
+  LoadResponseMessage(const LoadResponseMessage&) = default;
+  LoadResponseMessage& operator=(const LoadResponseMessage&) = default;
 
   static std::shared_ptr<LoadResponseMessage> make(std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>, SegmentKeyPointerHash, SegmentKeyPointerPredicate> segments,
 												                           const std::string &sender,
@@ -39,8 +42,26 @@ private:
   std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>, SegmentKeyPointerHash, SegmentKeyPointerPredicate> segments_;
   std::vector<std::shared_ptr<SegmentKey>> segmentKeysToCache_;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, LoadResponseMessage& msg) {
+    return f.object(msg).fields(f.field("type", msg.type()),
+                                f.field("sender", msg.sender()),
+                                f.field("segments", msg.segments_),
+                                f.field("segmentKeysToCache", msg.segmentKeysToCache_));
+  };
 };
 
 }
+
+using LoadResponseMessagePtr = std::shared_ptr<normal::core::cache::LoadResponseMessage>;
+
+namespace caf {
+template <>
+struct inspector_access<LoadResponseMessagePtr> : variant_inspector_access<LoadResponseMessagePtr> {
+    // nop
+};
+} // namespace caf
 
 #endif //NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_CACHE_LOADRESPONSEMESSAGE_H

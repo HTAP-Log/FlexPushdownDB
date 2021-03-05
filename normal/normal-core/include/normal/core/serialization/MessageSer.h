@@ -12,8 +12,15 @@
 #include <normal/core/message/ConnectMessage.h>
 #include <normal/core/message/CompleteMessage.h>
 #include <normal/pushdown/TupleMessage.h>
+#include <normal/core/cache/LoadRequestMessage.h>
+#include <normal/core/cache/LoadResponseMessage.h>
+#include <normal/core/cache/StoreRequestMessage.h>
+#include <normal/core/cache/WeightRequestMessage.h>
+#include <normal/core/cache/CacheMetricsMessage.h>
 
-using namespace normal::core::message;
+using namespace ::normal::core::message;
+using namespace ::normal::core::cache;
+
 using MessagePtr = std::shared_ptr<Message>;
 
 CAF_BEGIN_TYPE_ID_BLOCK(Message, normal::util::Message_first_custom_type_id)
@@ -22,6 +29,13 @@ CAF_ADD_TYPE_ID(Message, (StartMessage))
 CAF_ADD_TYPE_ID(Message, (ConnectMessage))
 CAF_ADD_TYPE_ID(Message, (CompleteMessage))
 CAF_ADD_TYPE_ID(Message, (TupleMessage))
+// The following are explicit message types, so have to implement `inspect` for concrete derived shared_ptr type,
+// implementing for base share_ptr type in this variant-based scheme doesn't work
+CAF_ADD_TYPE_ID(Message, (LoadRequestMessage))
+CAF_ADD_TYPE_ID(Message, (LoadResponseMessage))
+CAF_ADD_TYPE_ID(Message, (StoreRequestMessage))
+CAF_ADD_TYPE_ID(Message, (WeightRequestMessage))
+CAF_ADD_TYPE_ID(Message, (CacheMetricsMessage))
 CAF_END_TYPE_ID_BLOCK(Message)
 
 // Variant-based approach on OperatorPtr
@@ -37,7 +51,12 @@ struct variant_inspector_traits<MessagePtr> {
           type_id_v<StartMessage>,
           type_id_v<ConnectMessage>,
           type_id_v<CompleteMessage>,
-          type_id_v<TupleMessage>
+          type_id_v<TupleMessage>,
+//          type_id_v<LoadRequestMessage>,
+//          type_id_v<LoadResponseMessage>,
+//          type_id_v<StoreRequestMessage>,
+//          type_id_v<WeightRequestMessage>,
+//          type_id_v<CacheMetricsMessage>
   };
 
   // Returns which type in allowed_types corresponds to x.
@@ -52,6 +71,16 @@ struct variant_inspector_traits<MessagePtr> {
       return 3;
     else if (x->type() == "TupleMessage")
       return 4;
+//    else if (x->type() == "LoadRequestMessage")
+//      return 5;
+//    else if (x->type() == "LoadResponseMessage")
+//      return 6;
+//    else if (x->type() == "StoreRequestMessage")
+//      return 7;
+//    else if (x->type() == "WeightRequestMessage")
+//      return 8;
+//    else if (x->type() == "CacheMetricsMessage")
+//      return 9;
     else return -1;
   }
 
@@ -65,9 +94,18 @@ struct variant_inspector_traits<MessagePtr> {
         return f(static_cast<ConnectMessage &>(*x));
       case 3:
         return f(static_cast<CompleteMessage &>(*x));
-      case 4:{
-        auto a = f(static_cast<TupleMessage &>(*x));
-        return a;}
+      case 4:
+        return f(static_cast<TupleMessage &>(*x));
+//      case 5:
+//        return f(static_cast<LoadRequestMessage &>(*x));
+//      case 6:
+//        return f(static_cast<LoadResponseMessage &>(*x));
+//      case 7:
+//        return f(static_cast<StoreRequestMessage &>(*x));
+//      case 8:
+//        return f(static_cast<WeightRequestMessage &>(*x));
+//      case 9:
+//        return f(static_cast<CacheMetricsMessage &>(*x));
       default: {
         none_t dummy;
         return f(dummy);
@@ -116,6 +154,31 @@ struct variant_inspector_traits<MessagePtr> {
         continuation(tmp);
         return true;
       }
+//      case type_id_v<LoadRequestMessage>: {
+//        auto tmp = LoadRequestMessage{};
+//        continuation(tmp);
+//        return true;
+//      }
+//      case type_id_v<LoadResponseMessage>: {
+//        auto tmp = LoadResponseMessage{};
+//        continuation(tmp);
+//        return true;
+//      }
+//      case type_id_v<StoreRequestMessage>: {
+//        auto tmp = StoreRequestMessage{};
+//        continuation(tmp);
+//        return true;
+//      }
+//      case type_id_v<WeightRequestMessage>: {
+//        auto tmp = WeightRequestMessage{};
+//        continuation(tmp);
+//        return true;
+//      }
+//      case type_id_v<CacheMetricsMessage>: {
+//        auto tmp = CacheMetricsMessage{};
+//        continuation(tmp);
+//        return true;
+//      }
     }
   }
 };

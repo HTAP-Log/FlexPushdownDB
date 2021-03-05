@@ -42,10 +42,6 @@ public:
   void setTuples(const std::shared_ptr<TupleSet> &Tuples);
 };
 
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, Collate& op) {
-//  return f(caf::meta::type_name("CollateOperatorMessage"), op.name(), op.getType());
-//}
 }
 
 #endif //NORMAL_NORMAL_S3_SRC_COLLATE_H

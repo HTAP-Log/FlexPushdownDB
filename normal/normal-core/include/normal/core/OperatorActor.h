@@ -50,6 +50,8 @@ private:
 
 CAF_BEGIN_TYPE_ID_BLOCK(OperatorActor, normal::util::OperatorActor_first_custom_type_id)
 CAF_ADD_ATOM(OperatorActor, GetProcessingTimeAtom)
+CAF_ADD_ATOM(OperatorActor, GetMetricsAtom)
+CAF_ADD_TYPE_ID(OperatorActor, (std::pair<size_t, size_t>))
 CAF_END_TYPE_ID_BLOCK(OperatorActor)
 
 #endif //NORMAL_OPERATORACTOR_H

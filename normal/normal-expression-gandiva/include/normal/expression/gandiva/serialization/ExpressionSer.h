@@ -41,11 +41,12 @@ CAF_ADD_TYPE_ID(Expression, (GreaterThanOrEqualTo))
 CAF_ADD_TYPE_ID(Expression, (LessThan))
 CAF_ADD_TYPE_ID(Expression, (LessThanOrEqualTo))
 CAF_ADD_TYPE_ID(Expression, (Multiply))
-//CAF_ADD_TYPE_ID(Expression, (NumericLiteral<ARROW_TYPE>))
-//CAF_ADD_TYPE_ID(Expression, (NumericLiteral<arrow::Int32Type>))
 CAF_ADD_TYPE_ID(Expression, (Or))
 CAF_ADD_TYPE_ID(Expression, (StringLiteral))
 CAF_ADD_TYPE_ID(Expression, (Subtract))
+CAF_ADD_TYPE_ID(Expression, (NumericLiteral<arrow::Int32Type>))
+CAF_ADD_TYPE_ID(Expression, (NumericLiteral<arrow::Int64Type>))
+CAF_ADD_TYPE_ID(Expression, (NumericLiteral<arrow::DoubleType>))
 CAF_END_TYPE_ID_BLOCK(Expression)
 
 // Variant-based approach on OperatorPtr
@@ -71,7 +72,10 @@ struct variant_inspector_traits<ExpressionPtr> {
           type_id_v<Multiply>,
           type_id_v<Or>,
           type_id_v<StringLiteral>,
-          type_id_v<Subtract>
+          type_id_v<Subtract>,
+          type_id_v<NumericLiteral<arrow::Int32Type>>,
+          type_id_v<NumericLiteral<arrow::Int64Type>>,
+          type_id_v<NumericLiteral<arrow::DoubleType>>
   };
 
   // Returns which type in allowed_types corresponds to x.
@@ -106,6 +110,12 @@ struct variant_inspector_traits<ExpressionPtr> {
       return 13;
     else if (x->expType() == "Subtract")
       return 14;
+    else if (x->expType() == "NumericLiteral-int32")
+      return 15;
+    else if (x->expType() == "NumericLiteral-int64")
+      return 16;
+    else if (x->expType() == "NumericLiteral-double")
+      return 17;
     else return -1;
   }
 
@@ -141,6 +151,12 @@ struct variant_inspector_traits<ExpressionPtr> {
         return f(static_cast<StringLiteral &>(*x));
       case 14:
         return f(static_cast<Subtract &>(*x));
+      case 15:
+        return f(static_cast<NumericLiteral<arrow::Int32Type> &>(*x));
+      case 16:
+        return f(static_cast<NumericLiteral<arrow::Int64Type> &>(*x));
+      case 17:
+        return f(static_cast<NumericLiteral<arrow::DoubleType> &>(*x));
       default: {
         none_t dummy;
         return f(dummy);
@@ -231,6 +247,21 @@ struct variant_inspector_traits<ExpressionPtr> {
       }
       case type_id_v<Subtract>: {
         auto tmp = Subtract{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<NumericLiteral<arrow::Int32Type>>: {
+        auto tmp = NumericLiteral<arrow::Int32Type>{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<NumericLiteral<arrow::Int64Type>>: {
+        auto tmp = NumericLiteral<arrow::Int64Type>{};
+        continuation(tmp);
+        return true;
+      }
+      case type_id_v<NumericLiteral<arrow::DoubleType>>: {
+        auto tmp = NumericLiteral<arrow::DoubleType>{};
         continuation(tmp);
         return true;
       }

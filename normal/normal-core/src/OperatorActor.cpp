@@ -12,6 +12,7 @@
 #include "normal/core/message/Envelope.h"
 #include <normal/pushdown/s3/S3Select.h>
 #include <normal/pushdown/s3/S3Get.h>
+#include <normal/pushdown/filter/Filter.h>
 
 using namespace normal::pushdown;
 using namespace ::caf;
@@ -23,6 +24,9 @@ OperatorActor::OperatorActor(actor_config &cfg, std::shared_ptr<Operator> opBeha
 	opBehaviour_(std::move(opBehaviour)) {
   name_ = opBehaviour_->name();
 
+  // Connect to segmentCacheActor of this server
+  opBehaviour_->getOpContext()->setSegmentCacheActor(GlobalSegmentCacheActor_);
+
   // Something has to be done after Operator created to avoid serialization, e.g. parser for S3Select
   if (opBehaviour_->getType() == "S3Select" || opBehaviour_->getType() == "S3Get") {
     auto S3SelectScanOp = std::static_pointer_cast<S3SelectScan>(opBehaviour_);
@@ -32,6 +36,9 @@ OperatorActor::OperatorActor(actor_config &cfg, std::shared_ptr<Operator> opBeha
       auto S3SelectOp = std::static_pointer_cast<S3Select>(opBehaviour_);
       S3SelectOp->makeParser();
     }
+  } else if (opBehaviour_->getType() == "Filter") {
+    auto filterOp = std::static_pointer_cast<filter::Filter>(opBehaviour_);
+    filterOp->initFilteredAndReceived();
   }
 }
 
@@ -51,6 +58,18 @@ behavior behaviour(OperatorActor *self) {
 		auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count();
 		self->incrementProcessingTime(elapsedTime);
 		return self->getProcessingTime();
+	  },
+    [=](GetMetricsAtom) {
+      if (self->operator_()->getType() == "S3Select" || self->operator_()->getType() == "S3Get") {
+        auto S3SelectScanOp = std::static_pointer_cast<S3SelectScan>(self->operator_());
+        auto processedBytes = S3SelectScanOp->getProcessedBytes();
+        auto returnedBytes = S3SelectScanOp->getReturnedBytes();
+        return std::make_pair(processedBytes, returnedBytes);
+      } else {
+        //FIXME: return caf::error properly
+        std::string errorMsg = fmt::format("GetMetrics for operator type {} not implemented", self->operator_()->getType());
+        throw std::runtime_error(errorMsg);
+      }
 	  },
 	  [=](const normal::core::message::Envelope &msg) {
 

@@ -14,7 +14,7 @@
 #include <normal/tuple/arrow/Arrays.h>
 #include <normal/tuple/arrow/TableHelper.h>
 #include "normal/tuple/Globals.h"
-#include <normal/tuple/serialization/TupleSetSer.h>
+#include <normal/tuple/serialization/ArrowSer.h>
 
 namespace arrow { class Table; }
 namespace arrow::csv { class TableReader; }

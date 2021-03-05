@@ -13,7 +13,7 @@
 
 namespace normal::frontend {
   inline constexpr size_t DefaultCacheSize_ = 8L * 1024 * 1024 * 1024;
-  inline constexpr int DefaultModeType_ = 4;
+  inline constexpr int DefaultModeType_ = 3;
   inline constexpr int DefaultCachingPolicyType_ = 3;
   inline const std::string DefaultBucketName_ = "pushdowndb";
   inline const std::string DefaultDirPrefix_ = "ssb-sf1-sortlineorder/csv/";

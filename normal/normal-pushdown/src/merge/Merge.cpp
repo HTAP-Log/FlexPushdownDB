@@ -35,8 +35,8 @@ void Merge::onStart() {
 
   SPDLOG_DEBUG("Starting operator  |  name: '{}', leftProducer: {}, rightProducer: {}",
 			   name(),
-			   leftProducer_.lock()->name(),
-			   rightProducer_.lock()->name());
+			   leftProducerName_,
+			   rightProducerName_);
 }
 
 void Merge::merge() {
@@ -78,13 +78,13 @@ void Merge::onTuple(const TupleMessage &message) {
   const auto &tupleSet = TupleSet2::create(message.tuples());
 
   // Add the tupleset to a slot in left or right producers tuple queue
-  if (message.sender() == leftProducer_.lock()->name()) {
+  if (message.sender() == leftProducerName_) {
 	leftTupleSets_.emplace_back(tupleSet);
-  } else if (message.sender() == rightProducer_.lock()->name()) {
+  } else if (message.sender() == rightProducerName_) {
 	rightTupleSets_.emplace_back(tupleSet);
   } else {
 	throw std::runtime_error(fmt::format("Unrecognized producer {}, left: {}, right: {}",
-	        message.sender(), leftProducer_.lock()->name(), rightProducer_.lock()->name()));
+	        message.sender(), leftProducerName_, rightProducerName_));
   }
 
   // Merge
@@ -92,11 +92,11 @@ void Merge::onTuple(const TupleMessage &message) {
 }
 
 void Merge::setLeftProducer(const std::shared_ptr<Operator> &leftProducer) {
-  leftProducer_ = leftProducer;
+  leftProducerName_ = leftProducer->name();
   consume(leftProducer);
 }
 
 void Merge::setRightProducer(const std::shared_ptr<Operator> &rightProducer) {
-  rightProducer_ = rightProducer;
+  rightProducerName_ = rightProducer->name();
   consume(rightProducer);
 }

@@ -267,7 +267,7 @@ void S3SelectScan::sendSegmentWeight() {
     }
   }
 
-  ctx()->send(WeightRequestMessage::make(weightMap, getQueryId(), name()), "SegmentCache")
+  ctx()->send(WeightRequestMessage::make(*weightMap, getQueryId(), name()), "SegmentCache")
           .map_error([](auto err) { throw std::runtime_error(err); });
 }
 

@@ -2,7 +2,7 @@
 // Created by Yifei Yang on 3/2/21.
 //
 
-#include <normal/tuple/serialization/TupleSetSer.h>
+#include <normal/tuple/serialization/ArrowSer.h>
 #include <fmt/format.h>
 #include <arrow/ipc/api.h>
 #include <arrow/io/api.h>
@@ -62,4 +62,22 @@ std::vector<std::uint8_t> normal::tuple::table_to_bytes(const std::shared_ptr<ar
   std::vector<std::uint8_t> bytes_vec(data, data + length);
 
   return bytes_vec;
+}
+
+std::shared_ptr<arrow::ChunkedArray> normal::tuple::bytes_to_chunkedArray(const std::vector<std::uint8_t> &bytes_vec) {
+  auto table = bytes_to_table(bytes_vec);
+  return table->column(0);
+}
+
+std::vector<std::uint8_t>
+normal::tuple::chunkedArray_to_bytes(const std::shared_ptr<arrow::ChunkedArray> &chunkedArray) {
+
+  // prepare the Table, as arrow only supports RecordBatch/Table level serialization
+  auto field = std::make_shared<arrow::Field>("", chunkedArray->type());
+  auto fields = std::vector<std::shared_ptr<arrow::Field>>{field};
+  auto schema = std::make_shared<arrow::Schema>(fields);
+  auto values = std::vector<std::shared_ptr<arrow::ChunkedArray>>{chunkedArray};
+  auto table = arrow::Table::Make(schema, values);
+
+  return table_to_bytes(table);
 }

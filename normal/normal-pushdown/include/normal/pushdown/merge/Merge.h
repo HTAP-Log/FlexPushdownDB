@@ -20,6 +20,9 @@ class Merge : public Operator {
 public:
 
   explicit Merge(const std::string &Name, long queryId);
+  Merge() = default;
+  Merge(const Merge&) = default;
+  Merge& operator=(const Merge&) = default;
 
   static std::shared_ptr<Merge> make(const std::string &Name, long queryId = 0);
 
@@ -36,12 +39,24 @@ private:
 
   void merge();
 
-  std::weak_ptr<Operator> leftProducer_;
-  std::weak_ptr<Operator> rightProducer_;
+  std::string leftProducerName_;
+  std::string rightProducerName_;
 
   std::list<std::shared_ptr<TupleSet2>> leftTupleSets_;
   std::list<std::shared_ptr<TupleSet2>> rightTupleSets_;
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Merge& op) {
+    return f.object(op).fields(f.field("leftProducerName", op.leftProducerName_),
+                               f.field("rightProducerName", op.rightProducerName_),
+                               f.field("name", op.name()),
+                               f.field("type", op.getType()),
+                               f.field("opContext", op.getOpContext()),
+                               f.field("producers", op.getProducers()),
+                               f.field("consumers", op.getConsumers()));
+  }
 };
 
 }

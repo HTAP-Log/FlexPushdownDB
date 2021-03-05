@@ -16,6 +16,9 @@
 
 namespace normal::core {
 
+  // A global segment cache actor for actors from other actor systems to communicate, initiated in client.boot()
+  inline caf::actor GlobalSegmentCacheActor_;
+
   void init_caf_global_meta_objects();
 }
 

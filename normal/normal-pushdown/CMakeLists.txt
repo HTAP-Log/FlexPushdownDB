@@ -173,3 +173,17 @@ configure_file(data/bloomjoin/right.csv ${CMAKE_CURRENT_BINARY_DIR}/data/bloomjo
 #-----------------------------------------------------------------------------------------------------------------------
 
 #showTargetProps(normal-pushdown)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# change lib position for mac (not sure why mac cannot find the correct location of graphviz's lib)
+#-----------------------------------------------------------------------------------------------------------------------
+
+set(executables normal-pushdown-test normal-pushdown-benchmark)
+if(${APPLE})
+    FOREACH(executable ${executables})
+        add_custom_command(TARGET ${executable} POST_BUILD COMMAND
+                ${CMAKE_INSTALL_NAME_TOOL} -change libgvplugin_neato_layout.6.dylib /usr/local/opt/graphviz/lib/graphviz/libgvplugin_neato_layout.6.dylib ${executable})
+        add_custom_command(TARGET ${executable} POST_BUILD COMMAND
+                ${CMAKE_INSTALL_NAME_TOOL} -change libgvplugin_core.6.dylib /usr/local/opt/graphviz/lib/graphviz/libgvplugin_core.6.dylib ${executable})
+    ENDFOREACH()
+endif()

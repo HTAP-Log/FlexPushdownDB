@@ -99,7 +99,7 @@ void run(const std::string &s3Bucket,
 //  client.shutdown();
 }
 
-#define SKIP_SUITE false
+#define SKIP_SUITE true
 
 TEST_SUITE ("s3select-scan" * doctest::skip(SKIP_SUITE)) {
 

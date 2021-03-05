@@ -59,7 +59,7 @@ void WFBRCachingPolicy::onLoad(const std::shared_ptr<SegmentKey> &key) {
     onLoadTime += std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime).count();
 }
 
-void WFBRCachingPolicy::onWeight(const std::shared_ptr<std::unordered_map<std::shared_ptr<SegmentKey>, double>> &weightMap, long queryId) {
+void WFBRCachingPolicy::onWeight(const std::unordered_map<std::shared_ptr<SegmentKey>, double> &weightMap, long queryId) {
   // if new query executes, clear temporary weight updated keys
   if (queryId > currentQueryId_) {
     weightUpdatedKeys_.clear();
@@ -67,7 +67,7 @@ void WFBRCachingPolicy::onWeight(const std::shared_ptr<std::unordered_map<std::s
   }
 
   // update value using weight
-  for (auto const &weightEntry: *weightMap) {
+  for (auto const &weightEntry: weightMap) {
     auto segmentKey = weightEntry.first;
     auto weight = weightEntry.second;
     if (weightUpdatedKeys_.find(segmentKey) == weightUpdatedKeys_.end()) {

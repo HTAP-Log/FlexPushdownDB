@@ -41,7 +41,7 @@ add_library(normal-tuple STATIC
         src/FileReaderBuilder.cpp include/normal/tuple/FileReaderBuilder.h
         src/CSVReader.cpp include/normal/tuple/CSVReader.h
         src/ArrayAppenderWrapper.cpp include/normal/tuple/ArrayAppenderWrapper.h
-        src/serialization/TupleSetSer.cpp include/normal/tuple/serialization/TupleSetSer.h)
+        src/serialization/ArrowSer.cpp include/normal/tuple/serialization/ArrowSer.h)
 
 target_include_directories(normal-tuple PUBLIC include)
 

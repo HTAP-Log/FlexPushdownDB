@@ -47,7 +47,7 @@ public:
 			   long queryId,
          std::vector<std::shared_ptr<normal::cache::SegmentKey>> weightedSegmentKeys);
 
-  // Something has to be done after Operator created to avoid serialization
+  // Something has to be done after Operator created to avoid unnecessary serialization
   void makeSchema();
   void reserveColumnsReadFromS3();
 

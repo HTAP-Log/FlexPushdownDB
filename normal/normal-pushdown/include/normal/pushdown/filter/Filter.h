@@ -22,10 +22,16 @@ class Filter : public normal::core::Operator {
 public:
   explicit Filter(std::string Name, std::shared_ptr<FilterPredicate> Pred, long queryId,
                   const std::vector<std::shared_ptr<normal::cache::SegmentKey>> &weightedSegmentKeys);
+  Filter() = default;
+  Filter(const Filter&) = default;
+  Filter& operator=(const Filter&) = default;
 
   static std::shared_ptr<Filter> make(const std::string &Name, const std::shared_ptr<FilterPredicate> &Pred,
                                       long queryId = 0,
                                       const std::vector<std::shared_ptr<normal::cache::SegmentKey>>& weightedSegmentKeys = std::vector<std::shared_ptr<normal::cache::SegmentKey>>());
+
+  // Something has to be done after Operator created to avoid unnecessary serialization
+  void initFilteredAndReceived();
 
   void onReceive(const core::message::Envelope &Envelope) override;
 
@@ -69,6 +75,19 @@ private:
 
   long filterTime_ = 0;
   size_t bytesFiltered_ = 0;
+
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Filter& op) {
+    return f.object(op).fields(f.field("pred", op.pred_),
+                               f.field("weightedSegmentKeys", op.weightedSegmentKeys_),
+                               f.field("name", op.name()),
+                               f.field("type", op.getType()),
+                               f.field("opContext", op.getOpContext()),
+                               f.field("producers", op.getProducers()),
+                               f.field("consumers", op.getConsumers()));
+  }
 };
 
 }

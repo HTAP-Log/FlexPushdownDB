@@ -125,4 +125,8 @@ void OperatorContext::destroyActorHandles() {
   destroy(segmentCacheActor_);
 }
 
+void OperatorContext::setSegmentCacheActor(const caf::actor &segmentCacheActor) {
+  segmentCacheActor_ = segmentCacheActor;
+}
+
 } // namespace

@@ -27,10 +27,6 @@ using namespace normal::core;
 using namespace normal::core::message;
 using namespace normal::pushdown::scan;
 
-CAF_BEGIN_TYPE_ID_BLOCK(S3SelectScan2, normal::util::S3SelectScan2_first_custom_type_id)
-CAF_ADD_ATOM(S3SelectScan2, GetMetricsAtom)
-CAF_END_TYPE_ID_BLOCK(S3SelectScan2)
-
 using namespace normal::tuple;
 
 namespace normal::pushdown {

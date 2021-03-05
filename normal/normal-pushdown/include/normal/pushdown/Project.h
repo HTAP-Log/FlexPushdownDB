@@ -26,6 +26,9 @@ public:
   Project(const std::string &Name,
           std::vector<std::shared_ptr<normal::expression::gandiva::Expression>> Expressions,
           long queryId = 0);
+  Project() = default;
+  Project(const Project&) = default;
+  Project& operator=(const Project&) = default;
 
   /**
    * Default destructor
@@ -95,6 +98,17 @@ private:
   void cacheInputSchema(const core::message::TupleMessage &message);
   void buildAndCacheProjector();
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, Project& op) {
+    return f.object(op).fields(f.field("expressions", op.expressions_),
+                               f.field("name", op.name()),
+                               f.field("type", op.getType()),
+                               f.field("opContext", op.getOpContext()),
+                               f.field("producers", op.getProducers()),
+                               f.field("consumers", op.getConsumers()));
+  }
 };
 
 }

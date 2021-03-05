@@ -9,6 +9,7 @@
 #include <normal/core/message/Envelope.h>
 #include <normal/connector/partition/Partition.h>
 #include <normal/core/cache/LoadResponseMessage.h>
+#include <normal/connector/serialization/PartitionSer.h>
 
 using namespace normal::core;
 using namespace normal::core::message;
@@ -27,6 +28,9 @@ public:
 					 int64_t finishOffset,
 					 bool useNewCacheLayout,
 					 long queryId);
+  CacheLoad() = default;
+  CacheLoad(const CacheLoad&) = default;
+  CacheLoad& operator=(const CacheLoad&) = default;
   ~CacheLoad() override = default;
 
   static std::shared_ptr<CacheLoad> make(const std::string &name,
@@ -57,9 +61,9 @@ private:
   int64_t startOffset_;
   int64_t finishOffset_;
 
-  std::weak_ptr<Operator> hitOperator_;
-  std::weak_ptr<Operator> missOperatorToCache_;
-  std::weak_ptr<Operator> missOperatorToPushdown_;
+  std::optional<std::string> hitOperatorName_;
+  std::optional<std::string> missOperatorToCacheName_;
+  std::optional<std::string> missOperatorToPushdownName_;
 
   /**
    * whether to use the new cache layout after segments back or the last one without waiting
@@ -69,6 +73,26 @@ private:
   void requestLoadSegmentsFromCache();
   void onCacheLoadResponse(const LoadResponseMessage &Message);
 
+// caf inspect
+public:
+  template <class Inspector>
+  friend bool inspect(Inspector& f, CacheLoad& op) {
+    return f.object(op).fields(f.field("columnNames", op.columnNames_),
+                               f.field("projectedColumnNames", op.projectedColumnNames_),
+                               f.field("predicatedColumnNames", op.predicateColumnNames_),
+                               f.field("partition", op.partition_),
+                               f.field("startOffset", op.startOffset_),
+                               f.field("finishOffset", op.finishOffset_),
+                               f.field("hitOperatorName", op.hitOperatorName_),
+                               f.field("missOperatorToCacheName", op.missOperatorToCacheName_),
+                               f.field("missOperatorToPushdownName", op.missOperatorToPushdownName_),
+                               f.field("useNewCacheLayout", op.useNewCacheLayout_),
+                               f.field("name", op.name()),
+                               f.field("type", op.getType()),
+                               f.field("opContext", op.getOpContext()),
+                               f.field("producers", op.getProducers()),
+                               f.field("consumers", op.getConsumers()));
+  }
 };
 
 }

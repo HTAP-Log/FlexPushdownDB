@@ -23,14 +23,17 @@ using namespace normal::cache;
 Filter::Filter(std::string Name, std::shared_ptr<FilterPredicate> Pred, long queryId,
                const std::vector<std::shared_ptr<normal::cache::SegmentKey>> &weightedSegmentKeys) :
 	Operator(std::move(Name), "Filter", queryId),
-	received_(normal::tuple::TupleSet2::make()),
-	filtered_(normal::tuple::TupleSet2::make()),
 	pred_(Pred),
 	weightedSegmentKeys_(weightedSegmentKeys) {}
 
 std::shared_ptr<Filter> Filter::make(const std::string &Name, const std::shared_ptr<FilterPredicate> &Pred, long queryId,
                                      const std::vector<std::shared_ptr<normal::cache::SegmentKey>> &weightedSegmentKeys) {
   return std::make_shared<Filter>(Name, Pred, queryId, weightedSegmentKeys);
+}
+
+void Filter::initFilteredAndReceived() {
+  received_ = normal::tuple::TupleSet2::make();
+  filtered_ = normal::tuple::TupleSet2::make();
 }
 
 void Filter::onReceive(const normal::core::message::Envelope &Envelope) {
@@ -221,6 +224,6 @@ void Filter::sendSegmentWeight() {
     }
   }
 
-  ctx()->send(core::cache::WeightRequestMessage::make(weightMap, getQueryId(), name()), "SegmentCache")
+  ctx()->send(core::cache::WeightRequestMessage::make(*weightMap, getQueryId(), name()), "SegmentCache")
           .map_error([](auto err) { throw std::runtime_error(err); });
 }

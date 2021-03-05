@@ -83,13 +83,13 @@ void CacheLoad::onStart() {
    * In hybrid caching, we also have missOperatorToPushdown_; in pullup caching, we don't
    */
 
-  if (!hitOperator_.lock())
+  if (!hitOperatorName_.has_value())
 	throw std::runtime_error("Hit consumer not set ");
 
-  if (!missOperatorToCache_.lock())
+  if (!missOperatorToCacheName_.has_value())
 	throw std::runtime_error("Miss caching consumer not set");
 
-  if (missOperatorToPushdown_.lock()) {
+  if (missOperatorToPushdownName_.has_value()) {
     SPDLOG_DEBUG("Starting operator  |  name: '{}', hitOperator: '{}', missOperatorToCache: '{}', missOperatorToPushdown: '{}'",
                  this->name(),
                  hitOperator_.lock()->name(),
@@ -154,7 +154,7 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
 
   // Send the hit columns to the hit operator
   auto hitMessage = std::make_shared<TupleMessage>(hitTupleSet->toTupleSetV1(), this->name());
-  ctx()->send(hitMessage, hitOperator_.lock()->name());
+  ctx()->send(hitMessage, hitOperatorName_.value());
 
   if (useNewCacheLayout_) {
     /**
@@ -183,10 +183,10 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
       }
     }
 
-    if (missOperatorToPushdown_.lock()) {
+    if (missOperatorToPushdownName_.has_value()) {
       // Send the missed caching column names to the miss caching operator
       auto missCachingMessage = std::make_shared<ScanMessage>(missedCachingColumnNames, this->name(), cachingResultNeeded);
-      ctx()->send(missCachingMessage, missOperatorToCache_.lock()->name());
+      ctx()->send(missCachingMessage, missOperatorToCacheName_.value());
 
       // Send the missed pushdown column names to the miss pushdown operator
       std::shared_ptr<ScanMessage> missPushdownMessage;
@@ -195,11 +195,11 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
       } else {
         missPushdownMessage = std::make_shared<ScanMessage>(projectedColumnNames_, this->name(), true);
       }
-      ctx()->send(missPushdownMessage, missOperatorToPushdown_.lock()->name());
+      ctx()->send(missPushdownMessage, missOperatorToPushdownName_.value());
     } else {
       // Send the missed caching column names to the miss caching operator
       auto missCachingMessage = std::make_shared<ScanMessage>(missedCachingColumnNames, this->name(), true);
-      ctx()->send(missCachingMessage, missOperatorToCache_.lock()->name());
+      ctx()->send(missCachingMessage, missOperatorToCacheName_.value());
     }
 
     // Send cache metrics to segmentCacheActor
@@ -215,7 +215,7 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
       shardMissNum = 1;
     }
     // Hybrid
-    if (missOperatorToPushdown_.lock()) {
+    if (missOperatorToPushdownName_.has_value()) {
       if (cachingResultNeeded) {
         hitNum = hitSegments.size();
         missNum = columnNames_.size() - hitNum;
@@ -263,17 +263,17 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
 
     // Send the missed caching column names to the miss caching operator
     auto missCachingMessage = std::make_shared<ScanMessage>(missedCachingColumnNames, this->name(), false);
-    ctx()->send(missCachingMessage, missOperatorToCache_.lock()->name());
+    ctx()->send(missCachingMessage, missOperatorToCacheName_.value());
 
     // Send the missed pushdown column names to the miss pushdown operator
-    if (missOperatorToPushdown_.lock()) {
+    if (missOperatorToPushdownName_.has_value()) {
       std::shared_ptr<ScanMessage> missPushdownMessage;
       if (hitSegmentsUseful) {
         missPushdownMessage = std::make_shared<ScanMessage>(missedPushdownColumnNames, this->name(), true);
       } else {
         missPushdownMessage = std::make_shared<ScanMessage>(projectedColumnNames_, this->name(), true);
       }
-      ctx()->send(missPushdownMessage, missOperatorToPushdown_.lock()->name());
+      ctx()->send(missPushdownMessage, missOperatorToPushdownName_.value());
     }
   }
 
@@ -281,16 +281,16 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
 }
 
 void CacheLoad::setHitOperator(const std::shared_ptr<Operator> &op) {
-  this->hitOperator_ = op;
+  this->hitOperatorName_ = op->name();
   this->produce(op);
 }
 
 void CacheLoad::setMissOperatorToCache(const std::shared_ptr<Operator> &op) {
-  this->missOperatorToCache_ = op;
+  this->missOperatorToCacheName_ = op->name();
   this->produce(op);
 }
 
 void CacheLoad::setMissOperatorToPushdown(const std::shared_ptr<Operator> &op) {
-  this->missOperatorToPushdown_ = op;
+  this->missOperatorToPushdownName_ = op->name();
   this->produce(op);
 }
