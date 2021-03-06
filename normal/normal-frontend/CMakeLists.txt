@@ -31,7 +31,7 @@ target_link_libraries(variant_serialization PUBLIC caf::libcaf_io_shared)
 #-----------------------------------------------------------------------------------------------------------------------
 # change lib position for mac (not sure why mac cannot find the correct location of graphviz's lib)
 #-----------------------------------------------------------------------------------------------------------------------
-
+message(${CMAKE_CURRENT_BINARY_DIR}/../_deps/aws-cpp-sdk-ep/install/lib/libaws-cpp-sdk-core.dylib)
 set(executables normal-frontend)
 if(${APPLE})
     FOREACH(executable ${executables})
@@ -39,6 +39,9 @@ if(${APPLE})
                 ${CMAKE_INSTALL_NAME_TOOL} -change libgvplugin_neato_layout.6.dylib /usr/local/opt/graphviz/lib/graphviz/libgvplugin_neato_layout.6.dylib ${executable})
         add_custom_command(TARGET ${executable} POST_BUILD COMMAND
                 ${CMAKE_INSTALL_NAME_TOOL} -change libgvplugin_core.6.dylib /usr/local/opt/graphviz/lib/graphviz/libgvplugin_core.6.dylib ${executable})
+        # FIXME: not good to use absolute path
+        add_custom_command(TARGET ${executable} POST_BUILD COMMAND
+                ${CMAKE_INSTALL_NAME_TOOL} -change @rpath/libaws-cpp-sdk-core.dylib /Users/yyf/Desktop/pushdownDB/normal/cmake-build-relwithdebinfo/_deps/aws-cpp-sdk_ep/install/lib/libaws-cpp-sdk-core.dylib ${executable})
     ENDFOREACH()
 endif()
 

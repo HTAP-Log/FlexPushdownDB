@@ -205,7 +205,7 @@ S3SelectScanLogicalOperator::toOperatorsPullupCachingUniHash(int numNodes, int n
    */
   auto queryId = getQueryId();
 
-  int partitionRangeIndex;
+  int partitionRangeIndex = 0;
   for (const auto &partition: *getPartitioningScheme()->partitions()) {
     // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
     auto validPair = checkPartitionValid(partition);

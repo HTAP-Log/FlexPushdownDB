@@ -6,6 +6,7 @@
 #define NORMAL_UTIL_UTIL_H
 
 #include <normal/util/Globals.h>
+#include <vector>
 
 namespace normal::util {
   std::string readFile(const std::string& filePath);
