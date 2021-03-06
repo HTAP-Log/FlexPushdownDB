@@ -20,18 +20,14 @@ namespace normal::frontend {
 
 class Client {
   struct config : actor_system_config {
-    config(int port, std::string host, bool serverMode) :
-    port_(port), host_(host), serverMode_(serverMode){
+    config(int port, std::vector<std::string> hosts, bool serverMode) :
+    port_(port), hosts_(hosts), serverMode_(serverMode){
       load<io::middleman>();
       add_actor_type("display", display_fun);
       add_actor_type<OperatorActor, OperatorPtr&>("OperatorActor");
-      opt_group{custom_options_, "global"}
-              .add(port, "port,p", "set port")
-              .add(host, "host,H", "set node (ignored in server mode)")
-              .add(serverMode_, "server-mode,s", "enable server mode");
     }
     uint16_t port_;
-    std::string host_;
+    std::vector<std::string> hosts_;
     bool serverMode_;
   };
 
@@ -46,7 +42,7 @@ public:
     auto type = "display";             // type of the actor we wish to spawn
     auto args = make_message();           // arguments to construct the actor
     auto tout = std::chrono::seconds(30); // wait no longer than 30s
-    auto worker = clientActorSystem_->middleman().remote_spawn<display>(node_.value(), type, args,
+    auto worker = clientActorSystem_->middleman().remote_spawn<display>(nodes_[0], type, args,
                                                                         tout);
     if (!worker) {
       std::cerr << "*** remote spawn failed: " << to_string(worker.error()) << std::endl;
@@ -97,11 +93,11 @@ private:
   std::shared_ptr<Interpreter> interpreter_;
 
   /* Remote parameters */
-  struct config clientCfg_{DefaultServerPort_, "localhost", false};
-  struct config serverCfg_{DefaultServerPort_, "localhost", true};
+  std::shared_ptr<config> clientCfg_;
+  std::shared_ptr<config> serverCfg_;
   std::shared_ptr<caf::actor_system> clientActorSystem_;
   std::shared_ptr<caf::actor_system> serverActorSystem_;
-  std::optional<node_id> node_;
+  std::vector<node_id> nodes_;      // other nodes
   bool distributed_;
 
   void configureS3ConnectorSinglePartition(std::shared_ptr<Interpreter> &i, std::string bucket_name, std::string dir_prefix);
@@ -109,6 +105,8 @@ private:
   std::shared_ptr<TupleSet> execute();
   void server();
 };
+
+std::vector<std::string> readAllRemoteIps();
 
 }
 

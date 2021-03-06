@@ -21,17 +21,18 @@ using namespace normal::util;
 
 Client::Client():
   cacheSize_(DefaultCacheSize_), bucketName_(DefaultBucketName_), dirPrefix_(DefaultDirPrefix_),
-  distributed_(true) {
-  ::caf::init_global_meta_objects<::caf::id_block::Client>();
-  normal::core::init_caf_global_meta_objects();
-  clientActorSystem_ = std::make_shared<caf::actor_system>(clientCfg_);
-//  auto logCfg = caf::logger::config();
-//  caf::logger(logCfg);
-//  std::cout << caf::logger::current_logger()->console_verbosity() << logCfg.console_verbosity << std::endl;
-  serverActorSystem_ = std::make_shared<caf::actor_system>(serverCfg_);
-}
+  distributed_(true) {}
 
 std::string Client::boot() {
+  /* Initialize caf communication */
+  auto hosts = readAllRemoteIps();
+  clientCfg_ = std::make_shared<config>(DefaultServerPort_, hosts, false);
+  serverCfg_ = std::make_shared<config>(DefaultServerPort_, hosts, true);
+  ::caf::init_global_meta_objects<::caf::id_block::Client>();
+  normal::core::init_caf_global_meta_objects();
+  clientActorSystem_ = std::make_shared<caf::actor_system>(*clientCfg_);
+  serverActorSystem_ = std::make_shared<caf::actor_system>(*serverCfg_);
+
   /* Initialize query processing */
   defaultMiniCatalogue = MiniCatalogue::defaultMiniCatalogue(bucketName_, dirPrefix_);
   setMode(DefaultModeType_);
@@ -64,17 +65,22 @@ std::string Client::reboot() {
 }
 
 void Client::connect() {
-  auto expectedNode = clientActorSystem_->middleman().connect(clientCfg_.host_, clientCfg_.port_);
-  if (!expectedNode) {
-    std::cerr << "*** connect failed: " << to_string(expectedNode.error()) << std::endl;
-    return;
+  for (auto const& host: clientCfg_->hosts_) {
+    auto expectedNode = clientActorSystem_->middleman().connect(host, clientCfg_->port_);
+    if (!expectedNode) {
+      std::string errorMsg = fmt::format("Connected to {} failed: {}", host, to_string(expectedNode.error()));
+      std::cerr << errorMsg << std::endl;
+      nodes_.clear();
+      return;
+    }
+    std::cout << fmt::format("Connected to {}", host) << std::endl;
+    nodes_.emplace_back(expectedNode.value());
   }
-  std::cout << "connected to server" << std::endl;
-  node_ = expectedNode.value();
+  std::cout << "Connected to all servers" << std::endl;
 }
 
 void Client::server() {
-  auto res = serverActorSystem_->middleman().open(serverCfg_.port_);
+  auto res = serverActorSystem_->middleman().open(serverCfg_->port_);
   if (!res) {
     std::cerr << "*** cannot open port: " << to_string(res.error()) << std::endl;
     return;
@@ -87,9 +93,6 @@ void Client::setDistributed(bool distributed) {
 
 std::shared_ptr<TupleSet> Client::execute() {
   interpreter_->getCachingPolicy()->onNewQuery();
-  if (distributed_ && node_.has_value()) {
-    interpreter_->getOperatorGraph()->setNode(node_.value());
-  }
   interpreter_->getOperatorGraph()->boot();
   interpreter_->getOperatorGraph()->start();
   interpreter_->getOperatorGraph()->join();
@@ -100,8 +103,9 @@ std::shared_ptr<TupleSet> Client::execute() {
 std::string Client::executeSql(const std::string &sql) {
   interpreter_->clearOperatorGraph();
   interpreter_->parse(sql);
-  if (distributed_ && node_.has_value()) {
-    interpreter_->plan(2);
+  if (distributed_) {
+    interpreter_->plan(1 + nodes_.size());
+    interpreter_->getOperatorGraph()->setNodes(nodes_);
   } else {
     interpreter_->plan(1);
   }
@@ -114,10 +118,7 @@ std::string Client::executeSql(const std::string &sql) {
 }
 
 std::string Client::executeSqlFile(const std::string &filePath) {
-  // Default sql files put under cmake.../normal-ssb/sql
-  auto currentPath = filesystem::current_path().parent_path().append("normal-ssb/sql");
-  auto sql_file_dir_path = currentPath.append(filePath);
-  auto sql = readFile(sql_file_dir_path.string());
+  auto sql = readFile(filePath);
   return executeSql(sql);
 }
 
@@ -225,4 +226,16 @@ void Client::configureS3ConnectorMultiPartition(std::shared_ptr<Interpreter> &i,
     cat->put(std::make_shared<normal::connector::s3::S3SelectCatalogueEntry>(tableName, partitioningScheme, cat));
   }
   i->put(cat);
+}
+
+std::vector<std::string> normal::frontend::readAllRemoteIps() {
+  auto localIp = getLocalIp();
+  auto ips = readFileByLine(filesystem::current_path().append("conf/cluster_ips").string());
+  for (auto it = ips.begin(); it != ips.end(); it++) {
+    if (localIp == *it) {
+      ips.erase(it);
+      return ips;
+    }
+  }
+  return ips;
 }

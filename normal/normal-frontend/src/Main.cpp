@@ -4,11 +4,13 @@
 
 #include <normal/frontend/Global.h>
 #include <normal/frontend/Client.h>
+#include <normal/util/Util.h>
 
 #define CMD_BEGIN(isNewLine) { std::cout << "FlexPushdownDB> "; if(!isNewLine) std::cout << "  ";}
 #define RESULT(content) std::cout << "\t" << content << std::endl;
 
 using namespace normal::frontend;
+using namespace normal::util;
 
 std::string set(const std::string& command, const std::shared_ptr<Client>& client) {
   size_t whiteIndex = command.find(' ');
@@ -57,6 +59,9 @@ bool execute(const std::string& command, const std::shared_ptr<Client>& client) 
       return false;
     } else if (word1 == "set") {
       RESULT(set(word2, client));
+      return false;
+    } else if (word1 == "local_ip") {
+      RESULT(getLocalIp());
       return false;
     }
   }

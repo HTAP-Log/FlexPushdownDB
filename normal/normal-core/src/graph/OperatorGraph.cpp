@@ -127,7 +127,7 @@ void graph::OperatorGraph::boot() {
     if (placement == 0) {
       element.second.setActorHandle(localSpawn(op));
     } else {
-      element.second.setActorHandle(remoteSpawn(op));
+      element.second.setActorHandle(remoteSpawn(op, placement));
     }
   }
 }
@@ -175,13 +175,13 @@ caf::actor graph::OperatorGraph::localSpawn(const std::shared_ptr<Operator>& op)
   }
 }
 
-caf::actor graph::OperatorGraph::remoteSpawn(const std::shared_ptr<Operator>& op) {
+caf::actor graph::OperatorGraph::remoteSpawn(const std::shared_ptr<Operator>& op, int placement) {
   auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor());
   op->create(ctx);
   auto remoteSpawnTout = std::chrono::seconds(10);
   auto args = make_message(op);
   auto expectedActorHandle = operatorManager_.lock()->getActorSystem()->middleman()
-          .remote_spawn<caf::actor>(node_.value(), "OperatorActor", args, remoteSpawnTout);
+          .remote_spawn<caf::actor>(nodes_[placement - 1], "OperatorActor", args, remoteSpawnTout);
   if (!expectedActorHandle) {
     throw std::runtime_error(fmt::format("Failed to remote-spawn operator actor '{}': {}", op->name(), to_string(expectedActorHandle.error())));
   }
@@ -516,8 +516,8 @@ tl::expected<std::shared_ptr<TupleSet2>, std::string> graph::OperatorGraph::exec
   return TupleSet2::create(tuples);
 }
 
-void graph::OperatorGraph::setNode(const node_id &node) {
-  node_ = node;
+void graph::OperatorGraph::setNodes(const std::vector<node_id> &nodes) {
+  nodes_ = nodes;
 }
 
 void graph::OperatorGraph::setPlacements(

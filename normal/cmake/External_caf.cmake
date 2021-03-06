@@ -67,7 +67,7 @@ file(MAKE_DIRECTORY ${CAF_INCLUDE_DIR}) # Include directory needs to exist to ru
 
 find_package(Threads REQUIRED)
 
-message(${CAF_CORE_SHARED_LIBS})
+#message(${CAF_CORE_SHARED_LIBS})
 
 add_library(caf::libcaf_core_shared SHARED IMPORTED)
 set_target_properties(caf::libcaf_core_shared PROPERTIES IMPORTED_LOCATION ${CAF_CORE_SHARED_LIBS})

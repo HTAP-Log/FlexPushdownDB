@@ -53,7 +53,7 @@ public:
   std::pair<size_t, size_t> getSelectTransferConvertTimesNS();
   std::string showMetrics();
   [[nodiscard]] const long &getId() const;
-  void setNode(const node_id &node);
+  void setNodes(const std::vector<node_id> &nodes);
   void setPlacements(const std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> &placements);
   const std::shared_ptr<Collate> &getLegacyCollateOperator() const;
 
@@ -69,11 +69,13 @@ private:
   std::chrono::steady_clock::time_point stopTime_;
 
   /* Distributed */
-  std::optional<node_id> node_;
+  std::vector<node_id> nodes_;      // other nodes
+
+private:
   std::unordered_map<std::shared_ptr<core::Operator>, int, core::OperatorPointerHash, core::OperatorPointerPredicate> placements_;
 
   caf::actor localSpawn(const std::shared_ptr<Operator>&);
-  caf::actor remoteSpawn(const std::shared_ptr<Operator>&);
+  caf::actor remoteSpawn(const std::shared_ptr<Operator>&, int placement);
 };
 
 }

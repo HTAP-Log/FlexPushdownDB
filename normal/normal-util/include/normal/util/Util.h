@@ -8,8 +8,10 @@
 #include <normal/util/Globals.h>
 
 namespace normal::util {
-  std::string readFile(std::string filePath);
-  bool isInteger(std::string str);
+  std::string readFile(const std::string& filePath);
+  std::vector<std::string> readFileByLine(const std::string& filePath);
+  bool isInteger(const std::string& str);
+  std::string getLocalIp();
 }
 
 

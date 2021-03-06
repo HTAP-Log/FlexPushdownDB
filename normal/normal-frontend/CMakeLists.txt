@@ -41,3 +41,9 @@ if(${APPLE})
                 ${CMAKE_INSTALL_NAME_TOOL} -change libgvplugin_core.6.dylib /usr/local/opt/graphviz/lib/graphviz/libgvplugin_core.6.dylib ${executable})
     ENDFOREACH()
 endif()
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Copy data to runtime directory
+#-----------------------------------------------------------------------------------------------------------------------
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/conf/cluster_ips ${CMAKE_CURRENT_BINARY_DIR}/conf/cluster_ips COPYONLY)
