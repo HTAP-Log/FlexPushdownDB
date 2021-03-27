@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.15)
 project(normal-ssb VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 # need to link libraries on mac
