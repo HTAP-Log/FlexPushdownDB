@@ -97,7 +97,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
       // FIXME 1: hack Parquet Get using Select
       // FIXME 2: not a idea way to distinguish CSV and Parquet
       if (s3Object.find("csv") != std::string::npos) {
-        scanOp = S3Get::make(
+        scanOp = S3Get::make_1(
                 "s3get - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
                 s3Partition->getBucket(),
                 s3Object,
@@ -106,6 +106,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 scanRange.first,
                 scanRange.second,
                 miniCatalogue->getSchema(getName()),
+                getName(), // name of the table of the partition
                 DefaultS3Client,
                 true,
                 false,

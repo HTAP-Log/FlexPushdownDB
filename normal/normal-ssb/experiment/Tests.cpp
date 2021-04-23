@@ -49,7 +49,12 @@
 #include <arrow/io/buffered.h>                              // for BufferedI...
 #include <arrow/io/memory.h>                                // for BufferReader
 #include <arrow/type_fwd.h>                                 // for default_m...
+#include "arrow/csv/api.h"                                  // for reading csv into arrow format
 #include <normal/tuple/arrow/ArrowAWSInputStream.h>
+
+#include <iostream>
+#include <fstream>
+
 //#include <normal/tuple/arrow/ArrowAWSGZIPInputStream.h>
 #include <normal/tuple/arrow/ArrowAWSGZIPInputStream2.h>
 #include "normal/ssb/SSBSchema.h"
@@ -510,12 +515,50 @@ void normal::ssb::concurrentGetTest(int numRequests) {
               (((double) totalBytesReturned * 8 / numTrials / 1024.0 / 1024.0 / 1024.0) / averageTrialTimeNS));
 }
 
+void normal::ssb::htapTest(std::string col_name, std::string row_name) {
+    std::cout << col_name << std::endl;
+    std::cout << row_name << std::endl;
+
+//    std::ofstream col_file;
+//    col_file.open(col_name);
+//
+//    // reading both CSV file here
+//    arrow::MemoryPool* pool = arrow::default_memory_pool();
+//    std::shared_ptr<arrow::io::InputStream> input = col_file;
+//
+//    auto read_options = arrow::csv::ReadOptions::Defaults();
+//    auto parse_options = arrow::csv::ParseOptions::Defaults();
+//    auto convert_options = arrow::csv::ConvertOptions::Defaults();
+//
+//    // Instantiate TableReader from input stream and options
+//    auto maybe_reader =
+//            arrow::csv::TableReader::Make(pool,
+//                                          input,
+//                                          read_options,
+//                                          parse_options,
+//                                          convert_options);
+//    if (!maybe_reader.ok()) {
+//        // Handle TableReader instantiation error...
+//    }
+//    std::shared_ptr<arrow::csv::TableReader> reader = *maybe_reader;
+//
+//    // Read table from CSV file
+//    auto maybe_table = reader->Read();
+//    if (!maybe_table.ok()) {
+//        // Handle CSV read error
+//        // (for example a CSV syntax error or failed type conversion)
+//    }
+//    std::shared_ptr<arrow::Table> table = *maybe_table;
+//    std::cout << "ok" << std::endl;
+
+}
+
 void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType, std::string dirPrefix,
                            size_t networkLimit, bool writeResults) {
   spdlog::set_level(spdlog::level::critical);
   // parameters
   const int warmBatchSize = 50, executeBatchSize = 50;
-  std::string bucket_name = "pushdowndb";
+  std::string bucket_name = "pushdowndb-htap";
   normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dirPrefix);
   normal::cache::beladyMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dirPrefix);
   if (networkLimit > 0) {
@@ -581,7 +624,9 @@ void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType
     SPDLOG_CRITICAL("First-run query:");
     auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", 1));
     auto sql = ExperimentUtil::read_file(sql_file_path.string());
+
     executeSql(i, sql, false, false, fmt::format("{}output.txt", index));
+//      SPDLOG_CRITICAL("I AM HERE");
     sql_file_dir_path = sql_file_dir_path.parent_path();
   }
 

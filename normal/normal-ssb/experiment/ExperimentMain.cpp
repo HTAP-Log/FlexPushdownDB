@@ -67,9 +67,15 @@ int main(int argc, char **argv) {
     concurrentGetTest(partitionNum);
   }
 
+  // htap test
+  else if ((std::string(argv[1]) == "-htap")) {
+      std::cout << "RUNNING HTAP EXPERIMENT" << std::endl;
+      htapTest("col.csv", "row.csv");
+  }
+
     // main test
   else {
-    std::string dirPrefix = "ssb-sf100-sortlineorder/csv_150MB/";
+    std::string dirPrefix = "ssb-sf10-sortlineorder/csv/";
     auto cacheSize = (size_t) (atof(argv[1]) * 1024 * 1024 * 1024);
     auto modeType = atoi(argv[2]);
     auto cachingPolicyType = atoi(argv[3]);

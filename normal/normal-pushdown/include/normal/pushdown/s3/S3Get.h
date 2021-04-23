@@ -35,6 +35,21 @@ class S3Get : public S3SelectScan {
              long queryId,
              std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys);
 
+    S3Get(std::string name,
+          std::string s3Bucket,
+          std::string s3Object,
+          std::vector<std::string> returnedS3ColumnNames,
+          std::vector<std::string> neededColumnNames,
+          int64_t startOffset,
+          int64_t finishOffset,
+          std::shared_ptr<arrow::Schema> schema,
+          std::string tableName,
+          std::shared_ptr<Aws::S3::S3Client> s3Client,
+          bool scanOnStart,
+          bool toCache,
+          long queryId,
+          std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>> weightedSegmentKeys);
+
     static std::shared_ptr<S3Get> make(const std::string& name,
                                           const std::string& s3Bucket,
                                           const std::string& s3Object,
@@ -49,10 +64,26 @@ class S3Get : public S3SelectScan {
                                           long queryId = 0,
                                           const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>>& weightedSegmentKeys = nullptr);
 
+    static std::shared_ptr<S3Get> make_1(const std::string& name,
+                                       const std::string& s3Bucket,
+                                       const std::string& s3Object,
+                                       const std::vector<std::string>& returnedS3ColumnNames,
+                                       const std::vector<std::string>& neededColumnNames,
+                                       int64_t startOffset,
+                                       int64_t finishOffset,
+                                       const std::shared_ptr<arrow::Schema>& schema,
+                                       const std::string& tableName,
+                                       const std::shared_ptr<Aws::S3::S3Client>& s3Client,
+                                       bool scanOnStart = true,
+                                       bool toCache = false,
+                                       long queryId = 0,
+                                       const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>>& weightedSegmentKeys = nullptr);
+
   private:
     std::shared_ptr<TupleSet2> readCSVFile(std::shared_ptr<arrow::io::InputStream> &arrowInputStream);
     std::shared_ptr<TupleSet2> readParquetFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile);
     std::shared_ptr<TupleSet2> s3GetFullRequest();
+    std::shared_ptr<TupleSet2> s3GetFullRequest_cp(std::string objectKey);
     Aws::S3::Model::GetObjectResult s3GetRequestOnly(int64_t startOffset, int64_t endOffset);
 
     // Whether we can process different portions of the response in parallel
@@ -71,6 +102,7 @@ class S3Get : public S3SelectScan {
     std::mutex splitReqLock_;
     std::map<int, std::shared_ptr<arrow::Table>> splitReqNumToTable_;
     std::unordered_map<int, std::vector<char>> reqNumToAdditionalOutput_;
+    std::string tableName_;
     #ifdef __AVX2__
     std::unordered_map<int, std::shared_ptr<CSVToArrowSIMDChunkParser>> reqNumToParser_;
     #endif
@@ -80,7 +112,11 @@ class S3Get : public S3SelectScan {
 
     std::shared_ptr<TupleSet2> readTuples() override;
     int getPredicateNum() override;
-};
+
+        void mergeLog(std::shared_ptr<TupleSet2> logTuple, std::shared_ptr<TupleSet2> fileTuple);
+
+        std::unordered_set<std::string> generateDeleteMap(std::shared_ptr<TupleSet2> logTuple);
+    };
 
 }
 
