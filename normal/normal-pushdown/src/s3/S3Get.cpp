@@ -667,11 +667,11 @@ namespace normal::pushdown {
 
             // Store the read columns in the cache, if not in full-pushdown mode
 //            if (toCache_) {
-//                // TODO: only send caching columns
+//                // TODO: only send caching columnsœ
 //                requestStoreSegmentsInCache(readTupleSet);
 //            } else {
 //                // send segment filter weight
-//                if (weightedSegmentKeys_ && s3SelectScanStats_.processedBytes > 0) {
+//                if (weightedSegmentKeys_ && s3SelectScanStats_.processedBytes > 0)
 //                    sendSegmentWeight();
 //                }
 //            }
