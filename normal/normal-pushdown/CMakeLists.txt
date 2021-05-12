@@ -72,6 +72,7 @@ add_library(normal-pushdown STATIC
         include/normal/pushdown/group/AggregateBuilder.cpp include/normal/pushdown/group/AggregateBuilder.h
         include/normal/pushdown/group/AggregateBuilderWrapper.cpp include/normal/pushdown/group/AggregateBuilderWrapper.h
         include/normal/pushdown/s3/S3Select.h include/normal/pushdown/s3/S3Get.h src/s3/S3Select.cpp src/s3/S3Get.cpp
+        include/normal/pushdown/s3/DeleteMap.h src/s3/DeleteMap.cpp
         include/normal/pushdown/shuffle/RecordBatchShuffler2.h src/shuffle/RecordBatchShuffler2.cpp)
 
 target_include_directories(normal-pushdown PUBLIC include)

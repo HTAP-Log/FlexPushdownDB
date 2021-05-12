@@ -52,6 +52,7 @@
 #include <normal/pushdown/cache/CacheHelper.h>
 #include <parquet/arrow/reader.h>
 #include <normal/tuple/arrow/ArrowAWSInputStream.h>
+#include "normal/pushdown/s3/DeleteMap.h"
 //#include <normal/tuple/arrow/ArrowAWSGZIPInputStream.h>
 #include <normal/tuple/arrow/ArrowAWSGZIPInputStream2.h>
 
@@ -681,8 +682,9 @@ namespace normal::pushdown {
         // RUN THE MERGE HERE
 
         // STEP 1. Construct the DeleteMap
-//        std::unordered_set<std::string> deleteMap;
+        normal::pushdown::DeleteMap deleteMap = normal::pushdown::DeleteMap(readTupleSet->numRows());
 
+        // currently we only do work on lineorder table
         if (tableName_ == "lineorder") {
             SPDLOG_CRITICAL(logTupleSet->getColumnByIndex(0).value()->showString());
         }
@@ -690,8 +692,6 @@ namespace normal::pushdown {
 //        SPDLOG_CRITICAL(logTupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
 
 //        mergeLog(logTupleSet, readTupleSet);
-
-
         return readTupleSet;
     }
 

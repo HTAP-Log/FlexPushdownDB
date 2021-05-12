@@ -5,20 +5,24 @@
 #ifndef NORMAL_DELETEMAP_H
 #define NORMAL_DELETEMAP_H
 
+#include <bitset>
+#include <vector>
+
 namespace normal::pushdown {
     class DeleteMap {
     public:
-        DeleteMap();
+        DeleteMap(long colSize);
         void addRecord(bool toDelete);
-        bool getDeleteBit (int colIndex);
+        void setBit(long colIndex);
+        bool getIfDelete();
+        bool getDeleteBit (long colIndex);
 
     private:
-        final int BITSET_SIZE = 1024;
+        static const int BITSET_SIZE = 1024;
 
         std::vector<std::bitset<BITSET_SIZE>>  bitsetVector;
         int currentBitIndex;
     };
-
 }
 
 #endif //NORMAL_DELETEMAP_H
