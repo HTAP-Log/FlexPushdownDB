@@ -33,6 +33,7 @@ namespace normal::pushdown {
     void DeleteMap::setBit(long colIndex) {
         int vecIndex = colIndex/BITSET_SIZE;
         bitsetVector[vecIndex].set(colIndex%BITSET_SIZE);
+        SPDLOG_CRITICAL("DELETE MAP HAS BEEN SET AT INDEX:{}",colIndex);
     }
 
     bool DeleteMap::getIfDelete() {
@@ -42,12 +43,12 @@ namespace normal::pushdown {
     }
 
     void DeleteMap::addRecord(bool toDelete) {
-        // if current long if full then create a new integer
-//        if (currentBitIndexWithinLong == BITSET_SIZE) {
+//         if current long if full then create a new integer
+//        if (currentWriteBitIndex == BITSET_SIZE) {
 //            bitsetVector.push_back(std::bitset<BITSET_SIZE>);
 //            currentBitIndex = 0;
 //        }
-//
+
 //        if (toDelete) {
 //            bitsetVector.back().set(currentBitIndex);
 //            currentBitIndex++;
