@@ -158,17 +158,24 @@ void graph::OperatorGraph::boot() {
     // Don't run more S3Get requests in parallel than # cores, earlier testing showed this did not help as S3Get
     // already utilizes the full network bandwidth with #cores requests whereas S3Select does not when
     // selectivity is low.
-	  if (op->getType() == "S3Select" || op->getType() == "S3Get") {
-	    auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn<normal::core::OperatorActor, detached>(op);
-	    if (!actorHandle)
-      throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
+    if (runInDetachedMode) {
+      if (op->getType() == "S3Select" || op->getType() == "S3Get") {
+        auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn<normal::core::OperatorActor, detached>(op);
+        if (!actorHandle)
+          throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
+        element.second.setActorHandle(caf::actor_cast<caf::actor>(actorHandle));
+      } else {
+        auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn<normal::core::OperatorActor>(op);
+        if (!actorHandle)
+          throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
+        element.second.setActorHandle(caf::actor_cast<caf::actor>(actorHandle));
+      }
+    } else {
+      auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn<normal::core::OperatorActor>(op);
+      if (!actorHandle)
+        throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
       element.second.setActorHandle(caf::actor_cast<caf::actor>(actorHandle));
-	  } else {
-	    auto actorHandle = operatorManager_.lock()->getActorSystem()->spawn<normal::core::OperatorActor>(op);
-	    if (!actorHandle)
-      throw std::runtime_error(fmt::format("Failed to spawn operator actor '{}'", op->name()));
-      element.second.setActorHandle(caf::actor_cast<caf::actor>(actorHandle));
-	  }
+    }
 	}
   }
 }

@@ -7,6 +7,8 @@
 #include "normal/ssb/Globals.h"
 #include "Tests.h"
 #include "MathModelTest.h"
+#include "normal/core/graph/OperatorGraph.h"
+#include "normal/pushdown/Globals.h"
 
 using namespace normal::ssb;
 
@@ -78,6 +80,28 @@ int main(int argc, char **argv) {
     SPDLOG_INFO("CachingPolicy type: {}", cachingPolicyType);
 
     if (argc < 5) {
+      mainTest(cacheSize, modeType, cachingPolicyType, dirPrefix, 0, false);
+    }
+    // Matt thesis tests
+    else if (std::string(argv[4]) == "-mt") {
+      int arrowConversionModeSetting = atoi(argv[5]);
+      int detachedMode = atoi(argv[6]);
+      int splitReqMode = atoi(argv[7]);
+      // Set these parameters here:
+      normal::pushdown::arrowConversionMode = arrowConversionModeSetting;
+      if (detachedMode == 0) {
+        normal::core::graph::runInDetachedMode = false;
+      } else {
+        normal::core::graph::runInDetachedMode = true;
+      }
+      if (splitReqMode == 0) {
+        normal::pushdown::performReqsInsplitReqMode = false;
+      } else {
+        normal::pushdown::performReqsInsplitReqMode = true;
+      }
+      std::string dirPrefix = argv[8];
+      SPDLOG_INFO("Arrow conversion mode: {}, detached mode: {}, splitReqMode: {}, dir Prefix: {}",
+                  arrowConversionMode, detachedMode, splitReqMode, dirPrefix);
       mainTest(cacheSize, modeType, cachingPolicyType, dirPrefix, 0, false);
     }
     // network

@@ -12,6 +12,7 @@
 #include <normal/plan/Globals.h>
 #include <normal/cache/SegmentKey.h>
 #include <normal/connector/MiniCatalogue.h>
+#include "normal/pushdown/Globals.h"
 
 using namespace normal::plan::operator_;
 using namespace normal::pushdown;
@@ -92,60 +93,111 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
     int rangeId = 0;
     for (const auto &scanRange: scanRanges) {
-      // S3Scan
       std::shared_ptr<Operator> scanOp;
-      // FIXME 1: hack Parquet Get using Select
-      // FIXME 2: not a idea way to distinguish CSV and Parquet
-      if (s3Object.find("csv") != std::string::npos) {
-        scanOp = S3Get::make(
-                "s3get - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
-                s3Partition->getBucket(),
-                s3Object,
-                *allColumnNames,
-                *allNeededColumnNames,
-                scanRange.first,
-                scanRange.second,
-                miniCatalogue->getSchema(getName()),
-                DefaultS3Client,
-                true,
-                false,
-                queryId);
-      } else {
-        scanOp = S3Select::make(
-                "s3get(hacked for parquet using select) - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
-                s3Partition->getBucket(),
-                s3Object,
-                "",
-                *allNeededColumnNames,
-                *allNeededColumnNames,
-                scanRange.first,
-                scanRange.second,
-                miniCatalogue->getSchema(getName()),
-                DefaultS3Client,
-                true,
-                false,
-                queryId);
-      }
-      operators->emplace_back(scanOp);
+//      if (normal::pushdown::arrowConversionMode != 0) {
+        // S3Scan
+        // FIXME 1: hack Parquet Get using Select
+        // FIXME 2: not a idea way to distinguish CSV and Parquet
+        if (s3Object.find("csv") != std::string::npos) {
+          scanOp = S3Get::make(
+                  "s3get - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
+                  s3Partition->getBucket(),
+                  s3Object,
+                  *allColumnNames,
+                  *allNeededColumnNames,
+                  scanRange.first,
+                  scanRange.second,
+                  miniCatalogue->getSchema(getName()),
+                  DefaultS3Client,
+                  true,
+                  false,
+                  queryId);
+        } else {
+          scanOp = S3Select::make(
+                  "s3get(hacked for parquet using select) - " + s3Partition->getBucket() + "/" + s3Object + "-" +
+                  std::to_string(rangeId),
+                  s3Partition->getBucket(),
+                  s3Object,
+                  "",
+                  *allNeededColumnNames,
+                  *allNeededColumnNames,
+                  scanRange.first,
+                  scanRange.second,
+                  miniCatalogue->getSchema(getName()),
+                  DefaultS3Client,
+                  true,
+                  false,
+                  queryId);
+        }
+        operators->emplace_back(scanOp);
 
-      std::shared_ptr<Operator> upStreamOfProj;
-      // Filter if it has filterPredicate
-      if (finalPredicate) {
-        auto filter = filter::Filter::make(
-                fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
-                filterPredicate,
-                queryId);
-        operators->emplace_back(filter);
+        std::shared_ptr<Operator> upStreamOfProj;
+        // Filter if it has filterPredicate
+        if (finalPredicate) {
+          auto filter = filter::Filter::make(
+                  fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
+                  filterPredicate,
+                  queryId);
+          operators->emplace_back(filter);
 
-        scanOp->produce(filter);
-        filter->consume(scanOp);
-        streamOutPhysicalOperators_->emplace_back(filter);
-      } else {
-        streamOutPhysicalOperators_->emplace_back(scanOp);
-      }
-      // No project needed as S3Get does a project based on the neededColumns input
+          scanOp->produce(filter);
+          filter->consume(scanOp);
+          streamOutPhysicalOperators_->emplace_back(filter);
+        } else {
+          streamOutPhysicalOperators_->emplace_back(scanOp);
+        }
+        // No project needed as S3Get does a project based on the neededColumns input
 
-      rangeId++;
+        rangeId++;
+//      } else {
+//        // S3Scan
+//        scanOp = S3Get::make(
+//                  "s3get - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
+//                  s3Partition->getBucket(),
+//                  s3Object,
+//                  *allColumnNames,
+//                  *allNeededColumnNames,
+//                  scanRange.first,
+//                  scanRange.second,
+//                  miniCatalogue->getSchema(getName()),
+//                  DefaultS3Client,
+//                  true,
+//                  false,
+//                  queryId);
+//        operators->emplace_back(scanOp);
+//
+//        std::shared_ptr<Operator> upStreamOfProj;
+//        // Filter if it has filterPredicate
+//        if (finalPredicate) {
+//          auto filter = filter::Filter::make(
+//                  fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
+//                  filterPredicate,
+//                  queryId);
+//          operators->emplace_back(filter);
+//
+//          scanOp->produce(filter);
+//          filter->consume(scanOp);
+//          upStreamOfProj = filter;
+//        } else {
+//          upStreamOfProj = scanOp;
+//        }
+//
+//        // project
+//        auto projectExpressions = std::make_shared<std::vector<std::shared_ptr<expression::gandiva::Expression>>>();
+//        for (auto const &projectedColumnName: *projectedColumnNames_) {
+//          projectExpressions->emplace_back(expression::gandiva::col(projectedColumnName));
+//        }
+//        auto project = std::make_shared<Project>(
+//                fmt::format("project-{}/{}-{}", s3Bucket, s3Object, rangeId), *projectExpressions, queryId);
+//        operators->emplace_back(project);
+//
+//        upStreamOfProj->produce(project);
+//        project->consume(upStreamOfProj);
+//
+//        streamOutPhysicalOperators_->emplace_back(project);
+//
+//        rangeId++;
+//      }
     }
   }
 

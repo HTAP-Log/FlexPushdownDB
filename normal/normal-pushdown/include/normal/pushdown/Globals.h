@@ -15,6 +15,9 @@
 
 namespace normal::pushdown {
 
+inline int arrowConversionMode = 2;
+inline bool performReqsInsplitReqMode = true;
+
 /**
  * Default number of tuples operators should buffer before sending to consumers
  */

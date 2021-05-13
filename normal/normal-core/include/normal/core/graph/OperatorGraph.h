@@ -65,6 +65,8 @@ private:
 
 };
 
+inline bool runInDetachedMode = true;
+
 }
 
 #endif //NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_GRAPH_OPERATORGRAPH_H

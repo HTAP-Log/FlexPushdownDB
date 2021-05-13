@@ -51,6 +51,7 @@ class S3Get : public S3SelectScan {
 
   private:
     std::shared_ptr<TupleSet2> readCSVFile(std::shared_ptr<arrow::io::InputStream> &arrowInputStream);
+    std::shared_ptr<TupleSet2> slowReadCSVFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile);
     std::shared_ptr<TupleSet2> readParquetFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile);
     std::shared_ptr<TupleSet2> s3GetFullRequest();
     Aws::S3::Model::GetObjectResult s3GetRequestOnly(int64_t startOffset, int64_t endOffset);

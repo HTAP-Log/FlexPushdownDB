@@ -54,6 +54,7 @@
 #include <normal/tuple/arrow/ArrowAWSInputStream.h>
 //#include <normal/tuple/arrow/ArrowAWSGZIPInputStream.h>
 #include <normal/tuple/arrow/ArrowAWSGZIPInputStream2.h>
+#include "normal/pushdown/s3/S3CSVParser.h"
 
 #ifdef __AVX2__
 #include <normal/plan/Globals.h>
@@ -172,6 +173,73 @@ std::shared_ptr<TupleSet2> S3Get::readCSVFile(std::shared_ptr<arrow::io::InputSt
   return tupleSet;
 }
 
+std::shared_ptr<TupleSet2> S3Get::slowReadCSVFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile) {
+  auto readSize = DefaultS3ScanBufferSize - 1;
+  char buffer[DefaultS3ScanBufferSize];
+
+  std::chrono::steady_clock::time_point startConversionTime = std::chrono::steady_clock::now();
+  auto parser = S3CSVParser::make(returnedS3ColumnNames_, schema_, normal::connector::defaultMiniCatalogue->getCSVFileDelimiter());
+
+  // Discard column names
+  SPDLOG_DEBUG("S3 Scan starts  |  name: {}", name());
+  retrievedFile.getline(buffer, readSize);
+
+  std::vector<std::shared_ptr<arrow::Table>> tables;
+
+  // Get content
+  while (!retrievedFile.eof()) {
+    memset(buffer, 0, DefaultS3ScanBufferSize);
+
+    SPDLOG_DEBUG("S3 Scan buffer  |  name: {}, numBytes: {}", name(), readSize);
+    retrievedFile.read(buffer, readSize);
+    s3SelectScanStats_.processedBytes += strlen(buffer);
+    s3SelectScanStats_.returnedBytes += strlen(buffer);
+    Aws::Vector<unsigned char> charAwsVec(buffer, buffer + readSize);
+
+    std::shared_ptr<TupleSet> tupleSetV1 = parser->parsePayload(charAwsVec);
+    auto tupleSet = TupleSet2::create(tupleSetV1);
+    std::shared_ptr<arrow::Table> currentTable = tupleSet->getArrowTable().value();
+    // Don't need to concatenate empty tables
+    if (currentTable->num_rows() > 0) {
+      tables.push_back(currentTable);
+    }
+  }
+
+  std::shared_ptr<TupleSet2> readTupleSet;
+  if (tables.size() == 0) {
+    readTupleSet = TupleSet2::make2();
+  } else if (tables.size() == 1) {
+    auto tupleSetV1 = normal::tuple::TupleSet::make(tables[0]);
+    readTupleSet = normal::tuple::TupleSet2::create(tupleSetV1);
+  } else {
+    const arrow::Result<std::shared_ptr<arrow::Table>> &res = arrow::ConcatenateTables(tables);
+    if (!res.ok())
+      abort();
+    auto tupleSetV1 = normal::tuple::TupleSet::make(*res);
+    readTupleSet = normal::tuple::TupleSet2::create(tupleSetV1);
+  }
+  std::chrono::steady_clock::time_point stopConversionTime = std::chrono::steady_clock::now();
+  auto conversionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(stopConversionTime - startConversionTime).count();
+  splitReqLock_.lock();
+  s3SelectScanStats_.getConvertTimeNS += conversionTime;
+  splitReqLock_.unlock();
+
+
+  std::shared_ptr<arrow::Table> arrowTable = readTupleSet->getArrowTable().value();
+  std::vector<std::shared_ptr<arrow::Field>> fields;
+  std::vector<std::shared_ptr<arrow::ChunkedArray>> arrowColumns;
+  for (auto const columnName: neededColumnNames_) {
+    auto arrowColumn = arrowTable->GetColumnByName(columnName);
+    arrowColumns.emplace_back(arrowColumn);
+    fields.emplace_back(std::make_shared<arrow::Field>(columnName, arrowColumn->type()));
+  }
+  auto projectedTuples = TupleSet::make(std::make_shared<arrow::Schema>(fields), arrowColumns);
+  readTupleSet = normal::tuple::TupleSet2::create(projectedTuples);
+
+  return readTupleSet;
+}
+
+
 std::shared_ptr<TupleSet2> S3Get::readParquetFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile) {
   std::string parquetFileString(std::istreambuf_iterator<char>(retrievedFile), {});
   auto bufferedReader = std::make_shared<arrow::io::BufferReader>(parquetFileString);
@@ -265,13 +333,24 @@ std::shared_ptr<TupleSet2> S3Get::s3GetFullRequest() {
       tupleSet = readCSVFile(inputStream);
 #endif
     } else {
-#ifdef __AVX2__
-      auto parser = CSVToArrowSIMDStreamParser(name(), DefaultS3ConversionBufferSize, retrievedFile, true, schema_, outputSchema, false, normal::connector::defaultMiniCatalogue->getCSVFileDelimiter());
-      tupleSet = parser.constructTupleSet();
-#else
-      inputStream = std::make_shared<ArrowAWSInputStream>(retrievedFile);
-      tupleSet = readCSVFile(inputStream);
-#endif
+//#ifdef __AVX2__
+//      auto parser = CSVToArrowSIMDStreamParser(name(), DefaultS3ConversionBufferSize, retrievedFile, true, schema_, outputSchema, false, normal::connector::defaultMiniCatalogue->getCSVFileDelimiter());
+//      tupleSet = parser.constructTupleSet();
+//#else
+//      inputStream = std::make_shared<ArrowAWSInputStream>(retrievedFile);
+//      tupleSet = readCSVFile(inputStream);
+//#endif
+      if (arrowConversionMode == 2) {
+        auto parser = CSVToArrowSIMDStreamParser(name(), DefaultS3ConversionBufferSize, retrievedFile, true, schema_, outputSchema, false, normal::connector::defaultMiniCatalogue->getCSVFileDelimiter());
+        tupleSet = parser.constructTupleSet();
+      } else if (arrowConversionMode == 1) {
+        inputStream = std::make_shared<ArrowAWSInputStream>(retrievedFile);
+        tupleSet = readCSVFile(inputStream);
+      } else if (arrowConversionMode == 0) {
+        tupleSet = slowReadCSVFile(retrievedFile);
+      } else {
+        throw std::runtime_error(fmt::format("Invalid arrow conversion mode provided: {}", arrowConversionMode));
+      }
     }
   } else { // (s3Object_.find("parquet") != std::string::npos)
     tupleSet = readParquetFile(retrievedFile);
@@ -470,7 +549,7 @@ std::shared_ptr<TupleSet2> S3Get::readTuples() {
 
     // Read columns from s3
 #ifdef __AVX2__
-    if (normal::plan::s3ClientType == normal::plan::S3 && parallelTuplesetCreationSupported()
+    if (performReqsInsplitReqMode && normal::plan::s3ClientType == normal::plan::S3 && parallelTuplesetCreationSupported()
         && (finishOffset_ - startOffset_ > DefaultS3RangeSize)) {
       readTupleSet = s3GetParallelReqs();
     } else {

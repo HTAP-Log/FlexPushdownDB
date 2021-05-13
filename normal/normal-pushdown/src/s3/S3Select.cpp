@@ -180,11 +180,8 @@ bool S3Select::scanRangeSupported() {
 
 std::shared_ptr<TupleSet2> S3Select::s3Select(int64_t startOffset, int64_t endOffset) {
   // Create the necessary parser
-#ifdef __AVX2__
   auto simdParser = generateSIMDParser();
-#else
   auto parser = generateParser();
-#endif
   // create s3select request (must create a new one for each call as different start/end offsets require a new
   // S3Select request object
   std::optional<std::string> optionalErrorMessage;
@@ -234,6 +231,7 @@ std::shared_ptr<TupleSet2> S3Select::s3Select(int64_t startOffset, int64_t endOf
   std::vector<char*> allocations;
   std::vector<size_t> allocation_sizes;
 
+  std::vector<std::shared_ptr<arrow::Table>> tables;
   SelectObjectContentHandler handler;
   handler.SetRecordsEventCallback([&](const RecordsEvent &recordsEvent) {
     SPDLOG_DEBUG("S3 Select RecordsEvent  |  name: {}, size: {}",
@@ -277,11 +275,19 @@ std::shared_ptr<TupleSet2> S3Select::s3Select(int64_t startOffset, int64_t endOf
                 std::chrono::milliseconds(rand() % variableSleepRetryTimeMS + minimumSleepRetryTimeMS));
       }
       std::chrono::steady_clock::time_point startConversionTime = std::chrono::steady_clock::now();
-#ifdef __AVX2__
-      simdParser->parseChunk(reinterpret_cast<char *>(payload.data()), payload.size());
-#else
-      s3Result_.insert(s3Result_.end(), payload.begin(), payload.end());
-#endif
+      if (arrowConversionMode == 2) {
+        simdParser->parseChunk(reinterpret_cast<char *>(payload.data()), payload.size());
+      } else if (arrowConversionMode == 1) {
+        s3Result_.insert(s3Result_.end(), payload.begin(), payload.end());
+      } else if (arrowConversionMode == 0) {
+        std::shared_ptr<TupleSet> tupleSetV1 = parser->parsePayload(payload);
+        auto tupleSet = TupleSet2::create(tupleSetV1);
+        std::shared_ptr<arrow::Table> currentTable = tupleSet->getArrowTable().value();
+        // Don't need to concatenate empty tables
+        if (currentTable->num_rows() > 0) {
+          tables.push_back(currentTable);
+        }
+      }
       std::chrono::steady_clock::time_point stopConversionTime = std::chrono::steady_clock::now();
       auto conversionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
               stopConversionTime - startConversionTime).count();
@@ -326,10 +332,12 @@ std::shared_ptr<TupleSet2> S3Select::s3Select(int64_t startOffset, int64_t endOf
   uint64_t retrySleepTimeMS = 10;
   while (true) {
 #ifdef __AVX2__
-    // Create a new parser to use if the current one has results from the previous request
-    // We could alternatively reset the object but doing this is easier and the overhead is likely very minimal
-    if (simdParser->isInitialized()) {
-      simdParser = generateSIMDParser();
+    if (normal::pushdown::arrowConversionMode == 2) {
+      // Create a new parser to use if the current one has results from the previous request
+      // We could alternatively reset the object but doing this is easier and the overhead is likely very minimal
+      if (simdParser->isInitialized()) {
+        simdParser = generateSIMDParser();
+      }
     }
 #endif
 
@@ -356,47 +364,64 @@ std::shared_ptr<TupleSet2> S3Select::s3Select(int64_t startOffset, int64_t endOf
   //  SPDLOG_DEBUG("name: {}, returnedBytes: {}, sql: {}", name(), returnedBytes_, sql);
   std::chrono::steady_clock::time_point startConversionTime;
   std::shared_ptr<TupleSet2> tupleSet;
-#ifdef __AVX2__
-  if (normal::plan::s3ClientType == normal::plan::Airmettle) {
-    while (true) {
-      if (SelectConvertLock.try_lock()) {
-        if (activeSelectConversions < maxConcurrentArrowConversions) {
-          activeSelectConversions++;
-          SelectConvertLock.unlock();
-          break;
-        } else {
-          SelectConvertLock.unlock();
-        }
-      }
-      std::this_thread::sleep_for(
-              std::chrono::milliseconds(rand() % variableSleepRetryTimeMS + minimumSleepRetryTimeMS));
-    }
-    startConversionTime = std::chrono::steady_clock::now();
-    for (int i = 0; i < allocations.size(); i++) {
-      auto allocation = allocations[i];
-      simdParser->parseChunk(allocation, allocation_sizes[i]);
-      free(allocation);
-    }
-    std::chrono::steady_clock::time_point stopConversionTime = std::chrono::steady_clock::now();
-    auto conversionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-          stopConversionTime - startConversionTime).count();
-    SelectConvertLock.lock();
-    activeSelectConversions--;
-    SelectConvertLock.unlock();
-    splitReqLock_.lock();
-    s3SelectScanStats_.selectConvertTimeNS += conversionTime;
-    splitReqLock_.unlock();
-  }
+
+//  if (normal::plan::s3ClientType == normal::plan::Airmettle) {
+//    while (true) {
+//      if (SelectConvertLock.try_lock()) {
+//        if (activeSelectConversions < maxConcurrentArrowConversions) {
+//          activeSelectConversions++;
+//          SelectConvertLock.unlock();
+//          break;
+//        } else {
+//          SelectConvertLock.unlock();
+//        }
+//      }
+//      std::this_thread::sleep_for(
+//              std::chrono::milliseconds(rand() % variableSleepRetryTimeMS + minimumSleepRetryTimeMS));
+//    }
+//    startConversionTime = std::chrono::steady_clock::now();
+//    for (int i = 0; i < allocations.size(); i++) {
+//      auto allocation = allocations[i];
+//      simdParser->parseChunk(allocation, allocation_sizes[i]);
+//      free(allocation);
+//    }
+//    std::chrono::steady_clock::time_point stopConversionTime = std::chrono::steady_clock::now();
+//    auto conversionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
+//          stopConversionTime - startConversionTime).count();
+//    SelectConvertLock.lock();
+//    activeSelectConversions--;
+//    SelectConvertLock.unlock();
+//    splitReqLock_.lock();
+//    s3SelectScanStats_.selectConvertTimeNS += conversionTime;
+//    splitReqLock_.unlock();
+//  }
   startConversionTime = std::chrono::steady_clock::now();
-  tupleSet = simdParser->outputCompletedTupleSet();
-#else
-  // If no results are returned then there is nothing to process
-  if (s3Result_.size() > 0) {std::shared_ptr<TupleSet> tupleSetV1 = parser_->parseCompletePayload(s3Result_.begin(), s3Result_.end());
-    auto tupleSet = TupleSet2::create(tupleSetV1);
-  } else {
-    tupleSet = TupleSet2::make2();
+
+  if (arrowConversionMode == 2) {
+    tupleSet = simdParser->outputCompletedTupleSet();
+  } else if (arrowConversionMode == 1) {
+    // If no results are returned then there is nothing to process
+    if (s3Result_.size() > 0) {
+      std::shared_ptr<TupleSet> tupleSetV1 = parser->parseCompletePayload(s3Result_.begin(), s3Result_.end());
+      tupleSet = TupleSet2::create(tupleSetV1);
+    } else {
+      tupleSet = TupleSet2::make2();
+    }
+  } else if (arrowConversionMode == 0) {
+    if (tables.size() == 0) {
+      tupleSet = TupleSet2::make2();
+    } else if (tables.size() == 1) {
+      auto tupleSetV1 = normal::tuple::TupleSet::make(tables[0]);
+      tupleSet = normal::tuple::TupleSet2::create(tupleSetV1);
+    } else {
+      const arrow::Result<std::shared_ptr<arrow::Table>> &res = arrow::ConcatenateTables(tables);
+      if (!res.ok())
+        abort();
+      auto tupleSetV1 = normal::tuple::TupleSet::make(*res);
+      tupleSet = normal::tuple::TupleSet2::create(tupleSetV1);
+    }
   }
-#endif
+
   std::chrono::steady_clock::time_point stopConversionTime = std::chrono::steady_clock::now();
   auto conversionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
           stopConversionTime - startConversionTime).count();
@@ -405,6 +430,10 @@ std::shared_ptr<TupleSet2> S3Select::s3Select(int64_t startOffset, int64_t endOf
   splitReqLock_.unlock();
   if (optionalErrorMessage.has_value()) {
     throw std::runtime_error(fmt::format("{}, {}", optionalErrorMessage.value(), name()));
+  }
+
+  if (tupleSet == NULL) {
+    SPDLOG_INFO("Tupleset == NULL");
   }
 
   return tupleSet;
@@ -480,7 +509,7 @@ std::shared_ptr<TupleSet2> S3Select::readTuples() {
     SPDLOG_DEBUG("Reading From S3: {}", name());
 
     // Read columns from s3
-    if (normal::plan::s3ClientType == normal::plan::S3 && scanRangeSupported()
+    if (performReqsInsplitReqMode && normal::plan::s3ClientType == normal::plan::S3 && scanRangeSupported()
         && (finishOffset_ - startOffset_ > DefaultS3RangeSize)) {
       readTupleSet = s3SelectParallelReqs();
     } else {

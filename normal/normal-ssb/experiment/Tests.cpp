@@ -199,20 +199,29 @@ auto executeSql(normal::sql::Interpreter &i, const std::string &sql, bool saveMe
 
 std::mutex selectBytesReceivedLock;
 volatile size_t selectReceivedBytes = 0;
+volatile size_t selectProcessedBytes = 0;
 void simpleSelectRequest(std::shared_ptr<Aws::S3::S3Client> s3Client, int index) {
   size_t bytesReceived = 0;
   Aws::S3::Model::SelectObjectContentRequest selectObjectContentRequest;
 //  std::string bucketName = "demo-bucket";
-//  std::string keyName = "data.csv";
+//  std::string keyName = "ssb-sf0.01/csv/lineorder.tbl";
+//  std::string keyName = "ssb-sf1/csv/date.tbl";
 //  std::string sql = "SELECT col2, col5, col9, col13, col29, col61, col91 FROM s3object WHERE cast(col1 as int) = 0;";
   std::string bucketName = "pushdowndb";
+//  std::string keyName = fmt::format("ssb-sf100-sortlineorder/csv_150MB/lineorder_sharded/lineorder.tbl.{}", index);
   std::string keyName = fmt::format("ssb-sf100-sortlineorder/csv_150MB_initial_format/lineorder_sharded/lineorder.tbl.{}", index);
+
+//  std::string keyName = fmt::format("ssb-sf100-sortlineorder/parquet_150MB/lineorder_sharded/lineorder.parquet.{}", index);
 //  std::string sql = "select lo_orderkey from s3object where lo_orderdate > 0;";
   std::string sql = "select lo_revenue, lo_supplycost, lo_orderdate, lo_suppkey, lo_custkey from s3Object "
-                    "where cast(lo_quantity as int) <= 10;";
+                    "where cast(lo_quantity as int) <= 1;";
+//  std::string sql = "select lo_revenue, lo_supplycost, lo_orderdate, lo_suppkey, lo_custkey from s3Object;";
     // Use this query for testing Select when it returns a very high selectivity
 //    std::string sql = "select lo_orderkey,lo_linenumber,lo_custkey,lo_partkey,lo_suppkey,lo_orderdate,lo_orderpriority,lo_shippriority,lo_quantity,lo_extendedprice,lo_ordtotalprice,lo_discount,lo_revenue,lo_supplycost,lo_tax,lo_commitdate,lo_shipmode from s3Object "
 //                    "where cast(lo_quantity as int) <= 50;";
+//  std::string sql = "select lo_discount from s3object;";
+//  std::string sql = "select lo_custkey, lo_orderdate, lo_partkey, lo_quantity, lo_revenue, lo_suppkey, lo_supplycost from s3Object;";
+//  std::string sql = "select d_daynuminweek from s3object;";
   selectObjectContentRequest.SetBucket(Aws::String(bucketName));
   selectObjectContentRequest.SetKey(Aws::String(keyName));
 
@@ -226,6 +235,8 @@ void simpleSelectRequest(std::shared_ptr<Aws::S3::S3Client> s3Client, int index)
   csvInput.SetFieldDelimiter(",");
   csvInput.SetRecordDelimiter("\n");
   inputSerialization.SetCSV(csvInput);
+//  Aws::S3::Model::ParquetInput parquetInput;
+//  inputSerialization.SetParquet(parquetInput);
 
   selectObjectContentRequest.SetInputSerialization(inputSerialization);
 
@@ -236,12 +247,22 @@ void simpleSelectRequest(std::shared_ptr<Aws::S3::S3Client> s3Client, int index)
 
 //  auto schema = SSBSchema::lineOrder();
   auto fields = {
+//          ::arrow::field(ColumnName::canonicalize("LO_DISCOUNT"), ::arrow::int32())
          ::arrow::field(ColumnName::canonicalize("LO_REVENUE"), ::arrow::int64()),
          ::arrow::field(ColumnName::canonicalize("LO_SUPPLYCOST"), ::arrow::int64()),
          ::arrow::field(ColumnName::canonicalize("LO_ORDERDATE"), ::arrow::int32()),
          ::arrow::field(ColumnName::canonicalize("LO_SUPPKEY"), ::arrow::int64()),
          ::arrow::field(ColumnName::canonicalize("LO_CUSTKEY"), ::arrow::int32())
   };
+//  auto fields = {
+//          ::arrow::field(ColumnName::canonicalize("LO_CUSTKEY"), ::arrow::int32()),
+//          ::arrow::field(ColumnName::canonicalize("LO_ORDERDATE"), ::arrow::int32()),
+//          ::arrow::field(ColumnName::canonicalize("LO_PARTKEY"), ::arrow::int32()),
+//          ::arrow::field(ColumnName::canonicalize("LO_QUANTITY"), ::arrow::int32()),
+//          ::arrow::field(ColumnName::canonicalize("LO_REVENUE"), ::arrow::int64()),
+//          ::arrow::field(ColumnName::canonicalize("LO_SUPPKEY"), ::arrow::int32()),
+//          ::arrow::field(ColumnName::canonicalize("LO_SUPPLYCOST"), ::arrow::int64())
+//  };
 
 
   auto inputSchema = std::make_shared<::arrow::Schema>(fields);
@@ -250,7 +271,7 @@ void simpleSelectRequest(std::shared_ptr<Aws::S3::S3Client> s3Client, int index)
   // Only worrying about parser performance when AVX instructions are on as that is the test setup we run in
   // so only added support for that here rather than adding non AVX converting too
 #ifdef __AVX2__
-    auto parser = std::make_shared<CSVToArrowSIMDChunkParser>(callerName, 128 * 1024, inputSchema, outputSchema, normal::connector::defaultMiniCatalogue->getCSVFileDelimiter());
+//    auto parser = std::make_shared<CSVToArrowSIMDChunkParser>(callerName, 128 * 1024 * 1024, inputSchema, outputSchema, ',');
 #endif
   std::mutex convertSelectResponseLock;
   std::vector<char*> allocations;
@@ -261,25 +282,31 @@ void simpleSelectRequest(std::shared_ptr<Aws::S3::S3Client> s3Client, int index)
     SPDLOG_DEBUG("S3 Select RecordsEvent  | size: {}",
                  recordsEvent.GetPayload().size());
     auto payload = recordsEvent.GetPayload();
+    SPDLOG_INFO("Query {}: payload received", index);
     if (payload.size() > 0) {
 #ifdef __AVX2__
+//      SPDLOG_INFO("Parsing response from S3 Select, size={}", payload.size());
 //      parser->parseChunk(reinterpret_cast<char *>(payload.data()), payload.size());
+//      SPDLOG_INFO("Parsing done");
       convertSelectResponseLock.lock();
-      char* data = (char*) malloc(payload.size());
-      memcpy(data, payload.data(), payload.size());
-      allocations.emplace_back(data);
-      allocation_sizes.emplace_back(payload.size());
+//      char* data = (char*) malloc(payload.size());
+//      memcpy(data, payload.data(), payload.size());
+//      allocations.emplace_back(data);
+//      allocation_sizes.emplace_back(payload.size());
       bytesReceived += payload.size();
       convertSelectResponseLock.unlock();
+//      SPDLOG_INFO("Parsing done");
 #endif
     }
   });
+  size_t bytesProcessed = 0;
   handler.SetStatsEventCallback([&](const Aws::S3::Model::StatsEvent &statsEvent) {
-	SPDLOG_INFO("S3 Select StatsEvent  | scanned: {}, processed: {}, returned: {}",
-				 statsEvent.GetDetails().GetBytesScanned(),
-				 statsEvent.GetDetails().GetBytesProcessed(),
-				 statsEvent.GetDetails().GetBytesReturned());
+//	SPDLOG_INFO("S3 Select StatsEvent  | scanned: {}, processed: {}, returned: {}",
+//				 statsEvent.GetDetails().GetBytesScanned(),
+//				 statsEvent.GetDetails().GetBytesProcessed(),
+//				 statsEvent.GetDetails().GetBytesReturned());
 	SPDLOG_DEBUG("{} Processed bytes: {}\n Returned Bytes: {}", index, statsEvent.GetDetails().GetBytesProcessed(), statsEvent.GetDetails().GetBytesReturned());
+    bytesProcessed += statsEvent.GetDetails().GetBytesProcessed();
   });
   handler.SetEndEventCallback([&]() {
       SPDLOG_INFO("S3 Select done: {}", index);
@@ -294,26 +321,31 @@ void simpleSelectRequest(std::shared_ptr<Aws::S3::S3Client> s3Client, int index)
   uint64_t retrySleepTimeMS = 10;
   while (true) {
     // create a new parser to use as the current one has results from the previous request
-    if (parser->isInitialized()) {
-      parser = std::make_shared<CSVToArrowSIMDChunkParser>(callerName, 128 * 1024, inputSchema, outputSchema, normal::connector::defaultMiniCatalogue->getCSVFileDelimiter());
-    }
+//    if (parser->isInitialized()) {
+//      parser = std::make_shared<CSVToArrowSIMDChunkParser>(callerName, 128 * 1024 * 1024, inputSchema, outputSchema, normal::connector::defaultMiniCatalogue->getCSVFileDelimiter());
+//    }
 //  std::chrono::steady_clock::time_point startTransferConvertTime = std::chrono::steady_clock::now();
 //  SPDLOG_INFO("Starting select request for {}/{}", bucketName, keyName);
 //  auto selectObjectContentOutcome = normal::plan::DefaultS3Client->SelectObjectContent(selectObjectContentRequest);
+    SPDLOG_INFO("S3 Select starting: {}", index);
     auto selectObjectContentOutcome = s3Client->SelectObjectContent(selectObjectContentRequest);
 
     if (selectObjectContentOutcome.IsSuccess()) {
 #ifdef __AVX2__
-      for (int i = 0; i < allocations.size(); i++){
-        auto allocation = allocations[i];
-        parser->parseChunk(allocation, allocation_sizes[i]);
-        free(allocation);
-      }
-      auto tupleSet = parser->outputCompletedTupleSet();
+//      for (int i = 0; i < allocations.size(); i++){
+//        auto allocation = allocations[i];
+//        SPDLOG_INFO("Parsing chunk: {}/{}", i + 1, allocations.size());
+//        parser->parseChunk(allocation, allocation_sizes[i]);
+//        free(allocation);
+//      }
+//      SPDLOG_INFO("Outputting completed tupleset now");
+//      auto tupleSet = parser->outputCompletedTupleSet();
 //      SPDLOG_INFO("Query: {}, Output rows: {}, bytes received: {}", index, tupleSet->numRows(), bytesReceived);
+//      SPDLOG_INFO("Query {}: done", index);
 #endif
       selectBytesReceivedLock.lock();
       selectReceivedBytes += bytesReceived;
+      selectProcessedBytes += bytesProcessed;
       selectBytesReceivedLock.unlock();
       break;
     }
@@ -357,8 +389,8 @@ uint64_t simpleGetRequest(int requestNum) {
 //  auto schema = SSBSchema::date();
 //  auto requestKey = "ssb-sf10-sortlineorder/csv/lineorder_sharded/lineorder.tbl." + std::to_string(requestNum);
 //  auto requestKey = "minidata.csv";
-//  auto requestKey = "ssb-sf100-sortlineorder/csv/lineorder_sharded/lineorder.tbl." + std::to_string(requestNum);
-  std::string requestKey = fmt::format("ssb-sf100-sortlineorder/csv_150MB_initial_format/lineorder_sharded/lineorder.tbl.{}", index);
+  auto requestKey = "ssb-sf100-sortlineorder/csv/lineorder_sharded/lineorder.tbl." + std::to_string(requestNum);
+//  std::string requestKey = fmt::format("ssb-sf100-sortlineorder/csv_150MB_initial_format/lineorder_sharded/lineorder.tbl.{}", index);
   auto schema = SSBSchema::lineOrder();
   auto requestStartTime = std::chrono::steady_clock::now();
     Aws::S3::Model::GetObjectRequest getObjectRequest;
@@ -443,9 +475,11 @@ void normal::ssb::concurrentSelectTest(int numRequests) {
   std::shared_ptr<Aws::S3::S3Client> client1 = normal::pushdown::AWSClient::defaultS3Client();
   size_t totalTimeNS = 0;
   size_t totalBytesReturned = 0;
+  size_t totalBytesProcessed = 0;
   int numTrials = 5;
   for (int i = 0; i < numTrials; i++) {
     selectReceivedBytes = 0;
+    selectProcessedBytes = 0;
     spdlog::set_level(spdlog::level::off);
     std::vector<std::thread> threadVector = std::vector<std::thread>();
     auto startTime = std::chrono::steady_clock::now();
@@ -458,20 +492,26 @@ void normal::ssb::concurrentSelectTest(int numRequests) {
     auto stopTime = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime).count();
     totalTimeNS += duration;
-    selectBytesReceivedLock.lock();
-    size_t returnedBytes = selectReceivedBytes;
-    totalBytesReturned += returnedBytes;
-    selectBytesReceivedLock.unlock();
-    spdlog::set_level(spdlog::level::info);
-    SPDLOG_INFO("{} Concurrent Select requests took: {}sec\n Machine transfer rate: {}Gb/s", numRequests,
+    if (i != 0) {
+      selectBytesReceivedLock.lock();
+      size_t returnedBytes = selectReceivedBytes;
+      totalBytesReturned += returnedBytes;
+      size_t processedBytes = selectProcessedBytes;
+      totalBytesProcessed += processedBytes;
+      selectBytesReceivedLock.unlock();
+      spdlog::set_level(spdlog::level::info);
+      SPDLOG_INFO("{} Concurrent Select requests took: {}sec\n Machine transfer rate: {}Gb/s\nS3 Process rate: {}Gb/s",
+                  numRequests,
                 (double) (duration) / 1.0e9,
-                (((double) returnedBytes * 8 / 1024.0 / 1024.0 / 1024.0) / ((double) (duration) / 1.0e9)));
+                (((double) returnedBytes * 8 / 1024.0 / 1024.0 / 1024.0) / ((double) (duration) / 1.0e9)),
+                (((double) processedBytes * 8 / 1024.0 / 1024.0 / 1024.0) / ((double) (duration) / 1.0e9)));
+    }
     std::this_thread::sleep_for (std::chrono::milliseconds(1000));
   }
-  double averageTrialTimeNS = ((double) (totalTimeNS) / 1.0e9) / (double) numTrials;
+  double averageTrialTimeNS = ((double) (totalTimeNS) / 1.0e9) / (double) (numTrials - 1);
   SPDLOG_INFO("Average for {} took: {}sec\n Average machine transfer rate: {}Gb/s", numRequests,
               averageTrialTimeNS,
-              (((double) totalBytesReturned * 8 / numTrials / 1024.0 / 1024.0 / 1024.0) / averageTrialTimeNS));
+              (((double) totalBytesReturned * 8 / (numTrials - 1) / 1024.0 / 1024.0 / 1024.0) / averageTrialTimeNS));
 }
 
 void normal::ssb::concurrentGetTest(int numRequests) {
@@ -512,9 +552,10 @@ void normal::ssb::concurrentGetTest(int numRequests) {
 
 void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType, std::string dirPrefix,
                            size_t networkLimit, bool writeResults) {
-  spdlog::set_level(spdlog::level::critical);
+  spdlog::set_level(spdlog::level::off);
+
   // parameters
-  const int warmBatchSize = 50, executeBatchSize = 50;
+  const int warmBatchSize = 30, executeBatchSize = 50;
   std::string bucket_name = "pushdowndb";
   normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dirPrefix);
   normal::cache::beladyMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dirPrefix);

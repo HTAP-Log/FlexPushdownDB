@@ -82,7 +82,8 @@ FBRSCachingPolicy::onStore(const std::shared_ptr<SegmentKey> &key) {
             realKey->getMetadata()->setSize(key->getMetadata()->size());
         }
     } else {
-        throw std::runtime_error("onStore: Key should exist in keySet_");
+      throw std::runtime_error("onStore: Key should exist in keySet_");
+//      return std::nullopt;
     }
 
     auto segmentSize = realKey->getMetadata()->size();
