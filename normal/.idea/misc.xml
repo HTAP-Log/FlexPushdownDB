@@ -16,7 +16,9 @@
       </list>
     </option>
   </component>
-  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$/normal-pushdown">
+    <contentRoot DIR="$PROJECT_DIR$" />
+  </component>
   <component name="CidrRootsConfiguration">
     <excludeRoots>
       <file path="$PROJECT_DIR$/cmake-build-debug-llvm-10-ninja" />
