@@ -12,6 +12,7 @@
 #include <normal/plan/Globals.h>
 #include <normal/cache/SegmentKey.h>
 #include <normal/connector/MiniCatalogue.h>
+#include <normal/pushdown/antijoin/>
 
 using namespace normal::plan::operator_;
 using namespace normal::pushdown;

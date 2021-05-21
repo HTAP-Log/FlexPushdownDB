@@ -23,8 +23,8 @@ namespace normal::pushdown::join {
 class HashJoinProbeKernel2 {
 
 public:
-  explicit HashJoinProbeKernel2(JoinPredicate pred, std::set<std::string> neededColumnNames);
-  static HashJoinProbeKernel2 make(JoinPredicate pred, std::set<std::string> neededColumnNames);
+  explicit HashJoinProbeKernel2(join::JoinPredicate pred, std::set<std::string> neededColumnNames);
+  static HashJoinProbeKernel2 make(join::JoinPredicate pred, std::set<std::string> neededColumnNames);
 
   tl::expected<void, std::string> joinBuildTupleSetIndex(const std::shared_ptr<TupleSetIndex>& tupleSetIndex);
   tl::expected<void, std::string> joinProbeTupleSet(const std::shared_ptr<TupleSet2>& tupleSet);

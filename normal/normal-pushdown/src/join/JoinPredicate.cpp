@@ -13,7 +13,7 @@ JoinPredicate::JoinPredicate(std::string leftColumnName,
 	leftColumnName_(std::move(leftColumnName)),
 	rightColumnName_(std::move(rightColumnName)) {}
 
-JoinPredicate JoinPredicate::create(const std::string &leftColumnName, const std::string &rightColumnName) {
+JoinPredicate JoinPredicate::create(const std::string &leftColumnName, const std::string &rightColumnName) {  // TODO: support composite primary key
 
   std::string l(leftColumnName);
   std::string r(rightColumnName);

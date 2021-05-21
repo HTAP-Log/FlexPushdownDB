@@ -1,3 +1,5 @@
+cmake_policy(SET CMP0048 NEW)
+
 project("normal-pushdown" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 # need to link libraries on mac
@@ -73,7 +75,7 @@ add_library(normal-pushdown STATIC
         include/normal/pushdown/group/AggregateBuilderWrapper.cpp include/normal/pushdown/group/AggregateBuilderWrapper.h
         include/normal/pushdown/s3/S3Select.h include/normal/pushdown/s3/S3Get.h src/s3/S3Select.cpp src/s3/S3Get.cpp
         include/normal/pushdown/s3/DeleteMap.h src/s3/DeleteMap.cpp
-        include/normal/pushdown/shuffle/RecordBatchShuffler2.h src/shuffle/RecordBatchShuffler2.cpp)
+        include/normal/pushdown/shuffle/RecordBatchShuffler2.h src/shuffle/RecordBatchShuffler2.cpp src/antijoin/HashAntiJoinProbe.cpp include/normal/pushdown/antijoin/HashAntiJoinProbe.h src/antijoin/HashAntiJoinProbeKernel.cpp include/normal/pushdown/antijoin/HashAntiJoinProbeKernel.h src/antijoin/RecordBatchAntiJoiner.cpp include/normal/pushdown/antijoin/RecordBatchAntiJoiner.h src/antijoin/AntiJoinPredicate.cpp include/normal/pushdown/antijoin/AntiJoinPredicate.h)
 
 target_include_directories(normal-pushdown PUBLIC include)
 
