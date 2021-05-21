@@ -679,37 +679,37 @@ namespace normal::pushdown {
         }
         SPDLOG_DEBUG("Finished Reading: {}", name());
 
-        // RUN THE MERGE HERE
-
-        // STEP 1. Construct the DeleteMap
-        normal::pushdown::DeleteMap deleteMap = normal::pushdown::DeleteMap(readTupleSet->numRows());
-
-        std::unordered_set<int32_t> deleteKeySet;
-        // currently we only do work on lineorder table
-        if (tableName_ == "lineorder") {
-
-            // STEP1: GET ALL THE PRIMARY KEY OF ROWS WE WANT TO DELETE
-            std::shared_ptr<::arrow::ChunkedArray> logArrowArray = logTupleSet->getColumnByIndex(0).value()->getArrowArray();
-            std::shared_ptr<::arrow::ChunkedArray> readArrowArray = logTupleSet->getColumnByIndex(0).value()->getArrowArray();
-
-            auto int32_array = std::static_pointer_cast<arrow::Int32Array>(logArrowArray->chunk(0));
-//            const int32_t* data = int32_array->raw_values(); // one way to read
-            for (int32_t i = 0; i < int32_array->length();i++) {
-                if (!int32_array->IsNull(i)) {
-                    deleteKeySet.insert(int32_array->Value(i));
-                }
-            }
-
-            // STEP2: Loop Thru the readTuple and construct the Delete Map
-            auto int32_read_array = std::static_pointer_cast<arrow::Int32Array>(readArrowArray->chunk(0));
-
-            for (long i = 0; i < int32_read_array->length();i++) {
-                if (!int32_read_array->IsNull(i) && deleteKeySet.count(int32_read_array->Value(i))) {
-                    deleteMap.setBit(i);
-                    SPDLOG_CRITICAL("HIT:{}",int32_read_array->Value(i));
-                }
-            }
-        }
+//        // RUN THE MERGE HERE
+//
+//        // STEP 1. Construct the DeleteMap
+//        normal::pushdown::DeleteMap deleteMap = normal::pushdown::DeleteMap(readTupleSet->numRows());
+//
+//        std::unordered_set<int32_t> deleteKeySet;
+//        // currently we only do work on lineorder table
+//        if (tableName_ == "lineorder") {
+//
+//            // STEP1: GET ALL THE PRIMARY KEY OF ROWS WE WANT TO DELETE
+//            std::shared_ptr<::arrow::ChunkedArray> logArrowArray = logTupleSet->getColumnByIndex(0).value()->getArrowArray();
+//            std::shared_ptr<::arrow::ChunkedArray> readArrowArray = logTupleSet->getColumnByIndex(0).value()->getArrowArray();
+//
+//            auto int32_array = std::static_pointer_cast<arrow::Int32Array>(logArrowArray->chunk(0));
+////            const int32_t* data = int32_array->raw_values(); // one way to read
+//            for (int32_t i = 0; i < int32_array->length();i++) {
+//                if (!int32_array->IsNull(i)) {
+//                    deleteKeySet.insert(int32_array->Value(i));
+//                }
+//            }
+//
+//            // STEP2: Loop Thru the readTuple and construct the Delete Map
+//            auto int32_read_array = std::static_pointer_cast<arrow::Int32Array>(readArrowArray->chunk(0));
+//
+//            for (long i = 0; i < int32_read_array->length();i++) {
+//                if (!int32_read_array->IsNull(i) && deleteKeySet.count(int32_read_array->Value(i))) {
+//                    deleteMap.setBit(i);
+//                    SPDLOG_CRITICAL("HIT:{}",int32_read_array->Value(i));
+//                }
+//            }
+//        }
 
 //        SPDLOG_CRITICAL(logTupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
 

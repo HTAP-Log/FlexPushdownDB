@@ -12,7 +12,9 @@
 #include <normal/plan/Globals.h>
 #include <normal/cache/SegmentKey.h>
 #include <normal/connector/MiniCatalogue.h>
-#include <normal/pushdown/antijoin/>
+#include <normal/pushdown/antijoin/HashAntiJoinProbe.h>
+#include <normal/pushdown/join/HashJoinBuild.h>
+#include <normal/pushdown/join/JoinPredicate.h>
 
 using namespace normal::plan::operator_;
 using namespace normal::pushdown;
@@ -51,7 +53,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
 std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
 S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
   auto miniCatalogue = normal::connector::defaultMiniCatalogue;
-  auto allColumnNames = miniCatalogue->getColumnsOfTable(getName());
+  auto allColumnNames = miniCatalogue->getColumnsOfTable(getName());  //TODO: need a way to get primary key
 
   auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
@@ -89,12 +91,23 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
     auto s3Bucket = s3Partition->getBucket();
     auto s3Object = s3Partition->getObject();
     auto numBytes = s3Partition->getNumBytes();
+    std::string readObjectKey = "ssb-sf10-sortlineorder/csv/lineorder_sharded/lineorder.tbl.1";
     auto scanRanges = normal::pushdown::Util::ranges<long>(0, numBytes, numRanges);
 
     int rangeId = 0;
     for (const auto &scanRange: scanRanges) {
       // S3Scan
       std::shared_ptr<Operator> scanOp;
+      std::shared_ptr<Operator> logOp;
+      std::shared_ptr<Operator> logBuildOp;
+//      std::shared_ptr<Operator> antiJoinProbeOp;
+
+      auto joinPred = join::JoinPredicate("LO_ORDERKEY","LO_ORDERKEY");
+
+      logBuildOp = join::HashJoinBuild::create("htap-join-build", "LO_ORDERKEY");
+      auto antiJoinProbeOp = antijoin::HashAntiJoinProbe("htap-antijoin-probe", joinPred, *allNeededColumnNameSet);
+
+
       // FIXME 1: hack Parquet Get using Select
       // FIXME 2: not a idea way to distinguish CSV and Parquet
       if (s3Object.find("csv") != std::string::npos) {
@@ -112,6 +125,22 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 true,
                 false,
                 queryId);
+
+        logOp = S3Get::make_1(
+                "s3get - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),  // TODO: what's the key here?
+                s3Partition->getBucket(),
+                s3Object,
+                *allColumnNames,
+                *allNeededColumnNames,
+                scanRange.first,
+                scanRange.second,
+                miniCatalogue->getSchema(getName()),
+                getName(), // name of the table of the partition
+                DefaultS3Client,
+                true,
+                false,
+                queryId
+                );
       } else {
         scanOp = S3Select::make(
                 "s3get(hacked for parquet using select) - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
@@ -128,7 +157,12 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 false,
                 queryId);
       }
+
       operators->emplace_back(scanOp);
+      operators->emplace_back(logOp);
+
+      logOp->produce(logBuildOp);
+      logBuildOp->consume(logOp);
 
       std::shared_ptr<Operator> upStreamOfProj;
       // Filter if it has filterPredicate
@@ -139,13 +173,31 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 queryId);
         operators->emplace_back(filter);
 
+
+
         scanOp->produce(filter);
         filter->consume(scanOp);
-        streamOutPhysicalOperators_->emplace_back(filter);
+
+        filter->produce(&antiJoinProbeOp);
+        antiJoinProbeOp.consume(filter);
+
+        streamOutPhysicalOperators_->emplace_back(&antiJoinProbeOp);  // the last operator in this function
       } else {
-        streamOutPhysicalOperators_->emplace_back(scanOp);
+          scanOp->produce(&antiJoinProbeOp);
+          antiJoinProbeOp.consume(scanOp);
+        streamOutPhysicalOperators_->emplace_back(&antiJoinProbeOp);
       }
       // No project needed as S3Get does a project based on the neededColumns input
+
+      /*
+       * Step1: logOp -> HashJoinBuild
+       * Step2: ScanOP -> HashJoinProbe
+       * Step3: HashJoinBuild -> HashJoinProbe
+       * Step4: set the streamOutPhysicalOperators
+      */
+
+      logBuildOp->produce(&antiJoinProbeOp);
+      antiJoinProbeOp.consume(logBuildOp);
 
       rangeId++;
     }
