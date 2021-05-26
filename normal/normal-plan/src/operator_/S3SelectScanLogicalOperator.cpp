@@ -57,6 +57,8 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
   auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
+  std::string htapTargetTableName = "mm";
+
   /**
    * For each range of each valid partition, create a s3scan (and a filter if needed)
    */
@@ -98,15 +100,23 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
     for (const auto &scanRange: scanRanges) {
       // S3Scan
       std::shared_ptr<Operator> scanOp;
+      auto tableName = getName();  // get the name of the table that's currently reading
+
       std::shared_ptr<Operator> logOp;
       std::shared_ptr<Operator> logBuildOp;
       std::shared_ptr<Operator> antiJoinProbeOp;
 
-      auto joinPred = join::JoinPredicate("LO_ORDERKEY","LO_ORDERKEY");
+      SPDLOG_CRITICAL(getName());
 
-      logBuildOp = join::HashJoinBuild::create("htap-join-build", "LO_ORDERKEY");
-      antiJoinProbeOp = antijoin::HashAntiJoinProbe::create("htap-antijoin-probe", joinPred, *allNeededColumnNameSet,0);
 
+        // FIXME: Only operate updateJoin on "lineorder" table
+      if (tableName == htapTargetTableName) {
+          // FIXME: This is hard coded for testing on line order table
+          // initializing physical operator for joinUpdate
+          auto joinPred = join::JoinPredicate("lo_orderkey","lo_orderkey");
+          logBuildOp = join::HashJoinBuild::create("htap-join-build", "lo_orderkey");
+          antiJoinProbeOp = antijoin::HashAntiJoinProbe::create("htap-antijoin-probe", joinPred, *allNeededColumnNameSet,queryId);
+      }
 
       // FIXME 1: hack Parquet Get using Select
       // FIXME 2: not a idea way to distinguish CSV and Parquet
@@ -116,7 +126,8 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 s3Partition->getBucket(),
                 s3Object,
                 *allColumnNames,
-                *allNeededColumnNames,
+                *allColumnNames,
+//                *allNeededColumnNames,
                 scanRange.first,
                 scanRange.second,
                 miniCatalogue->getSchema(getName()),
@@ -126,21 +137,26 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 false,
                 queryId);
 
-        logOp = S3Get::make_1(
-                "s3get - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),  // TODO: what's the key here?
-                s3Partition->getBucket(),
-                s3Object,
-                *allColumnNames,
-                *allNeededColumnNames,
-                scanRange.first,
-                scanRange.second,
-                miniCatalogue->getSchema(getName()),
-                getName(), // name of the table of the partition
-                DefaultS3Client,
-                true,
-                false,
-                queryId
-                );
+          // FIXME: Now since we only have "lineorder" table log, then we only do updateJoin on line order table.
+
+          if (getName() == htapTargetTableName) {
+              logOp = S3Get::make_1(
+                      "s3get - log" + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),  // TODO: what's the key here?
+                      s3Partition->getBucket(),
+                      s3Object,
+                      *allColumnNames,
+                      *allColumnNames,
+//                      *allNeededColumnNames,
+                      scanRange.first,
+                      scanRange.second,
+                      miniCatalogue->getSchema(getName()),
+                      getName(), // name of the table of the partition
+                      DefaultS3Client,
+                      true,
+                      false,
+                      queryId
+              );
+          }
       } else {
         scanOp = S3Select::make(
                 "s3get(hacked for parquet using select) - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
@@ -158,35 +174,53 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 queryId);
       }
 
-      operators->emplace_back(scanOp);
-      operators->emplace_back(logOp);
+      if (tableName == htapTargetTableName) {
+          operators->emplace_back(scanOp);
+          operators->emplace_back(logOp);
 
-      logOp->produce(logBuildOp);
-      logBuildOp->consume(logOp);
+          operators->emplace_back(logBuildOp);
+          operators->emplace_back(antiJoinProbeOp);
 
-      std::shared_ptr<Operator> upStreamOfProj;
-      // Filter if it has filterPredicate
-      if (finalPredicate) {
-        auto filter = filter::Filter::make(
-                fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
-                filterPredicate,
-                queryId);
-        operators->emplace_back(filter);
+          logOp->produce(logBuildOp);
+          logBuildOp->consume(logOp);
 
-
-
-        scanOp->produce(filter);
-        filter->consume(scanOp);
-
-        filter->produce(antiJoinProbeOp);
-        antiJoinProbeOp->consume(filter);
-
-        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);  // the last operator in this function
-      } else {
           scanOp->produce(antiJoinProbeOp);
           antiJoinProbeOp->consume(scanOp);
-        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);
+
+          logBuildOp->produce(antiJoinProbeOp);
+          antiJoinProbeOp->consume(logBuildOp);
+
+          streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);
+      } else {
+          operators->emplace_back(scanOp);
+          streamOutPhysicalOperators_->emplace_back(scanOp);
       }
+
+
+
+//      std::shared_ptr<Operator> upStreamOfProj;
+      // Filter if it has filterPredicate
+
+      // FIXME:temperorily disable filter operator for testing
+//      if (finalPredicate) {
+//        auto filter = filter::Filter::make(
+//                fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
+//                filterPredicate,
+//                queryId);
+//        operators->emplace_back(filter);
+//
+//        scanOp->produce(filter);
+//        filter->consume(scanOp);
+//
+//        filter->produce(antiJoinProbeOp);
+//        antiJoinProbeOp->consume(filter);
+//
+//        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);  // the last operator in this function
+//      } else {
+//          scanOp->produce(antiJoinProbeOp);
+//          antiJoinProbeOp->consume(scanOp);
+//        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);
+//      }
       // No project needed as S3Get does a project based on the neededColumns input
 
       /*
@@ -196,8 +230,8 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
        * Step4: set the streamOutPhysicalOperators
       */
 
-      logBuildOp->produce(antiJoinProbeOp);
-      antiJoinProbeOp->consume(logBuildOp);
+//      logBuildOp->produce(antiJoinProbeOp);
+//      antiJoinProbeOp->consume(logBuildOp);
 
       rangeId++;
     }
