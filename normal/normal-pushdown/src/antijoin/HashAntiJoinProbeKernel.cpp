@@ -12,14 +12,16 @@
 
 #include "normal/pushdown/join/RecordBatchJoiner.h"
 
+#include "normal/pushdown/antijoin/RecordBatchAntiJoiner.h"
+
 
 using namespace normal::pushdown::antijoin;
 
-HashAntiJoinProbeKernel::HashAntiJoinProbeKernel(JoinPredicate pred, std::set<std::string> neededColumnNames) :
+HashAntiJoinProbeKernel::HashAntiJoinProbeKernel(join::JoinPredicate pred, std::set<std::string> neededColumnNames) :
         pred_(std::move(pred)), neededColumnNames_(std::move(neededColumnNames)) {}
 
-HashAntiJoinProbeKernel HashAntiJoinProbeKernel::make(JoinPredicate pred, std::set<std::string> neededColumnNames) {
-    return HashJoinProbeKernel2(std::move(pred), std::move(neededColumnNames));
+HashAntiJoinProbeKernel HashAntiJoinProbeKernel::make(join::JoinPredicate pred, std::set<std::string> neededColumnNames) {
+    return antijoin::HashAntiJoinProbeKernel(std::move(pred), std::move(neededColumnNames));
 }
 
 tl::expected<void, std::string> HashAntiJoinProbeKernel::putBuildTupleSetIndex(const std::shared_ptr<TupleSetIndex> &tupleSetIndex) {
@@ -47,7 +49,7 @@ tl::expected<void, std::string> HashAntiJoinProbeKernel::putProbeTupleSet(const 
 }
 
 tl::expected<std::shared_ptr<normal::tuple::TupleSet2>, std::string>
-join1(const std::shared_ptr<RecordBatchJoiner> &joiner, const std::shared_ptr<TupleSet2> &tupleSet) {
+join1(const std::shared_ptr<RecordBatchAntiJoiner> &joiner, const std::shared_ptr<TupleSet2> &tupleSet) {
     ::arrow::Result<std::shared_ptr<::arrow::RecordBatch>> recordBatchResult;
     ::arrow::Status status;
 
@@ -66,7 +68,7 @@ join1(const std::shared_ptr<RecordBatchJoiner> &joiner, const std::shared_ptr<Tu
     while (recordBatch) {
 
         // join
-        auto result = joiner->join(recordBatch);
+        auto result = joiner->antijoin(recordBatch);
         if (!result.has_value()) {
             return tl::make_unexpected(result.error());
         }
@@ -113,12 +115,12 @@ tl::expected<void, std::string> HashAntiJoinProbeKernel::joinBuildTupleSetIndex(
     bufferOutputSchema(tupleSetIndex, probeTupleSet_.value());
 
     // Create joiner
-    auto expectedJoiner = RecordBatchJoiner::make(tupleSetIndex, pred_.getRightColumnName(), outputSchema_.value(), neededColumnIndice_);
+    auto expectedJoiner = RecordBatchAntiJoiner::make(tupleSetIndex, pred_.getRightColumnName(), outputSchema_.value(), neededColumnIndice_);
     if (!expectedJoiner.has_value()) {
         return tl::make_unexpected(expectedJoiner.error());
     }
 
-    // Join
+    // AntiJoin
     auto expectedJoinedTupleSet = join1(expectedJoiner.value(), probeTupleSet_.value());
     if (!expectedJoinedTupleSet.has_value())
         return tl::make_unexpected(expectedJoinedTupleSet.error());
@@ -149,7 +151,7 @@ tl::expected<void, std::string> HashAntiJoinProbeKernel::joinProbeTupleSet(const
     bufferOutputSchema(buildTupleSetIndex_.value(), tupleSet);
 
     // Create joiner
-    auto expectedJoiner = RecordBatchJoiner::make(buildTupleSetIndex_.value(), pred_.getRightColumnName(), outputSchema_.value(), neededColumnIndice_);
+    auto expectedJoiner = RecordBatchAntiJoiner::make(buildTupleSetIndex_.value(), pred_.getRightColumnName(), outputSchema_.value(), neededColumnIndice_);
     if (!expectedJoiner.has_value()) {
         return tl::make_unexpected(expectedJoiner.error());
     }

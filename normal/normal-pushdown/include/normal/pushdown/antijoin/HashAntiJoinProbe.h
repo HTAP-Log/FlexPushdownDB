@@ -23,6 +23,10 @@ class HashAntiJoinProbe : public normal::core::Operator {
 public:
     HashAntiJoinProbe(const std::string &name, join::JoinPredicate pred, std::set<std::string> neededColumnNames, long queryId = 0);
 
+    static HashAntiJoinProbe make(const std::string &name, join::JoinPredicate pred, std::set<std::string> neededColumnNames, long queryId = 0);
+
+    static std::shared_ptr<HashAntiJoinProbe> create(const std::string &name, join::JoinPredicate pred, std::set<std::string> neededColumnNames, long queryId = 0);
+
     void onReceive(const core::message::Envelope &msg) override;
 
 private:

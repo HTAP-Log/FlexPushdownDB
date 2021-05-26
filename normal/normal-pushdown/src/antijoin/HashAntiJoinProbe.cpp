@@ -18,7 +18,16 @@ using namespace normal::pushdown::antijoin;
 HashAntiJoinProbe::HashAntiJoinProbe(const std::string &name, join::JoinPredicate pred, std::set<std::string> neededColumnNames, long queryId) :
     Operator(name, "HashAntiJoinProbe", queryId),
     kernel_(HashAntiJoinProbeKernel::make(std::move(pred), std::move(neededColumnNames))) {
+}
 
+HashAntiJoinProbe HashAntiJoinProbe::make(const std::string &name, join::JoinPredicate pred,
+                                          std::set<std::string> neededColumnNames, long queryId) {
+    return HashAntiJoinProbe(name, pred, neededColumnNames, queryId);
+}
+
+std::shared_ptr<HashAntiJoinProbe> HashAntiJoinProbe::create(const std::string &name, join::JoinPredicate pred,
+                                          std::set<std::string> neededColumnNames, long queryId) {
+    return std::make_shared<HashAntiJoinProbe>(HashAntiJoinProbe(name, pred, neededColumnNames, queryId));
 }
 
 void HashAntiJoinProbe::onReceive(const normal::core::message::Envelope &msg) {

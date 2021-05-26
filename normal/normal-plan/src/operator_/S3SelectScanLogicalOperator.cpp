@@ -100,12 +100,12 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
       std::shared_ptr<Operator> scanOp;
       std::shared_ptr<Operator> logOp;
       std::shared_ptr<Operator> logBuildOp;
-//      std::shared_ptr<Operator> antiJoinProbeOp;
+      std::shared_ptr<Operator> antiJoinProbeOp;
 
       auto joinPred = join::JoinPredicate("LO_ORDERKEY","LO_ORDERKEY");
 
       logBuildOp = join::HashJoinBuild::create("htap-join-build", "LO_ORDERKEY");
-      auto antiJoinProbeOp = antijoin::HashAntiJoinProbe("htap-antijoin-probe", joinPred, *allNeededColumnNameSet);
+      antiJoinProbeOp = antijoin::HashAntiJoinProbe::create("htap-antijoin-probe", joinPred, *allNeededColumnNameSet,0);
 
 
       // FIXME 1: hack Parquet Get using Select
@@ -178,14 +178,14 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
         scanOp->produce(filter);
         filter->consume(scanOp);
 
-        filter->produce(&antiJoinProbeOp);
-        antiJoinProbeOp.consume(filter);
+        filter->produce(antiJoinProbeOp);
+        antiJoinProbeOp->consume(filter);
 
-        streamOutPhysicalOperators_->emplace_back(&antiJoinProbeOp);  // the last operator in this function
+        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);  // the last operator in this function
       } else {
-          scanOp->produce(&antiJoinProbeOp);
-          antiJoinProbeOp.consume(scanOp);
-        streamOutPhysicalOperators_->emplace_back(&antiJoinProbeOp);
+          scanOp->produce(antiJoinProbeOp);
+          antiJoinProbeOp->consume(scanOp);
+        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);
       }
       // No project needed as S3Get does a project based on the neededColumns input
 
@@ -196,8 +196,8 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
        * Step4: set the streamOutPhysicalOperators
       */
 
-      logBuildOp->produce(&antiJoinProbeOp);
-      antiJoinProbeOp.consume(logBuildOp);
+      logBuildOp->produce(antiJoinProbeOp);
+      antiJoinProbeOp->consume(logBuildOp);
 
       rangeId++;
     }
