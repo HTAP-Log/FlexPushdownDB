@@ -77,11 +77,12 @@ void HashAntiJoinProbe::onHashTable(const join::TupleSetIndexMessage &msg) {
     // Incremental join immediately
 
     // TODO: We must ensure that our HashTable was fully constructed. Disable pipelining.
-    if (!ctx()->operatorMap().allComplete(normal::core::OperatorRelationshipType::Producer)) {
-        return;
-    }
+//    if (!ctx()->operatorMap().allComplete(normal::core::OperatorRelationshipType::Producer)) {
+//        return;
+//    }
 
     auto result = kernel_.joinBuildTupleSetIndex(msg.getTupleSetIndex());
+
     if(!result)
         throw std::runtime_error(fmt::format("{}, {}", result.error(), name()));
 

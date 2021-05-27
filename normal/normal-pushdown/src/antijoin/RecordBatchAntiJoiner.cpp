@@ -67,6 +67,7 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
     // create appenders to create the destination arrays
     std::vector<std::shared_ptr<ArrayAppender>> appenders{static_cast<size_t>(outputSchema_->num_fields())};
 
+    // construct the arrayAppenders
     for (int c = 0; c < outputSchema_->num_fields(); ++c) {
         auto expectedAppender = ArrayAppenderBuilder::make(outputSchema_->field(c)->type(), 0);
         if (!expectedAppender.has_value())
@@ -74,13 +75,16 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
         appenders[c] = expectedAppender.value();
     }
 
+    // loop thru the probe table
     for (int64_t pr = 0; pr < probeJoinColumn->length(); ++pr) {
         std::vector<int64_t> buildRows = indexFinder->find(pr);  // maybe use a not in is better?
 
+        // if the key in probe table is not in the build table
         if (buildRows.empty()) {  // not in the log file
             // add this row to the appender
+            // do it column by column
             for (size_t c = 0; c < neededColumnIndice_.size(); ++c) {
-                auto appendResult = appenders[c]->safeAppendValue(buildColumns[neededColumnIndice_[c]->second], pr);
+                auto appendResult = appenders[c]->safeAppendValue(probeColumns[neededColumnIndice_[c]->second], pr);
                 if(!appendResult) return appendResult;  // why??
             }
         } else {  // this means we have a corresponding row in the log file
