@@ -57,7 +57,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
   auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-  std::string htapTargetTableName = "mm";
+  std::string htapTargetTableName = "lineorder";
 
   /**
    * For each range of each valid partition, create a s3scan (and a filter if needed)
@@ -65,7 +65,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
   streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
   auto queryId = getQueryId();
 
-  for (const auto &partition: *getPartitioningScheme()->partitions()) {
+  for (const auto &partition: *getPartitioningScheme()->partitions()) {  // FIXME: NO NEED TO READ LOG EVERY TIME.
     // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
     auto validPair = checkPartitionValid(partition);
     if (!validPair.first) {
@@ -84,9 +84,15 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
       // filter predicate
       filterPredicate = filter::FilterPredicate::make(finalPredicate);
     }
+
+
     auto allNeededColumnNameSet = std::make_shared<std::set<std::string>>(projectedColumnNames_->begin(), projectedColumnNames_->end());
     allNeededColumnNameSet->insert(predicateColumnNames->begin(), predicateColumnNames->end());
     auto allNeededColumnNames = std::make_shared<std::vector<std::string>>(allNeededColumnNameSet->begin(), allNeededColumnNameSet->end());
+
+
+    auto allColumnNameSet = std::make_shared<std::set<std::string>>(allColumnNames->begin(), allColumnNames->end());
+
 
     // Construct
     auto s3Partition = std::static_pointer_cast<S3SelectPartition>(partition);
@@ -108,14 +114,13 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
       SPDLOG_CRITICAL(getName());
 
-
         // FIXME: Only operate updateJoin on "lineorder" table
       if (tableName == htapTargetTableName) {
           // FIXME: This is hard coded for testing on line order table
           // initializing physical operator for joinUpdate
           auto joinPred = join::JoinPredicate("lo_orderkey","lo_orderkey");
-          logBuildOp = join::HashJoinBuild::create("htap-join-build", "lo_orderkey");
-          antiJoinProbeOp = antijoin::HashAntiJoinProbe::create("htap-antijoin-probe", joinPred, *allNeededColumnNameSet,queryId);
+          logBuildOp = join::HashJoinBuild::create("htap-join-build"+s3Object, "lo_orderkey");  //FIXME: Name operator
+          antiJoinProbeOp = antijoin::HashAntiJoinProbe::create("htap-antijoin-probe"+s3Object, joinPred, *allColumnNameSet,queryId);
       }
 
       // FIXME 1: hack Parquet Get using Select
@@ -138,7 +143,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 queryId);
 
           // FIXME: Now since we only have "lineorder" table log, then we only do updateJoin on line order table.
-
           if (getName() == htapTargetTableName) {
               logOp = S3Get::make_1(
                       "s3get - log" + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),  // TODO: what's the key here?
@@ -174,6 +178,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 queryId);
       }
 
+
       if (tableName == htapTargetTableName) {
           operators->emplace_back(scanOp);
           operators->emplace_back(logOp);
@@ -195,9 +200,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
           operators->emplace_back(scanOp);
           streamOutPhysicalOperators_->emplace_back(scanOp);
       }
-
-
-
 //      std::shared_ptr<Operator> upStreamOfProj;
       // Filter if it has filterPredicate
 
