@@ -106,6 +106,8 @@ tl::expected<void, std::string> HashAntiJoinProbeKernel::joinBuildTupleSetIndex(
             return tl::make_unexpected(result.error());
     }
 
+
+
     // Check empty
     if (!probeTupleSet_.has_value() || probeTupleSet_.value()->numRows() == 0 || tupleSetIndex->size() == 0) {
         return {};
@@ -116,6 +118,7 @@ tl::expected<void, std::string> HashAntiJoinProbeKernel::joinBuildTupleSetIndex(
 
     // Create joiner
     auto expectedJoiner = RecordBatchAntiJoiner::make(tupleSetIndex, pred_.getRightColumnName(), outputSchema_.value(), neededColumnIndice_);
+
     if (!expectedJoiner.has_value()) {
         return tl::make_unexpected(expectedJoiner.error());
     }
@@ -207,13 +210,15 @@ void HashAntiJoinProbeKernel::bufferOutputSchema(const std::shared_ptr<TupleSetI
                 outputFields.emplace_back(field);
             }
         }
-        for (int c = 0; c < tupleSet->schema().value()->getSchema()->num_fields(); ++c) {
-            auto field = tupleSet->schema().value()->getSchema()->field(c);
-            if (neededColumnNames_.find(field->name()) != neededColumnNames_.end()) {
-                neededColumnIndice_.emplace_back(std::make_shared<std::pair<bool, int>>(false, c));
-                outputFields.emplace_back(field);
-            }
-        }
+
+        // for anti-join we do not need to concern about columns
+//        for (int c = 0; c < tupleSet->schema().value()->getSchema()->num_fields(); ++c) {
+//            auto field = tupleSet->schema().value()->getSchema()->field(c);
+//            if (neededColumnNames_.find(field->name()) != neededColumnNames_.end()) {
+//                neededColumnIndice_.emplace_back(std::make_shared<std::pair<bool, int>>(false, c));
+//                outputFields.emplace_back(field);
+//            }
+//        }
         outputSchema_ = std::make_shared<::arrow::Schema>(outputFields);
     }
 }

@@ -340,7 +340,7 @@ uint64_t simpleGetRequest(int requestNum) {
   bool parsingComplete = false;
   uint64_t retrySleepTimeMS = 1;
   // Do this so that it is hopefully easier for requests that are done
-  // to acquire the lock and decrement activeConvertGets due to not waiting in a retry loop
+  // to acquire the lock and decrement activeConvertGets due to not waitwaiting in a retry loop
 //  while (true) {
 //    if (getConvertLock.try_lock()) {
 //      if (activeConvertGets < 36) {

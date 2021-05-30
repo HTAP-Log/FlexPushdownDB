@@ -26,11 +26,14 @@ RecordBatchAntiJoiner::make(const std::shared_ptr<TupleSetIndex> &buildTupleSetI
                         const std::shared_ptr<::arrow::Schema> &outputSchema,
                         const std::vector<std::shared_ptr<std::pair<bool, int>>> &neededColumnIndice) {
     auto canonicalColumnName = ColumnName::canonicalize(probeJoinColumnName);
+//    SPDLOG_CRITICAL(outputSchema->ToString());
     return std::make_shared<RecordBatchAntiJoiner>(buildTupleSetIndex, canonicalColumnName, outputSchema, neededColumnIndice);
 }
 
 tl::expected<void, std::string>
 RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &recordBatch) {
+
+//    SPDLOG_CRITICAL("anti-join begins!");
 
     arrow::Status status;
 
@@ -67,6 +70,10 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
     // create appenders to create the destination arrays
     std::vector<std::shared_ptr<ArrayAppender>> appenders{static_cast<size_t>(outputSchema_->num_fields())};
 
+//    SPDLOG_CRITICAL(outputSchema_->num_fields());
+
+//    SPDLOG_CRITICAL(outputSchema_->ToString());
+
     // construct the arrayAppenders
     for (int c = 0; c < outputSchema_->num_fields(); ++c) {
         auto expectedAppender = ArrayAppenderBuilder::make(outputSchema_->field(c)->type(), 0);
@@ -101,6 +108,8 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
         }
     }
 
+
+
     // Create arrays from the appenders
     for (size_t c = 0; c < appenders.size(); ++c) {
         auto expectedArray = appenders[c]->finalize();
@@ -110,6 +119,7 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
             joinedArrayVectors_[c].emplace_back(expectedArray.value());
     }
 
+//    SPDLOG_CRITICAL(neededColumnIndice_.size());
     return {};
 }
 
