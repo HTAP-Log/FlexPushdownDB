@@ -67,7 +67,12 @@ void Collate::show() {
 
 std::shared_ptr<TupleSet> Collate::tuples() {
 
-  assert(tuples_);
+//  assert(tuples_);
+  if (tuples_) {
+      SPDLOG_CRITICAL(tuples_->numRows());
+  } else {
+      SPDLOG_CRITICAL("NO ROWS OUTPUT!");
+  }
 
   return tuples_;
 }

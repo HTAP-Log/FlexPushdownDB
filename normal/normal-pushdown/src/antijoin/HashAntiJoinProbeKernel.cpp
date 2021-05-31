@@ -83,6 +83,8 @@ join1(const std::shared_ptr<RecordBatchAntiJoiner> &joiner, const std::shared_pt
 
     // Get joined result
     auto expectedJoinedTupleSet = joiner->toTupleSet();
+//    SPDLOG_CRITICAL(expectedJoinedTupleSet.value()->numRows());
+
 
 #ifndef NDEBUG
 

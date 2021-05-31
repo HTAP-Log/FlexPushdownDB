@@ -88,8 +88,8 @@ RecordBatchJoiner::join(const std::shared_ptr<::arrow::RecordBatch> &recordBatch
 
                 // build column
                 if (neededColumnIndice_[c]->first) {
-//                    auto appendResult = appenders[c]->safeAppendValue(buildColumns[neededColumnIndice_[c]->second], br);
-//                    if (!appendResult) return appendResult;
+                    auto appendResult = appenders[c]->safeAppendValue(buildColumns[neededColumnIndice_[c]->second], br);
+                    if (!appendResult) return appendResult;
                 }
 
                     // probe column
@@ -131,6 +131,8 @@ RecordBatchJoiner::toTupleSet() {
 
     auto joinedTable = ::arrow::Table::Make(outputSchema_, chunkedArrays);
     auto joinedTupleSet = TupleSet2::make(joinedTable);
+
+//    SPDLOG_CRITICAL(joinedTupleSet->numRows());
 
     joinedArrayVectors_.clear();
     return joinedTupleSet;

@@ -63,6 +63,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
     auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
     std::string htapTargetTableName = "lineorder";
+//    std::string htapTargetTableName = "n/a";
 
     /**
      * For each range of each valid partition, create a s3scan (and a filter if needed)
