@@ -135,6 +135,8 @@ std::shared_ptr<std::unordered_map<std::string, int>> readMetadataColumnLength(c
 }
 
 std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>>> readMetadataSchemas(const std::string& schemaName) {
+
+    // TODO: Parse the new format schemas primary key
   auto res = std::make_shared<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>>>();
   auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("schemas");
   for (auto const &str: readFileByLines(filePath)) {
