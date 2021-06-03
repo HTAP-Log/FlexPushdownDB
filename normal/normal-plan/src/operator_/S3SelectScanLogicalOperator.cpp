@@ -161,7 +161,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                             std::to_string(rangeId),  // TODO: what's the key here?
                             s3Partition->getBucket(),
 //                            s3Object,
-                            logObjectKey,
+                            logObjectKey,  // Set it to the log object key
                             *allColumnNames,
                             *allColumnNames,
 //                      *allNeededColumnNames,
@@ -193,7 +193,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                         queryId);
             }
 
-
             if (tableName == htapTargetTableName) {
                 operators->emplace_back(scanOp);
                 operators->emplace_back(logOp);
@@ -210,46 +209,38 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 logBuildOp->produce(antiJoinProbeOp);
                 antiJoinProbeOp->consume(logBuildOp);
 
-                streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);
             } else {
                 operators->emplace_back(scanOp);
-                streamOutPhysicalOperators_->emplace_back(scanOp);
             }
+
 //      std::shared_ptr<Operator> upStreamOfProj;
             // Filter if it has filterPredicate
 
             // FIXME:temperorily disable filter operator for testing
-//      if (finalPredicate) {
-//        auto filter = filter::Filter::make(
-//                fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
-//                filterPredicate,
-//                queryId);
-//        operators->emplace_back(filter);
-//
-//        scanOp->produce(filter);
-//        filter->consume(scanOp);
-//
-//        filter->produce(antiJoinProbeOp);
-//        antiJoinProbeOp->consume(filter);
-//
-//        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);  // the last operator in this function
-//      } else {
-//          scanOp->produce(antiJoinProbeOp);
-//          antiJoinProbeOp->consume(scanOp);
-//        streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);
-//      }
+            if (finalPredicate) {
+                // initializing the filter operator
+                auto filter = filter::Filter::make(
+                        fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
+                        filterPredicate,
+                        queryId);
+                operators->emplace_back(filter);
+
+                if (tableName == htapTargetTableName) {  // enable htap
+                    antiJoinProbeOp->produce(filter);
+                    filter->consume(antiJoinProbeOp);
+                } else {  // disable htap
+                    scanOp->produce(filter);
+                    filter->consume(scanOp);
+                }
+                streamOutPhysicalOperators_->emplace_back(filter); // the last operator in this function
+            } else {
+                if (tableName == htapTargetTableName) {  // enable htap
+                    streamOutPhysicalOperators_->emplace_back(antiJoinProbeOp);
+                } else {  // disable htap
+                    streamOutPhysicalOperators_->emplace_back(scanOp);
+                }
+            }
             // No project needed as S3Get does a project based on the neededColumns input
-
-            /*
-             * Step1: logOp -> HashJoinBuild
-             * Step2: ScanOP -> HashJoinProbe
-             * Step3: HashJoinBuild -> HashJoinProbe
-             * Step4: set the streamOutPhysicalOperators
-            */
-
-//      logBuildOp->produce(antiJoinProbeOp);
-//      antiJoinProbeOp->consume(logBuildOp);
-
             rangeId++;
         }
     }
