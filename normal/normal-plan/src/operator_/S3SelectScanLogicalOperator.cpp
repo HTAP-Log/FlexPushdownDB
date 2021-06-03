@@ -62,14 +62,16 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
     auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-//    std::string htapTargetTableName = "lineorder";
-    std::string htapTargetTableName = "n/a";
+    std::string htapTargetTableName = "lineorder";
+//    std::string htapTargetTableName = "n/a";
 
     /**
      * For each range of each valid partition, create a s3scan (and a filter if needed)
      */
     streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
     auto queryId = getQueryId();
+
+    // TODO: put the log scan operator here
 
     for (const auto &partition: *getPartitioningScheme()->partitions()) {  // FIXME: NO NEED TO READ LOG EVERY TIME.
         // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
@@ -111,7 +113,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
         std::basic_string<char> logObjectKey = "ssb-sf10-sortlineorder/csv/log/log.csv";
 
-//        std::string readObjectKey = "ssb-sf10-sortlineorder/csv/lineorder_sharded/lineorder.tbl.1";
         auto scanRanges = normal::pushdown::Util::ranges<long>(0, numBytes, numRanges);
 
         int rangeId = 0;
@@ -144,7 +145,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                         s3Object,
                         *allColumnNames,
                         *allColumnNames,
-//                *allNeededColumnNames,
                         scanRange.first,
                         scanRange.second,
                         miniCatalogue->getSchema(getName()),
@@ -160,11 +160,9 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                             "s3get - log" + s3Partition->getBucket() + "/" + s3Object + "-" +
                             std::to_string(rangeId),  // TODO: what's the key here?
                             s3Partition->getBucket(),
-//                            s3Object,
                             logObjectKey,  // Set it to the log object key
                             *allColumnNames,
                             *allColumnNames,
-//                      *allNeededColumnNames,
                             scanRange.first,
                             scanRange.second,
                             miniCatalogue->getSchema(getName()),
