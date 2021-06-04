@@ -49,6 +49,7 @@ char getCsvFileDelimiterForSchema(const std::string& schemaName) {
 }
 
 normal::connector::MiniCatalogue::MiniCatalogue(
+        std::shared_ptr<std::unordered_map<std::string, std::string>>  primaryKeys,
         std::shared_ptr<std::unordered_map<std::string, int>>  partitionNums,
         std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>>> schemas,
         std::shared_ptr<std::unordered_map<std::string, int>> columnLengthMap,
@@ -62,6 +63,8 @@ normal::connector::MiniCatalogue::MiniCatalogue(
         std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<std::unordered_map<
                 std::shared_ptr<Partition>, std::pair<std::string, std::string>, PartitionPointerHash, PartitionPointerPredicate>>>> sortedColumns,
         char csvFileDelimiter) :
+
+        primaryKeys_(std::move(primaryKeys)),
         partitionNums_(std::move(partitionNums)),
         schemas_(std::move(schemas)),
         columnLengthMap_(std::move(columnLengthMap)),
@@ -134,6 +137,23 @@ std::shared_ptr<std::unordered_map<std::string, int>> readMetadataColumnLength(c
   return res;
 }
 
+/**
+ * Created by Han Cao Jun/4/2021.
+ * Get the information of primary key column of each table from the metadata schema file.
+ * @param schemaName name of the schema
+ * @return a pointer to a map <tableName, primaryKeyColumnName>
+ */
+std::shared_ptr<std::unordered_map<std::string, std::string>> readPrimaryKeyName(const std::string& schemaName) {
+    auto res = std::make_shared<std::unordered_map<std::string, std::string>>();
+    auto filePath = std::experimental::filesystem::current_path().append("metadata").append(schemaName).append("schemas");
+    for (auto const &str: readFileByLines(filePath)) {
+        auto splitRes = split(str, ":");
+        res->emplace(splitRes[0], splitRes[1]);
+    }
+
+    return res;
+}
+
 std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>>> readMetadataSchemas(const std::string& schemaName) {
 
     // TODO: Parse the new format schemas primary key
@@ -142,7 +162,7 @@ std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>
   for (auto const &str: readFileByLines(filePath)) {
     auto splitRes = split(str, ":");
     std::vector<std::shared_ptr<::arrow::Field>> fields;
-    for (auto const &fieldEntry: split(splitRes[1], ",")) {
+    for (auto const &fieldEntry: split(splitRes[2], ",")) {
 	  auto splitFieldEntry = split(fieldEntry, "/");
 	  fields.push_back(::arrow::field(splitFieldEntry[0], parseDataType(splitFieldEntry[1])));
     }
@@ -194,6 +214,9 @@ std::shared_ptr<normal::connector::MiniCatalogue> normal::connector::MiniCatalog
   defaultJoinOrder->emplace_back("customer");
   defaultJoinOrder->emplace_back("part");
 
+  // primary keys
+  auto primaryKey = readPrimaryKeyName(schemaName);
+
   // schemas
   auto schemas = readMetadataSchemas(schemaName);
 
@@ -230,7 +253,7 @@ std::shared_ptr<normal::connector::MiniCatalogue> normal::connector::MiniCatalog
                           cache::SegmentKeyPointerHash, cache::SegmentKeyPointerPredicate>>();
 
   char csvFileDelimiter = getCsvFileDelimiterForSchema(schemaName);
-  return std::make_shared<MiniCatalogue>(partitionNums, schemas, columnLengthMap, segmentKeyToSize, queryNumToInvolvedSegments, segmentKeysToInvolvedQueryNums, defaultJoinOrder, sortedColumns, csvFileDelimiter);
+  return std::make_shared<MiniCatalogue>(primaryKey, partitionNums, schemas, columnLengthMap, segmentKeyToSize, queryNumToInvolvedSegments, segmentKeysToInvolvedQueryNums, defaultJoinOrder, sortedColumns, csvFileDelimiter);
 }
 
 const std::shared_ptr<std::unordered_map<std::string, int>> &normal::connector::MiniCatalogue::partitionNums() const {
