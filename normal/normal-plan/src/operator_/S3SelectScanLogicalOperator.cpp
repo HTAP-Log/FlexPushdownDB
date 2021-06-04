@@ -71,7 +71,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
     auto queryId = getQueryId();
 
     logOp = S3Get::make_1(
-            "s3get - log - only" + std::to_string(queryId),  // TODO: what's the key here?
+            "s3get - log - only" + std::to_string(queryId),
             "pushdowndb-htap",
             logObjectKey,  // Set it to the log object key
             *allColumnNames,
@@ -91,10 +91,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
      */
     streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-
-    // TODO: put the log scan operator here
-
-    for (const auto &partition: *getPartitioningScheme()->partitions()) {  // FIXME: NO NEED TO READ LOG EVERY TIME.
+    for (const auto &partition: *getPartitioningScheme()->partitions()) {
         // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
         auto validPair = checkPartitionValid(partition);
         if (!validPair.first) {
