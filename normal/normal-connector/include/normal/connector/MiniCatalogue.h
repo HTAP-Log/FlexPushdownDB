@@ -51,6 +51,8 @@ namespace normal::connector {
 
         std::string findTableOfColumn(const std::string &columnName);
 
+        std::string getPrimaryKeyColumnName(const std::string& tableName);
+
         double lengthFraction(const std::string &columnName);
 
         int lengthOfRow(const std::string &tableName);

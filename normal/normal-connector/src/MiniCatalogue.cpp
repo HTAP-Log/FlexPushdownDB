@@ -369,6 +369,10 @@ std::shared_ptr<std::vector<std::string>> normal::connector::MiniCatalogue::tabl
   return tables;
 }
 
+std::string normal::connector::MiniCatalogue::getPrimaryKeyColumnName(const std::string& tableName) {
+    return primaryKeys_->find(tableName)->second;
+}
+
 int normal::connector::MiniCatalogue::lengthOfRow(const std::string& tableName) {
   return rowLengthMap_->find(tableName)->second;
 }
