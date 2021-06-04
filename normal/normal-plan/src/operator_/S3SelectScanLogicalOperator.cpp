@@ -62,14 +62,35 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
     auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
+    // hard code some of the information
     std::string htapTargetTableName = "lineorder";
+    std::basic_string<char> logObjectKey = "ssb-sf10-sortlineorder/csv/log/log.csv";
 //    std::string htapTargetTableName = "n/a";
+
+    std::shared_ptr<Operator> logOp;
+    auto queryId = getQueryId();
+
+    logOp = S3Get::make_1(
+            "s3get - log - only" + std::to_string(queryId),  // TODO: what's the key here?
+            "pushdowndb-htap",
+            logObjectKey,  // Set it to the log object key
+            *allColumnNames,
+            *allColumnNames,
+            0,
+            16529775,
+            miniCatalogue->getSchema(getName()),
+            getName(), // name of the table of the partition
+            DefaultS3Client,
+            true,
+            false,
+            queryId
+    );
 
     /**
      * For each range of each valid partition, create a s3scan (and a filter if needed)
      */
     streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
-    auto queryId = getQueryId();
+
 
     // TODO: put the log scan operator here
 
@@ -111,8 +132,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
         auto s3Object = s3Partition->getObject();
         auto numBytes = s3Partition->getNumBytes();
 
-        std::basic_string<char> logObjectKey = "ssb-sf10-sortlineorder/csv/log/log.csv";
-
         auto scanRanges = normal::pushdown::Util::ranges<long>(0, numBytes, numRanges);
 
         int rangeId = 0;
@@ -121,7 +140,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
             std::shared_ptr<Operator> scanOp;
             auto tableName = getName();  // get the name of the table that's currently reading
 
-            std::shared_ptr<Operator> logOp;
             std::shared_ptr<Operator> logBuildOp;
             std::shared_ptr<Operator> antiJoinProbeOp;
 
@@ -153,26 +171,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                         true,
                         false,
                         queryId);
-
-                // FIXME: Now since we only have "lineorder" table log, then we only do updateJoin on line order table.
-                if (getName() == htapTargetTableName) {
-                    logOp = S3Get::make_1(
-                            "s3get - log" + s3Partition->getBucket() + "/" + s3Object + "-" +
-                            std::to_string(rangeId),  // TODO: what's the key here?
-                            s3Partition->getBucket(),
-                            logObjectKey,  // Set it to the log object key
-                            *allColumnNames,
-                            *allColumnNames,
-                            scanRange.first,
-                            scanRange.second,
-                            miniCatalogue->getSchema(getName()),
-                            getName(), // name of the table of the partition
-                            DefaultS3Client,
-                            true,
-                            false,
-                            queryId
-                    );
-                }
             } else {
                 scanOp = S3Select::make(
                         "s3get(hacked for parquet using select) - " + s3Partition->getBucket() + "/" + s3Object + "-" +
