@@ -67,6 +67,8 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
     std::basic_string<char> logObjectKey = "ssb-sf10-sortlineorder/csv/log/log.csv";
 //    std::string htapTargetTableName = "n/a";
 
+//    SPDLOG_CRITICAL(miniCatalogue->getPrimaryKeyColumnName(htapTargetTableName));
+
     std::shared_ptr<Operator> logOp;
     auto queryId = getQueryId();
 

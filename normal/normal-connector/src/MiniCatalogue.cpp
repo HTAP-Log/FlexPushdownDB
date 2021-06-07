@@ -162,7 +162,7 @@ std::shared_ptr<std::unordered_map<std::string, std::shared_ptr<::arrow::Schema>
   for (auto const &str: readFileByLines(filePath)) {
     auto splitRes = split(str, ":");
     std::vector<std::shared_ptr<::arrow::Field>> fields;
-    for (auto const &fieldEntry: split(splitRes[2], ",")) {
+    for (auto const &fieldEntry: split(splitRes[2], ",")) {  // TODO: Making change here.
 	  auto splitFieldEntry = split(fieldEntry, "/");
 	  fields.push_back(::arrow::field(splitFieldEntry[0], parseDataType(splitFieldEntry[1])));
     }
