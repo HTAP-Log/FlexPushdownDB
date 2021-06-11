@@ -21,7 +21,7 @@ enum S3ClientType {
 };
 
 inline constexpr int NumRanges = 1;
-inline constexpr int JoinParallelDegree = 1;  // was 48
+inline constexpr int JoinParallelDegree = 24;  // was 48
 inline S3ClientType s3ClientType = S3;
 inline std::shared_ptr<Aws::S3::S3Client> DefaultS3Client = normal::pushdown::AWSClient::defaultS3Client();
 }

@@ -69,24 +69,24 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
 //    SPDLOG_CRITICAL(miniCatalogue->getPrimaryKeyColumnName(htapTargetTableName));
 
-    std::shared_ptr<Operator> logOp;
+//    std::shared_ptr<Operator> logOp;
     auto queryId = getQueryId();
 
-    logOp = S3Get::make_1(
-            "s3get - log - only" + std::to_string(queryId),
-            "pushdowndb-htap",
-            logObjectKey,  // Set it to the log object key
-            *allColumnNames,
-            *allColumnNames,
-            0,
-            16529775,
-            miniCatalogue->getSchema(getName()),
-            getName(), // name of the table of the partition
-            DefaultS3Client,
-            true,
-            false,
-            queryId
-    );
+//    logOp = S3Get::make_1(
+//            "s3get - log - only" + std::to_string(queryId),
+//            "pushdowndb-htap",
+//            logObjectKey,  // Set it to the log object key
+//            *allColumnNames,
+//            *allColumnNames,
+//            0,
+//            16529775,
+//            miniCatalogue->getSchema(getName()),
+//            getName(), // name of the table of the partition
+//            DefaultS3Client,
+//            true,
+//            false,
+//            queryId
+//    );
 
     /**
      * For each range of each valid partition, create a s3scan (and a filter if needed)
@@ -117,6 +117,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
         auto allNeededColumnNameSet = std::make_shared<std::set<std::string>>(projectedColumnNames_->begin(),
                                                                               projectedColumnNames_->end());
+
         allNeededColumnNameSet->insert(predicateColumnNames->begin(), predicateColumnNames->end());
         auto allNeededColumnNames = std::make_shared<std::vector<std::string>>(allNeededColumnNameSet->begin(),
                                                                                allNeededColumnNameSet->end());
@@ -141,6 +142,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
             std::shared_ptr<Operator> logBuildOp;
             std::shared_ptr<Operator> antiJoinProbeOp;
+            std::shared_ptr<Operator> logOp;
 
             // FIXME: Only operate updateJoin on "lineorder" table
             if (tableName == htapTargetTableName) {
@@ -161,7 +163,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                         s3Partition->getBucket(),
                         s3Object,
                         *allColumnNames,
-                        *allColumnNames,  // TODO: Make some change here
+                        *allNeededColumnNames,  // TODO: Make some change here
                         scanRange.first,
                         scanRange.second,
                         miniCatalogue->getSchema(getName()),
@@ -170,6 +172,22 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                         true,
                         false,
                         queryId);
+
+                logOp = S3Get::make_1(
+                        "s3get - log - " + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
+                        "pushdowndb-htap",
+                        logObjectKey,  // Set it to the log object key
+                        *allColumnNames,
+                        *allNeededColumnNames,
+                        0,
+                        16529775,
+                        miniCatalogue->getSchema(getName()),
+                        getName(), // name of the table of the partition
+                        DefaultS3Client,
+                        true,
+                        false,
+                        queryId
+                );
             } else {
                 scanOp = S3Select::make(
                         "s3get(hacked for parquet using select) - " + s3Partition->getBucket() + "/" + s3Object + "-" +
@@ -208,10 +226,6 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 operators->emplace_back(scanOp);
             }
 
-//      std::shared_ptr<Operator> upStreamOfProj;
-            // Filter if it has filterPredicate
-
-            // FIXME:temperorily disable filter operator for testing
             if (finalPredicate) {
                 // initializing the filter operator
                 auto filter = filter::Filter::make(
