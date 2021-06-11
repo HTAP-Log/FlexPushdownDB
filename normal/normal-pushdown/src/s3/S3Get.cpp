@@ -294,7 +294,6 @@ namespace normal::pushdown {
         splitReqLock_.unlock();
         std::vector<std::shared_ptr<arrow::Field>> fields;
 
-        // modify this
         for (auto column : neededColumnNames_) {
             fields.emplace_back(::arrow::field(column, schema_->GetFieldByName(column)->type()));
         }
@@ -392,9 +391,22 @@ namespace normal::pushdown {
         s3SelectScanStats_.returnedBytes += resultSize;
         splitReqLock_.unlock();
         std::vector<std::shared_ptr<arrow::Field>> fields;
+
+        auto primaryKeyName = normal::connector::defaultMiniCatalogue->getPrimaryKeyColumnName(tableName_);
+
+        bool primaryKeyColumnAdded = false;
+
         for (auto column : neededColumnNames_) {
+            if (column == primaryKeyName) {
+                primaryKeyColumnAdded = true;
+            }
             fields.emplace_back(::arrow::field(column, schema_->GetFieldByName(column)->type()));
         }
+
+        if (!primaryKeyColumnAdded) {
+            fields.emplace_back(::arrow::field(primaryKeyName, schema_->GetFieldByName(primaryKeyName)->type()));
+        }
+
         auto outputSchema = std::make_shared<::arrow::Schema>(fields);
         while (true) {
             if (GetConvertLock.try_lock()) {
@@ -636,10 +648,8 @@ namespace normal::pushdown {
 
     std::shared_ptr<TupleSet2> S3Get::readTuples() {
         std::shared_ptr<TupleSet2> readTupleSet;
-        std::shared_ptr<TupleSet2> logTupleSet;
 
         std::string logObjectKey = "ssb-sf10-sortlineorder/csv/log/log.csv";  // one table one log
-        std::string readObjectKey = "ssb-sf10-sortlineorder/csv/lineorder_sharded/lineorder.tbl.1";
 
         if (neededColumnNames_.empty()) {
             readTupleSet = TupleSet2::make2();
@@ -656,9 +666,6 @@ namespace normal::pushdown {
 //                readTupleSet = s3GetFullRequest();
 //            }
 
-            if (tableName_ == "lineorder") {
-                logTupleSet = s3GetFullRequest_cp(logObjectKey);
-            }
             readTupleSet = s3GetFullRequest();
 
 #else
@@ -666,84 +673,11 @@ namespace normal::pushdown {
             logTupleSer = s3GetFullRequest_cp(logObjectKey);
 #endif
 
-            // Store the read columns in the cache, if not in full-pushdown mode
-//            if (toCache_) {
-//                // TODO: only send caching columnsœ
-//                requestStoreSegmentsInCache(readTupleSet);
-//            } else {
-//                // send segment filter weight
-//                if (weightedSegmentKeys_ && s3SelectScanStats_.processedBytes > 0)
-//                    sendSegmentWeight();
-//                }
-//            }
+            SPDLOG_DEBUG("Finished Reading: {}", name());
+
+            return readTupleSet;
         }
-        SPDLOG_DEBUG("Finished Reading: {}", name());
-
-//        // RUN THE MERGE HERE
-//
-//        // STEP 1. Construct the DeleteMap
-//        normal::pushdown::DeleteMap deleteMap = normal::pushdown::DeleteMap(readTupleSet->numRows());
-//
-//        std::unordered_set<int32_t> deleteKeySet;
-//        // currently we only do work on lineorder table
-//        if (tableName_ == "lineorder") {
-//
-//            // STEP1: GET ALL THE PRIMARY KEY OF ROWS WE WANT TO DELETE
-//            std::shared_ptr<::arrow::ChunkedArray> logArrowArray = logTupleSet->getColumnByIndex(0).value()->getArrowArray();
-//            std::shared_ptr<::arrow::ChunkedArray> readArrowArray = logTupleSet->getColumnByIndex(0).value()->getArrowArray();
-//
-//            auto int32_array = std::static_pointer_cast<arrow::Int32Array>(logArrowArray->chunk(0));
-////            const int32_t* data = int32_array->raw_values(); // one way to read
-//            for (int32_t i = 0; i < int32_array->length();i++) {
-//                if (!int32_array->IsNull(i)) {
-//                    deleteKeySet.insert(int32_array->Value(i));
-//                }
-//            }
-//
-//            // STEP2: Loop Thru the readTuple and construct the Delete Map
-//            auto int32_read_array = std::static_pointer_cast<arrow::Int32Array>(readArrowArray->chunk(0));
-//
-//            for (long i = 0; i < int32_read_array->length();i++) {
-//                if (!int32_read_array->IsNull(i) && deleteKeySet.count(int32_read_array->Value(i))) {
-//                    deleteMap.setBit(i);
-//                    SPDLOG_CRITICAL("HIT:{}",int32_read_array->Value(i));
-//                }
-//            }
-//        }
-
-//        SPDLOG_CRITICAL(logTupleSet->showString(TupleSetShowOptions(TupleSetShowOrientation::RowOriented)));
-
-//        mergeLog(logTupleSet, readTupleSet);
-        return readTupleSet;
     }
-
-    void S3Get::mergeLog(std::shared_ptr<TupleSet2> logTuple, std::shared_ptr<TupleSet2> fileTuple) {
-        // GET DELETE MAP
-//        std::unordered_set<std::string> deleteMap = generateDeleteMap(logTuple);
-//
-//        for (int i = 0; i < logTuple->numRows(); i++) {
-//            if ( deleteMap.find(logTuple.get()->getColumnByIndex(0))) {
-//                // Mark as Deleted.
-//                // ??
-//            }
-//        }
-//
-//        logTuple->concatenate(logTuple);
-    }
-
-    std::unordered_set<std::string> S3Get::generateDeleteMap(std::shared_ptr<TupleSet2> logTuple) {
-        std::unordered_set<std::string> deleteMap;
-
-//        std::shared_ptr<normal::tuple::Column> pKey = logTuple->getColumnByIndex(0).value();
-//
-//        for (int i = 0; i < pKey->numRows(); i++) {
-//            deleteMap.insert(pKey->element(i));
-//        }
-
-        return deleteMap;
-    }
-
-
 
     void S3Get::processScanMessage(const scan::ScanMessage &message) {
         // This is for hybrid caching as we later determine which columns to pull up

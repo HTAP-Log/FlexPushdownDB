@@ -33,8 +33,6 @@ RecordBatchAntiJoiner::make(const std::shared_ptr<TupleSetIndex> &buildTupleSetI
 tl::expected<void, std::string>
 RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &recordBatch) {
 
-//    SPDLOG_CRITICAL("anti-join begins!");
-
     arrow::Status status;
 
     // Combine the chunks in the build table so we have single arrays for each column
@@ -48,6 +46,9 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
 
     // Get an reference to the probe array to join on
     const auto &probeJoinColumn = recordBatch->GetColumnByName(probeJoinColumnName_);  // OG data
+
+    // FIXME: The bug occurs here
+    
 
     // Create a finder for the array index
     auto expectedIndexFinder = ArraySetIndexFinderBuilder::make(buildTupleSetIndex_, probeJoinColumn);
@@ -69,10 +70,6 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
 
     // create appenders to create the destination arrays
     std::vector<std::shared_ptr<ArrayAppender>> appenders{static_cast<size_t>(outputSchema_->num_fields())};
-
-//    SPDLOG_CRITICAL(outputSchema_->num_fields());
-
-//    SPDLOG_CRITICAL(outputSchema_->ToString());
 
     // construct the arrayAppenders
     for (int c = 0; c < outputSchema_->num_fields(); ++c) {
@@ -98,7 +95,7 @@ RecordBatchAntiJoiner::antijoin(const std::shared_ptr<::arrow::RecordBatch> &rec
             // we do not add the OG record, and we add the log record
 
             // we know that there is could be only one match, but we still loop thru
-            // TODO: at here maybe we do not have to to the log compression, we just make sure we add the last result of find
+            // TODO: at here maybe we do not have to do the log compression, we just make sure we add the last result of find
             for (const auto br : buildRows) {
                 for (size_t c = 0; c < neededColumnIndice_.size(); ++c) {
                     auto appendResult = appenders[c]->safeAppendValue(buildColumns[neededColumnIndice_[c]->second], br);
@@ -143,6 +140,7 @@ RecordBatchAntiJoiner::toTupleSet() {
     auto joinedTupleSet = TupleSet2::make(joinedTable);
 
     joinedArrayVectors_.clear();
+
     return joinedTupleSet;
 }
 

@@ -213,14 +213,7 @@ void HashAntiJoinProbeKernel::bufferOutputSchema(const std::shared_ptr<TupleSetI
             }
         }
 
-        // for anti-join we do not need to concern about columns
-//        for (int c = 0; c < tupleSet->schema().value()->getSchema()->num_fields(); ++c) {
-//            auto field = tupleSet->schema().value()->getSchema()->field(c);
-//            if (neededColumnNames_.find(field->name()) != neededColumnNames_.end()) {
-//                neededColumnIndice_.emplace_back(std::make_shared<std::pair<bool, int>>(false, c));
-//                outputFields.emplace_back(field);
-//            }
-//        }
         outputSchema_ = std::make_shared<::arrow::Schema>(outputFields);
+
     }
 }

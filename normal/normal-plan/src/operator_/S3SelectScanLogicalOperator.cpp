@@ -150,7 +150,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                 logBuildOp = join::HashJoinBuild::create("htap-join-build-" + s3Object,
                                                          "lo_orderkey");  //FIXME: Name operator
                 antiJoinProbeOp = antijoin::HashAntiJoinProbe::create("htap-antijoin-probe-" + s3Object, joinPred,
-                                                                      *allColumnNameSet, queryId);
+                                                                      *allNeededColumnNameSet, queryId);
             }
 
             // FIXME 1: hack Parquet Get using Select
@@ -161,7 +161,7 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
                         s3Partition->getBucket(),
                         s3Object,
                         *allColumnNames,
-                        *allColumnNames,
+                        *allColumnNames,  // TODO: Make some change here
                         scanRange.first,
                         scanRange.second,
                         miniCatalogue->getSchema(getName()),
