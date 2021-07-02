@@ -556,8 +556,11 @@ void normal::ssb::htapTest(std::string col_name, std::string row_name) {
 void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType, std::string dirPrefix,
                            size_t networkLimit, bool writeResults) {
   spdlog::set_level(spdlog::level::critical);
+//  spdlog::set_level(spdlog::level::info);
   // parameters
   const int warmBatchSize = 50, executeBatchSize = 50;
+
+//  const int warmBatchSize = 8, executeBatchSize = 8;
   std::string bucket_name = "pushdowndb-htap";
   normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dirPrefix);
   normal::cache::beladyMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue(bucket_name, dirPrefix);

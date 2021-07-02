@@ -42,11 +42,15 @@ void Interpreter::parse(const std::string &sql) {
   NormalSQLParser parser(&tokens);
 
   antlr4::tree::ParseTree *tree = parser.parse();
+
   SPDLOG_DEBUG("Parse Tree:\n{}", tree->toStringTree(true));
 
   visitor::Visitor visitor(this->catalogues_, this->operatorManager_);
+
   auto untypedLogicalPlans = tree->accept(&visitor);
   auto logicalPlans = untypedLogicalPlans.as<std::shared_ptr<std::vector<std::shared_ptr<plan::LogicalPlan>>>>();
+
+//    SPDLOG_CRITICAL(logicalPlans->size());
 
   // TODO: Perhaps support multiple statements in future
   logicalPlan_ = logicalPlans->at(0);
