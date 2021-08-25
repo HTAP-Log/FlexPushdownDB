@@ -3,6 +3,7 @@
 //
 
 #include "normal/pushdown/antijoin/HashAntiJoinProbe.h"
+#include "normal/htap/antijoin/HashAntiJoinProbe.h"
 
 #include <utility>
 

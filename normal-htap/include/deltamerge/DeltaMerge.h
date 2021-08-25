@@ -6,7 +6,6 @@
 #define NORMAL_DELTAMERGE_H
 
 #include <normal/core/Operator.h>
-
 #include <normal/core/message/CompleteMessage.h>
 #include <normal/pushdown/TupleMessage.h>
 

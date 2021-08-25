@@ -2,9 +2,12 @@
 // Created by Han Cao on 7/15/21.
 //
 
-#include "normal/pushdown/deltamerge/DeltaMerge.h"
+#include <deltamerge/DeltaMerge.h>
+#include <string>
+#include <memory>
 
 using namespace normal::pushdown::deltamerge;
+
 
 DeltaMerge::DeltaMerge(const std::string &Name, long queryId) :
         Operator(Name, "deltamerge", queryId) {
@@ -37,7 +40,7 @@ bool DeltaMerge::allProducersComplete() {
     return ctx()->operatorMap().allComplete(OperatorRelationshipType::Producer);
 }
 
-void DeltaMerge::onTuple(const TupleMessage &message) {
+ void DeltaMerge::onTuple(const TupleMessage &message) {
     const auto &tupleSet = TupleSet2::create(message.tuples());
 
     if (deltaProducers_.find(message.sender()) != deltaProducers_.end()) {
@@ -78,9 +81,6 @@ void DeltaMerge::DeltaMerge() {
     // right now assume all the tuples that we have are in arrow format
     std::vector<std::vector<>> deltaTracker;
 
-    std::for_each(deltas_.begin(), deltas_.end()) {
-
-    }
     return;
 }
 
