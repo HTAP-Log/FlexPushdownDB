@@ -162,38 +162,50 @@ std::shared_ptr<TupleSet2> S3Get::readCSVFile(std::shared_ptr<arrow::io::InputSt
   return tupleSet;
 }
 
-std::shared_ptr<avro_tuple::AvroTuple> S3Get::readAvroFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile, const char* schemaName) {
-  // create an avro_tuple data input stream
-  std::vector<uint8_t> avroFileString(std::istream_iterator<uint8_t>(retrievedFile), {});
-  auto avroBytes = reinterpret_cast<const uint8_t*>(&avroFileString[0]);
-  std::unique_ptr<avro::InputStream> avroInputStream = avro::memoryInputStream(avroBytes, avroFileString.size());
+std::shared_ptr<avro_tuple::AvroTuple> S3Get::readAvroFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile, const std::string schemaName) {
+    // create an avro_tuple data input stream
 
-  // get the schema file
-  std::ifstream schemaInput(schemaName);
-  avro::ValidSchema validSchema;
-  avro::compileJsonSchema(schemaInput, validSchema);
+    std::vector<uint8_t> avroFileString(std::istream_iterator<uint8_t>(retrievedFile), {});
+    std::cout << "[Check 0] " << avroFileString.size() << std::endl;
 
-  // read the data input stream with the given valid schema
-  avro::DataFileReader<avro::GenericDatum> fileReader(move(avroInputStream), validSchema);
-  avro::GenericDatum datum(fileReader.dataSchema());
+    auto avroBytes = reinterpret_cast<const uint8_t*>(&avroFileString[0]);
+    std::cout << "[Check 1] ######## " << std::endl;
+    std::unique_ptr<avro::InputStream> avroInputStream = avro::memoryInputStream(avroBytes, avroFileString.size());
+    std::cout << "[Check 2] ######## " << std::endl;
 
-  std::vector<avro::GenericRecord> recordArray;
+    // get the schema file
+    std::stringstream schemaInput(schemaName);
+//    std::ifstream schemaInput(schemaName, std::ifstream::in);
+//    char c = schemaInput.get();
+//    std::cout << "[Check] good or bad? " << schemaInput.good() << std::endl;
+//    while (schemaInput.good()) {
+//        std::cout << c;
+//        c = schemaInput.get();
+//    }
+//
+//    schemaInput.close();
 
-  while (fileReader.read(datum)) {
-    if (datum.type() == avro::AVRO_RECORD) {
+    // std::cout << "[Check 3] ######## " << schemaName << std::endl;
+    avro::ValidSchema validSchema;
+    avro::compileJsonSchema(schemaInput, validSchema);
+    std::cout << "[Check 3] ######## " << std::endl;
+    std::cout << "[Check 4] ######## " << avroInputStream->byteCount() << std::endl;
+    // read the data input stream with the given valid schema
+    avro::DataFileReader<avro::GenericDatum> fileReader(move(avroInputStream), validSchema);
 
-      const avro::GenericRecord& record = datum.value<avro::GenericRecord>();
-      recordArray.push_back(record);
-//      size_t fieldCount = record.fieldCount();
-//      for (size_t i = 0; i < fieldCount; i ++) {
-//        // TODO: pull out each field and add to some kind of data structure defined in AvroTuple.h
-//        recordArray.push_back(record.fieldAt(i));
-//      }
+    avro::GenericDatum datum(fileReader.dataSchema());
+
+
+    std::vector<avro::GenericRecord> recordArray;
+
+    while (fileReader.read(datum)) {
+        if (datum.type() == avro::AVRO_RECORD) {
+            const avro::GenericRecord& record = datum.value<avro::GenericRecord>();
+            recordArray.push_back(record);
+        }
     }
-  }
 
-  return normal::avro_tuple::AvroTuple::make(recordArray, schemaName, false);
-//  return nullptr; // TODO: return an AvroTuple type
+    return normal::avro_tuple::AvroTuple::make(recordArray, schemaName, false);
 }
 
 std::shared_ptr<TupleSet2> S3Get::readParquetFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile) {

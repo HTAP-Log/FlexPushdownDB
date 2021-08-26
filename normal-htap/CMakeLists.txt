@@ -36,3 +36,9 @@ target_link_libraries(normal-htap-test PUBLIC aws-cpp-sdk-core)
 target_link_libraries(normal-htap-test PUBLIC aws-cpp-sdk-s3)
 target_link_libraries(normal-htap-test PUBLIC normal-htap)
 target_link_libraries(normal-htap-test PUBLIC /usr/local/lib/libavrocpp.so)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Test Data
+#-----------------------------------------------------------------------------------------------------------------------
+
+configure_file(test/lineorder_d.json ${CMAKE_CURRENT_BINARY_DIR}/test/lineorder_d.json COPYONLY)

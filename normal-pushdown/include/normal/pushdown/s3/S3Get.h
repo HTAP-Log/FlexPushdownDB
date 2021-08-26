@@ -51,7 +51,7 @@ class S3Get : public S3SelectScan {
                                           long queryId = 0,
                                           const std::shared_ptr<std::vector<std::shared_ptr<normal::cache::SegmentKey>>>& weightedSegmentKeys = nullptr);
 
-    static std::shared_ptr<normal::avro_tuple::AvroTuple> readAvroFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile, const char* schemaName);
+    static std::shared_ptr<normal::avro_tuple::AvroTuple> readAvroFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile, const std::string schemaName);
 
   private:
     std::shared_ptr<TupleSet2> readCSVFile(std::shared_ptr<arrow::io::InputStream> &arrowInputStream);
