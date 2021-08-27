@@ -166,32 +166,15 @@ std::shared_ptr<avro_tuple::AvroTuple> S3Get::readAvroFile(std::basic_iostream<c
     // create an avro_tuple data input stream
 
     std::vector<uint8_t> avroFileString(std::istream_iterator<uint8_t>(retrievedFile), {});
-    std::cout << "[Check 0] " << avroFileString.size() << std::endl;
-
-    auto avroBytes = reinterpret_cast<const uint8_t*>(&avroFileString[0]);
-    std::cout << "[Check 1] ######## " << std::endl;
-    std::unique_ptr<avro::InputStream> avroInputStream = avro::memoryInputStream(avroBytes, avroFileString.size());
-    std::cout << "[Check 2] ######## " << std::endl;
-
+    std::unique_ptr<avro::InputStream> avroInputStream = avro::memoryInputStream(avroFileString.data(), avroFileString.size());
     // get the schema file
     std::stringstream schemaInput(schemaName);
-//    std::ifstream schemaInput(schemaName, std::ifstream::in);
-//    char c = schemaInput.get();
-//    std::cout << "[Check] good or bad? " << schemaInput.good() << std::endl;
-//    while (schemaInput.good()) {
-//        std::cout << c;
-//        c = schemaInput.get();
-//    }
-//
-//    schemaInput.close();
-
-    // std::cout << "[Check 3] ######## " << schemaName << std::endl;
     avro::ValidSchema validSchema;
     avro::compileJsonSchema(schemaInput, validSchema);
-    std::cout << "[Check 3] ######## " << std::endl;
+
     std::cout << "[Check 4] ######## " << avroInputStream->byteCount() << std::endl;
     // read the data input stream with the given valid schema
-    avro::DataFileReader<avro::GenericDatum> fileReader(move(avroInputStream), validSchema);
+    avro::DataFileReader<avro::GenericDatum> fileReader(move(avroInputStream));
 
     avro::GenericDatum datum(fileReader.dataSchema());
 
