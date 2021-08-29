@@ -164,26 +164,20 @@ std::shared_ptr<TupleSet2> S3Get::readCSVFile(std::shared_ptr<arrow::io::InputSt
 
 std::shared_ptr<avro_tuple::AvroTuple> S3Get::readAvroFile(std::basic_iostream<char, std::char_traits<char>> &retrievedFile, const std::string schemaName) {
     // create an avro_tuple data input stream
+    std::unique_ptr<avro::InputStream> avroInputStream  = avro::istreamInputStream(retrievedFile);
 
-    std::vector<uint8_t> avroFileString(std::istream_iterator<uint8_t>(retrievedFile), {});
-    std::unique_ptr<avro::InputStream> avroInputStream = avro::memoryInputStream(avroFileString.data(), avroFileString.size());
     // get the schema file
     std::stringstream schemaInput(schemaName);
     avro::ValidSchema validSchema;
     avro::compileJsonSchema(schemaInput, validSchema);
 
-    std::cout << "[Check 4] ######## " << avroInputStream->byteCount() << std::endl;
     // read the data input stream with the given valid schema
     avro::DataFileReader<avro::GenericDatum> fileReader(move(avroInputStream));
-
     avro::GenericDatum datum(fileReader.dataSchema());
-
-
     std::vector<avro::GenericRecord> recordArray;
-
     while (fileReader.read(datum)) {
         if (datum.type() == avro::AVRO_RECORD) {
-            const avro::GenericRecord& record = datum.value<avro::GenericRecord>();
+            const avro::GenericRecord record = datum.value<avro::GenericRecord>();
             recordArray.push_back(record);
         }
     }

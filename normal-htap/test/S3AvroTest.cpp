@@ -48,7 +48,6 @@ bool GetObject(const Aws::String& objectKey, const Aws::String& fromBucket, cons
                                 "    {\"name\": \"lo_shippriority\", \"type\" : \"string\"},\n"
                                 "    {\"name\": \"lo_quantity\", \"type\" : \"int\"},\n"
                                 "    {\"name\": \"lo_extendedprice\", \"type\" : \"int\"},\n"
-                                "    {\"name\": \"lo_ordtotalprice\", \"type\" : \"int\"},\n"
                                 "    {\"name\": \"lo_discount\", \"type\" : \"int\"},\n"
                                 "    {\"name\": \"lo_revenue\", \"type\" : \"long\"},\n"
                                 "    {\"name\": \"lo_supplycost\", \"type\" : \"long\"},\n"
