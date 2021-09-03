@@ -74,7 +74,7 @@ int main() {
     Aws::InitAPI(options);
     {
         const Aws::String bucket_name = "pushdowndb-htap";
-        const Aws::String object_name = "lineorder.avro";
+        const Aws::String object_name = "lineorder (1).avro";
         const Aws::String region = "us-west-1";
 
         if (!GetObject(object_name, bucket_name, region)) {

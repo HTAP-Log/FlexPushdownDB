@@ -177,7 +177,7 @@ std::shared_ptr<avro_tuple::AvroTuple> S3Get::readAvroFile(std::basic_iostream<c
     std::vector<avro::GenericRecord> recordArray;
     while (fileReader.read(datum)) {
         if (datum.type() == avro::AVRO_RECORD) {
-            const avro::GenericRecord record = datum.value<avro::GenericRecord>();
+            const avro::GenericRecord record = datum.value<avro::GenericRecord>(); // TODO: investigate the segmentation fault here
             recordArray.push_back(record);
         }
     }
