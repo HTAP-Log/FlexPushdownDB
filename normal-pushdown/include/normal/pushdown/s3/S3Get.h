@@ -6,6 +6,8 @@
 #define NORMAL_NORMAL_CORE_SRC_S3GET_H
 
 #include "normal/pushdown/s3/S3SelectScan.h"
+#include "normal/avro_tuple/AvroTuple.h"
+
 #include <aws/s3/model/GetObjectResult.h>
 
 #ifdef __AVX2__
