@@ -1,4 +1,4 @@
-project(normal-avro VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
+project(normal-avro-tuple VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 
 INCLUDE_DIRECTORIES(/usr/local/include)
 #-------------------------------------------------------------------------------------------------------------

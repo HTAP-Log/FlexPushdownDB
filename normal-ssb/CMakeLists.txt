@@ -42,7 +42,6 @@ target_link_libraries(normal-ssb PUBLIC normal-pushdown)
 target_link_libraries(normal-ssb PUBLIC spdlog::spdlog)
 target_link_libraries(normal-ssb PRIVATE ssl crypto)
 
-
 #-----------------------------------------------------------------------------------------------------------------------
 # Benchmark
 #-----------------------------------------------------------------------------------------------------------------------
