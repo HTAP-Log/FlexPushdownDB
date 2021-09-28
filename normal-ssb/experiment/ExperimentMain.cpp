@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 //    std::string dirPrefix = "ssb-sf100-sortlineorder/csv_150MB/";
 //    std::string dirPrefix = "ssb-sf100-sortlineorder/parquet_150MB/";
 //    std::string dirPrefix = "ssb-sf10-sortlineorder/csv/";
-
+    std::string deltaPredix = "super-small-sbb-htap/csv/deltas/";
     std::string dirPrefix = "super-small-ssb-htap/csv/stables/";
     auto cacheSize = (size_t) (atof(argv[1]) * 1024 * 1024 * 1024);
     auto modeType = atoi(argv[2]);
@@ -81,9 +81,10 @@ int main(int argc, char **argv) {
     SPDLOG_INFO("Cache size: {}", cacheSize);
     SPDLOG_INFO("Mode type: {}", modeType);
     SPDLOG_INFO("CachingPolicy type: {}", cachingPolicyType);
-//
-//    htapTest();
-//    return 0;
+
+    htapTest(dirPrefix, deltaPredix);
+
+    return 0;
 
     if (argc < 5) {
       mainTest(cacheSize, modeType, cachingPolicyType, dirPrefix, 0, false);

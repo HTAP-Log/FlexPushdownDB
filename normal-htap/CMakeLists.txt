@@ -17,8 +17,6 @@ add_library(normal-htap STATIC
         include/antijoin/HashAntiJoinProbeKernel.h src/antijoin/HashAntiJoinProbeKernel.cpp
         include/antijoin/RecordBatchAntiJoiner.h src/antijoin/RecordBatchAntiJoiner.cpp
         )
-        test/S3AvroTest.cpp
-        )
 
 target_include_directories(normal-pushdown PUBLIC include)
 
@@ -56,10 +54,3 @@ target_link_libraries(normal-htap PUBLIC /usr/local/lib/libavrocpp.so)
 #-----------------------------------------------------------------------------------------------------------------------
 # Test
 #-----------------------------------------------------------------------------------------------------------------------
-
-add_executable(normal-htap-test
-        test/S3AvroTest.cpp
-        )
-target_include_directories(normal-htap-test PUBLIC include)
-
-target_link_libraries(normal-htap-test PUBLIC normal-htap)
