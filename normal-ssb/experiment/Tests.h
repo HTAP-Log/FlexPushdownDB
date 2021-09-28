@@ -12,6 +12,9 @@ namespace normal::ssb {
                 size_t networkLimit, bool writeResults);
   void perfBatchRun(int modeType, const std::string& dirPrefix, int cacheLoadQueries,
                     int warmupQueriesPerColSize, int columnSizesToTest, int rowSelectivityValuesToTest);
+
+  void htapTest(const std::string& stableDirPrefix, const std::string& deltaDirPrefix);
+
   void concurrentSelectTest(int numRequests);
   void concurrentGetTest(int numRequests);
 }

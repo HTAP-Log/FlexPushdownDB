@@ -373,6 +373,8 @@ void normal::ssb::htapTest(const std::string& stableDirPrefix, const std::string
     NetworkLimit = 0;
     auto cacheSize = (size_t) (8.0 * 1024 * 1024 * 1024);
 
+    bool writeResults = false;
+
     normal::plan::DefaultS3Client = AWSClient::defaultS3Client();
 
     auto currentPath = std::filesystem::current_path();
@@ -383,7 +385,7 @@ void normal::ssb::htapTest(const std::string& stableDirPrefix, const std::string
 
     // interpreter
     normal::sql::Interpreter i(mode, cachingPolicy);
-    configureS3ConnectorMultiPartition(i, bucket_name, dirPrefix);
+    configureS3ConnectorMultiPartition(i, bucket_name, stableDirPrefix);
 
     // execute
     normal::plan::DefaultS3Client = AWSClient::defaultS3Client();
@@ -432,27 +434,27 @@ void normal::ssb::htapTest(const std::string& stableDirPrefix, const std::string
     }
     SPDLOG_CRITICAL("Execution phase finished");
 
-    SPDLOG_INFO("{} mode finished in dirPrefix: {}\nExecution metrics:\n{}", mode->toString(), dirPrefix, i.showMetrics());
+    SPDLOG_INFO("{} mode finished in dirPrefix: {}\nExecution metrics:\n{}", mode->toString(), stableDirPrefix, i.showMetrics());
     SPDLOG_INFO("Cache Metrics:\n{}", i.getOperatorManager()->showCacheMetrics());
     SPDLOG_INFO("Cache hit ratios:\n{}", i.showHitRatios());
     SPDLOG_INFO("OnLoad time: {}", i.getCachingPolicy()->onLoadTime);
     SPDLOG_INFO("OnStore time: {}", i.getCachingPolicy()->onStoreTime);
     SPDLOG_INFO("OnToCache time: {}", i.getCachingPolicy()->onToCacheTime);
 
-    auto metricsFilePath = std::filesystem::current_path().append("metrics-" + modeAlias + "-" + cachingPolicyAlias);
-    std::ofstream fout(metricsFilePath.string());
-    fout << mode->toString() << " mode finished in dirPrefix:" << dirPrefix << "\n";
-    fout << "Warmup metrics:\n" << warmupMetrics << "\n";
-    fout << "Warmup Cache metrics:\n" << warmupCacheMetrics << "\n";
-    fout << "Execution metrics:\n" << i.showMetrics() << "\n";
-    fout << "Execution Cache metrics:\n" << i.getOperatorManager()->showCacheMetrics() << "\n";
-    fout << "All Cache hit ratios:\n" << i.showHitRatios() << "\n";
-    fout.flush();
-    fout.close();
+//    auto metricsFilePath = std::filesystem::current_path().append("metrics-" + modeAlias + "-" + cachingPolicyAlias);
+//    std::ofstream fout(metricsFilePath.string());
+//    fout << mode->toString() << " mode finished in dirPrefix:" << stableDirPrefix << "\n";
+//    fout << "Warmup metrics:\n" << warmupMetrics << "\n";
+//    fout << "Warmup Cache metrics:\n" << warmupCacheMetrics << "\n";
+//    fout << "Execution metrics:\n" << i.showMetrics() << "\n";
+//    fout << "Execution Cache metrics:\n" << i.getOperatorManager()->showCacheMetrics() << "\n";
+//    fout << "All Cache hit ratios:\n" << i.showHitRatios() << "\n";
+//    fout.flush();
+//    fout.close();
 
     i.getOperatorGraph().reset();
     i.stop();
-    SPDLOG_INFO("Memory allocated finally: {}", arrow::default_memory_pool()->bytes_allocated());
+//    SPDLOG_INFO("Memory allocated finally: {}", arrow::default_memory_pool()->bytes_allocated());
 }
 
 void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType, const std::string& dirPrefix,
