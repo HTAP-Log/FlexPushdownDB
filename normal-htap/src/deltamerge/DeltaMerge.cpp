@@ -102,7 +102,7 @@ bool DeltaMerge::allProducersComplete() {
  * @param message
  */
 void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
-    const auto &tupleSet = TupleSet2::create(message.tuples());
+    const auto &tupleSet = TupleSet2::create(message.tuples()); // get all the useful rows
 
     if (deltaProducerNames_.count(message.sender())) {
         deltas_.emplace_back(tupleSet);
