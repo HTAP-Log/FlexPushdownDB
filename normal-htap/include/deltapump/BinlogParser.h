@@ -1,7 +1,3 @@
-//
-// Created by ZhangOscar on 8/8/21.
-//
-
 #ifndef NORMAL_BINLOGPARSER_H
 #define NORMAL_BINLOGPARSER_H
 
@@ -43,6 +39,25 @@
 
 using namespace normal::avro_tuple::make;
 
+
+class BinlogParser
+{
+    JNIEnv *g_env;
+    JavaVM *jvm;
+
+public:
+
+    /*
+    * function to call functions in java and receive serialized avro data returned from java side
+    * return pointers of partitioned tables
+    */
+    void parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr );
+    BinlogParser();  //constructor
+
+
+};
+
+
 struct lineorder_record{
     int orderkey;
     int linenumber;
@@ -57,15 +72,7 @@ struct lineorder_record{
 /*
  * load avro schema from disk
  */
-
 avro::ValidSchema loadSchema(const char* filename);
-
-/*
- * function to call functions in java and receive serialized avro data returned from java side
- * return pointers of partitioned tables
- */
-void parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr);
-
 
 
 #endif //NORMAL_BINLOGPARSER_H

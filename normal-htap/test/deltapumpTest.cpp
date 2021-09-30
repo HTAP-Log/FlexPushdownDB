@@ -1,5 +1,5 @@
 #include "BinlogParser.h"
-#include "makeTuple.h"
+//#include "makeTuple.h"
 
 using namespace normal::avro_tuple::make;
 
@@ -18,7 +18,9 @@ int main() {
     const char* path = "./bin.000002"; //binlog file path
     const char* path_range = "./partitions/ranges.csv"; //range file path
 
-    parse(path, path_range, &lineorder_record_ptr);
+    BinlogParser binlogParser;
+    binlogParser.parse(path, path_range, &lineorder_record_ptr);
+
 
     for(auto lineorder_pair : (*lineorder_record_ptr)){
         std::cout<<"lineorder_pair table number: "<< lineorder_pair.first <<'\n';

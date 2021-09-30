@@ -163,7 +163,7 @@ public class Parser {
 				}
 
 				
-				//TODO: currently ingnore all non LINORDER tables, comment the code below to parse all logs
+				//TODO: ignore all non LINEORDER tables, comment the code below to parse all logs
 			    if(currentTable == null || (currentTable != null && !currentTable.equals("LINEORDER"))) {
 			    	continue;
 			    }

@@ -1,5 +1,30 @@
 #include "BinlogParser.h"
 
+
+BinlogParser::BinlogParser(){
+    const int kNumOptions = 3;
+    JavaVMOption options[kNumOptions] = {
+            {const_cast<char *>("-Xmx512m"),                                                          NULL},
+            {const_cast<char *>("-verbose:gc"),                                                       NULL},
+            {const_cast<char *>("-Djava.class.path=./Parser.jar:./lib/mysql-binlog-connector-java-0.25.1.jar:./lib/avro-1.10.2.jar:./lib/avro-tools-1.10.2.jar"), NULL}
+    };
+
+    JavaVMInitArgs vm_args;
+    vm_args.version = JNI_VERSION_1_6;
+    vm_args.options = options;
+    vm_args.nOptions = sizeof(options) / sizeof(JavaVMOption);
+    assert(vm_args.nOptions == kNumOptions);
+
+//    JNIEnv *env = NULL;
+//    JavaVM *jvm = NULL;
+    int res = JNI_CreateJavaVM(&jvm, reinterpret_cast<void **>(&g_env), &vm_args);
+    if (res != JNI_OK) {
+        std::cerr << "FAILED: JNI_CreateJavaVM " << res << std::endl;
+        exit(-1);
+    }
+}
+
+
 avro::ValidSchema loadSchema(const char* filename)
 {
     std::ifstream ifs(filename);
@@ -9,7 +34,7 @@ avro::ValidSchema loadSchema(const char* filename)
 }
 
 
-void parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr ){
+void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr ){
 
     //get table_name, offset and range(fixed) of partitions for each table
     std::unordered_map<std::string, std::tuple<int, int>> range_result;
@@ -35,26 +60,13 @@ void parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<
     inFile.close();
 
     // code to call parser functions in java
-    const int kNumOptions = 3;
-    JavaVMOption options[kNumOptions] = {
-            {const_cast<char *>("-Xmx512m"),                                                          NULL},
-            {const_cast<char *>("-verbose:gc"),                                                       NULL},
-            {const_cast<char *>("-Djava.class.path=./Parser.jar:./lib/mysql-binlog-connector-java-0.25.1.jar:./lib/avro-1.10.2.jar:./lib/avro-tools-1.10.2.jar"), NULL}
-    };
-
-    JavaVMInitArgs vm_args;
-    vm_args.version = JNI_VERSION_1_6;
-    vm_args.options = options;
-    vm_args.nOptions = sizeof(options) / sizeof(JavaVMOption);
-    assert(vm_args.nOptions == kNumOptions);
-
-    JNIEnv *env = NULL;
-    JavaVM *jvm = NULL;
-    int res = JNI_CreateJavaVM(&jvm, reinterpret_cast<void **>(&env), &vm_args);
-    if (res != JNI_OK) {
-        std::cerr << "FAILED: JNI_CreateJavaVM " << res << std::endl;
+    if (jvm == NULL) {
+        std::cerr << "FAILED: jvm not initialized" << std::endl;
         exit(-1);
     }
+
+    JNIEnv *env = NULL;
+    jvm->AttachCurrentThread((void **) &env, NULL);
 
     const char *kClassName = "binlog_parser/Parser";
     jclass cls = env->FindClass(kClassName);
@@ -192,6 +204,6 @@ void parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<
     *lineorder_record_ptr = lineorder_record_map;
 
 
-    jvm->DestroyJavaVM();
+    jvm->DetachCurrentThread();
 
 }
