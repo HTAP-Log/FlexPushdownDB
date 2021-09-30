@@ -16,20 +16,23 @@ std::shared_ptr<ColumnBuilder> ColumnBuilder::make(const std::string &name,
 }
 
 void ColumnBuilder::append(const std::shared_ptr<Scalar> &scalar) {
-  if(scalar->type()->id() == ::arrow::Int64Type::type_id){
-	auto rawBuilderPtr = arrowBuilder_.get();
-	auto typedArrowBuilder = dynamic_cast<::arrow::Int64Builder*>(rawBuilderPtr);
-	auto status = typedArrowBuilder->Append(scalar->value<long>());
-  }
-  if(scalar->type()->id() == ::arrow::StringType::type_id){
-	auto rawBuilderPtr = arrowBuilder_.get();
-	auto typedArrowBuilder = dynamic_cast<::arrow::StringBuilder*>(rawBuilderPtr);
-	auto status = typedArrowBuilder->Append(scalar->value<std::string>());
-  }
-  else{
-	throw std::runtime_error(
-		"Builder for type '" + scalar->type()->ToString() + "' not implemented yet");
-  }
+    // adding int 32 array builder, not sure why this is not implemented.
+    if (scalar->type()->id() == ::arrow::Int32Type::type_id) {
+        auto rawBuilderPtr = arrowBuilder_.get();
+        auto typedArrowBuilder = dynamic_cast<::arrow::Int32Builder*>(rawBuilderPtr);
+        auto status = typedArrowBuilder->Append(scalar->value<int>());
+    } else if (scalar->type()->id() == ::arrow::Int64Type::type_id) {
+        auto rawBuilderPtr = arrowBuilder_.get();
+        auto typedArrowBuilder = dynamic_cast<::arrow::Int64Builder*>(rawBuilderPtr);
+        auto status = typedArrowBuilder->Append(scalar->value<long>());
+    } else if (scalar->type()->id() == ::arrow::StringType::type_id) {
+        auto rawBuilderPtr = arrowBuilder_.get();
+        auto typedArrowBuilder = dynamic_cast<::arrow::StringBuilder*>(rawBuilderPtr);
+        auto status = typedArrowBuilder->Append(scalar->value<std::string>());
+    } else {
+        throw std::runtime_error(
+            "Builder for type '" + scalar->type()->ToString() + "' not implemented yet");
+    }
 }
 
 std::shared_ptr<Column> ColumnBuilder::finalize() {

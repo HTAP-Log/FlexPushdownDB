@@ -197,6 +197,9 @@ void DeltaMerge::generateDeleteMaps() {
             currPK = std::min(currPK, stableTracker_[i][0]->element(stableIndexTracker_[i]).value()->value<int32_t>());
         }
         for (int i = 0; i < deltaTracker_.size(); i++) {
+            if (deltaIndexTracker_[i] >= deltaTracker_[i][0]->numRows()) {
+                continue;
+            }
             currPK = std::min(currPK, deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>());
         }
         // now you get the smallest primary key
@@ -216,6 +219,9 @@ void DeltaMerge::generateDeleteMaps() {
         }
 
         for (int i = 0; i < deltaTracker_.size(); i++) {
+            if (deltaIndexTracker_[i] >= deltaTracker_[i][0]->numRows()) {
+                continue;
+            }
             if (currPK != deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>()) continue;
             int tsIndex = deltaTracker_[0].size() - 2;
             auto currTS = deltaTracker_[i][tsIndex]->element(deltaIndexTracker_[i]).value()->toString();
@@ -246,10 +252,12 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 //    SPDLOG_CRITICAL(fmt::format("{}, IN generateFinalResult", this->name()));
 
     // initialize an array of column appender
-    std::vector<std::shared_ptr<ColumnBuilder>> columnBuilderArray;
+    std::vector<std::shared_ptr<ColumnBuilder>> columnBuilderArray(outputSchema_->num_fields());
+
     for (int i = 0; i < outputSchema_->num_fields(); i++) {
         std::string newColumnBuilderName = outputSchema_->field_names()[i] + "columnBuilder";
         auto newColumnBuilder = ColumnBuilder::make(newColumnBuilderName, outputSchema_->field(i)->type());
+        columnBuilderArray[i] = newColumnBuilder;
     }
 
     // TODO: Change to column first
@@ -263,7 +271,8 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
             if (deleteSet.find(r) == deleteSet.end()) continue;
             // if the row is found, then copy it one column by one column
             for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
-                columnBuilderArray[c]->append(originalTable->getColumnByIndex(c).value()->element(r).value());
+                auto x = originalTable->getColumnByIndex(c).value()->element(r).value();
+                columnBuilderArray[c]->append(x);
             }
         }
     }
