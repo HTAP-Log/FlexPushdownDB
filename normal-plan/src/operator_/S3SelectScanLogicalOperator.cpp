@@ -38,7 +38,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
     //  validPartitions_ = (!predicate_) ? getPartitioningScheme()->partitions() : getValidPartitions(predicate_);
 
     // construct physical operators
-//    return toOperatorsHTAP();
+    return toOperatorsHTAP();
 
     auto mode = getMode();
     switch (mode->id()) {
@@ -57,6 +57,9 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
 
     auto miniCatalogue = normal::connector::defaultMiniCatalogue;
     auto allColumnNames = miniCatalogue->getColumnsOfTable(getName());
+    auto allDeltaColumnNames =  miniCatalogue->getColumnsOfTable(getName());
+    allDeltaColumnNames->emplace_back("timestamp");
+    allDeltaColumnNames->emplace_back("type");
 
     auto operators = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
@@ -65,25 +68,33 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
 
     // loop through all partitions
     for (const auto &partition: *getPartitioningScheme()->partitions()) {
-        auto validPair = checkPartitionValid(partition);
-        if (!validPair.first) continue;
-        auto finalPredicate = validPair.second;
+//        auto validPair = checkPartitionValid(partition);
+//        if (!validPair.first) continue;
+//        auto finalPredicate = validPair.second;
 
         auto predicateColumnNames = std::make_shared<std::vector<std::string>>();
         std::shared_ptr<pushdown::filter::FilterPredicate> filterPredicate;
 
-        if (finalPredicate) {
-            // predicate column names
-            predicateColumnNames = finalPredicate->involvedColumnNames();
-            auto predicateColumnNameSet = std::make_shared<std::set<std::string>>(predicateColumnNames->begin(), predicateColumnNames->end());
-            predicateColumnNames->assign(predicateColumnNameSet->begin(), predicateColumnNameSet->end());
-            // filter predicate
-            filterPredicate = filter::FilterPredicate::make(finalPredicate);
-        }
+//        if (finalPredicate) {
+//            // predicate column names
+//            predicateColumnNames = finalPredicate->involvedColumnNames();
+//            auto predicateColumnNameSet = std::make_shared<std::set<std::string>>(predicateColumnNames->begin(), predicateColumnNames->end());
+//            predicateColumnNames->assign(predicateColumnNameSet->begin(), predicateColumnNameSet->end());
+//            // filter predicate
+//            filterPredicate = filter::FilterPredicate::make(finalPredicate);
+//        }
 
         auto allNeededColumnNameSet = std::make_shared<std::set<std::string>>(projectedColumnNames_->begin(), projectedColumnNames_->end());
         allNeededColumnNameSet->insert(predicateColumnNames->begin(), predicateColumnNames->end());
         auto allNeededColumnNames = std::make_shared<std::vector<std::string>>(allNeededColumnNameSet->begin(), allNeededColumnNameSet->end());
+
+        auto allNeededColumnNameSetDelta = std::make_shared<std::set<std::string>>(projectedColumnNames_->begin(), projectedColumnNames_->end());
+        allNeededColumnNameSetDelta->insert(predicateColumnNames->begin(), predicateColumnNames->end());
+
+        allNeededColumnNameSetDelta->insert("type");
+        allNeededColumnNameSetDelta->insert("timestamp");
+
+        auto allNeededColumnNamesDelta = std::make_shared<std::vector<std::string>>(allNeededColumnNameSetDelta->begin(), allNeededColumnNameSetDelta->end());
 
         // Construct
         auto s3Partition = std::static_pointer_cast<S3SelectPartition>(partition);
@@ -100,12 +111,12 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
         if (numDeltas != 0) {
             std::vector<std::string> deltaObjects;
             for (int i = 0; i < numDeltas; i++) {
-                std::string objectName = "lineorder.tbl.1.del." + std::to_string(i);
+                std::string objectName = "super-small-ssb-htap/csv/deltas/lineorder/lineorder.tbl.0.del." + std::to_string(i);
                 deltaObjects.push_back(objectName);
             }
 
             std::shared_ptr<Operator> stableScanOp;
-            std::shared_ptr<std::vector<std::shared_ptr<Operator>>> deltaScanOps;
+            auto deltaScanOps = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
             std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp = normal::htap::deltamerge::DeltaMerge::make(getName(),"deltamerge-"+s3Object, queryId,miniCatalogue->getSchema(getName()));
             operators->emplace_back(deltaMergeOp);
@@ -115,7 +126,7 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
                     s3Partition->getBucket(),
                     s3Object,
                     *allColumnNames,
-                    *allNeededColumnNames,
+                    *allColumnNames,
                     scanRange.first,
                     scanRange.second,
                     miniCatalogue->getSchema(getName()),
@@ -133,8 +144,8 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
                         "s3get-Delta-" + s3Partition->getBucket() + "/" + deltaObject + "-" + std::to_string(rangeId),
                         s3Partition->getBucket(),
                         deltaObject,
-                        *allColumnNames,
-                        *allNeededColumnNames,
+                        *allDeltaColumnNames,
+                        *allDeltaColumnNames,
                         scanRange.first,
                         scanRange.second,
                         miniCatalogue->getDeltaSchema(getName()),
@@ -148,19 +159,21 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
                 deltaScanOp->produce(deltaMergeOp);
             }
 
-            if (finalPredicate) {
-                auto filter = filter::Filter::make(
-                        fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
-                        filterPredicate,
-                        queryId);
-                operators->emplace_back(filter);
+//            if (finalPredicate) {
+//                auto filter = filter::Filter::make(
+//                        fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
+//                        filterPredicate,
+//                        queryId);
+//                operators->emplace_back(filter);
+//
+//                deltaMergeOp->produce(filter);
+//                filter->consume(deltaMergeOp);
+//                streamOutPhysicalOperators_->emplace_back(filter);
+//            } else {
+//                streamOutPhysicalOperators_->emplace_back(deltaMergeOp);
+//            }
+            streamOutPhysicalOperators_->emplace_back(deltaMergeOp);
 
-                deltaMergeOp->produce(filter);
-                filter->consume(deltaMergeOp);
-                streamOutPhysicalOperators_->emplace_back(filter);
-            } else {
-                streamOutPhysicalOperators_->emplace_back(deltaMergeOp);
-            }
         } else {
             std::shared_ptr<Operator> scanOp;
             if (s3Object.find("csv") != std::string::npos) {
@@ -197,19 +210,20 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
 
             std::shared_ptr<Operator> upStreamOfProj;
             // Filter if it has filterPredicate
-            if (finalPredicate) {
-                auto filter = filter::Filter::make(
-                        fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
-                        filterPredicate,
-                        queryId);
-                operators->emplace_back(filter);
-
-                scanOp->produce(filter);
-                filter->consume(scanOp);
-                streamOutPhysicalOperators_->emplace_back(filter);
-            } else {
-                streamOutPhysicalOperators_->emplace_back(scanOp);
-            }
+//            if (finalPredicate) {
+//                auto filter = filter::Filter::make(
+//                        fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
+//                        filterPredicate,
+//                        queryId);
+//                operators->emplace_back(filter);
+//
+//                scanOp->produce(filter);
+//                filter->consume(scanOp);
+//                streamOutPhysicalOperators_->emplace_back(filter);
+//            } else {
+//                streamOutPhysicalOperators_->emplace_back(scanOp);
+//            }
+            streamOutPhysicalOperators_->emplace_back(scanOp);
         }
     }
 

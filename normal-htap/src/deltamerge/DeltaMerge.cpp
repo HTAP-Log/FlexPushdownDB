@@ -137,6 +137,8 @@ void DeltaMerge::populateArrowTrackers() {
 
     // right now assume all the tuples that we have are in arrow format
     auto miniCatalogue = normal::connector::defaultMiniCatalogue;
+    deltaIndexTracker_ = std::vector(deltas_.size(), 0);
+    stableIndexTracker_ = std::vector(stables_.size(), 0);
 
     // set up a process to obtain the needed columns (Primary Keys, Timestamp, Type)
     // FIXME: SUPPORT Composited PrimaryKey
@@ -190,12 +192,12 @@ void DeltaMerge::generateDeleteMaps() {
 
     while (!checkIfAllRecordsWereVisited()) {
         // loop through the stable and find the primary key
-        std::string currPK;
+        int32_t currPK = std::numeric_limits<int32_t>::max();
         for (int i = 0; i < stableTracker_.size(); i++) {
-            currPK = std::min(currPK, stableTracker_[i][0]->element(stableIndexTracker_[i]).value()->toString());
+            currPK = std::min(currPK, stableTracker_[i][0]->element(stableIndexTracker_[i]).value()->value<int32_t>());
         }
         for (int i = 0; i < deltaTracker_.size(); i++) {
-            currPK = std::min(currPK, deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->toString());
+            currPK = std::min(currPK, deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>());
         }
         // now you get the smallest primary key
         // 1. Select all the deltas with the current primary key

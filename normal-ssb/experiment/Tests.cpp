@@ -435,6 +435,7 @@ void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType
 
   auto currentPath = std::filesystem::current_path();
   auto sql_file_dir_path = currentPath.append("sql/generated");
+//  auto sql_file_dir_path = currentPath.append("sql/original");
 
   if (cachingPolicy->id() == BELADY) {
     auto beladyCachingPolicy = std::static_pointer_cast<normal::cache::BeladyCachingPolicy>(cachingPolicy);

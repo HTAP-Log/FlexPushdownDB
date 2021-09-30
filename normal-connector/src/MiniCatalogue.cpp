@@ -488,7 +488,7 @@ std::shared_ptr<arrow::Schema> normal::connector::MiniCatalogue::getDeltaSchema(
  */
 int normal::connector::MiniCatalogue::getNumberOfDeltas(const std::string &tableName,  const std::string &objectName) {
     // FIXME: Hardcode this for now
-    if (tableName == "lineorder" && objectName == "lineorder.tbl.1") {
+    if (tableName == "lineorder" && objectName == "super-small-ssb-htap/csv/stables/lineorder_sharded/lineorder.tbl.0") {
         return 1;
     }
 
