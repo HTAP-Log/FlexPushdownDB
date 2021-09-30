@@ -207,7 +207,7 @@ void DeltaMerge::generateDeleteMaps() {
         std::array<int, 2> position = {0, 0}; // [deltaNum, idx]
 
         for (int i = 0; i < stableTracker_.size(); i++) {
-            if (currPK == stableTracker_[i][0]->element(stableIndexTracker_[i]).value()->toString()) {
+            if (currPK == stableTracker_[i][0]->element(stableIndexTracker_[i]).value()->value<int32_t>()) {
                 position[0] = i;
                 position[1] = stableIndexTracker_[i];
 
@@ -216,7 +216,7 @@ void DeltaMerge::generateDeleteMaps() {
         }
 
         for (int i = 0; i < deltaTracker_.size(); i++) {
-            if (currPK != deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->toString()) continue;
+            if (currPK != deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>()) continue;
             int tsIndex = deltaTracker_[0].size() - 2;
             auto currTS = deltaTracker_[i][tsIndex]->element(deltaIndexTracker_[i]).value()->toString();
 
