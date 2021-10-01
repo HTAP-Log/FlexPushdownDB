@@ -8,10 +8,13 @@ INCLUDE_DIRECTORIES(/usr/local/include)
 add_library(normal-avro-tuple
         # test
         test/makeTupleTest.cpp
+        test/DeltaPartitionTableTest.cpp
         # source
         src/makeTuple.cpp
+        src/DeltaPartitionTable.cpp
         # header
         include/normal/avro_tuple/makeTuple.h
+        include/normal/delta_table/DeltaPartitionTable.h
         # schema
         include/normal/avro_tuple/customer.hh include/normal/avro_tuple/customer_d.hh
         include/normal/avro_tuple/date.hh include/normal/avro_tuple/date_d.hh
@@ -48,3 +51,20 @@ target_include_directories(normal-avro-tuple-test PUBLIC include)
 
 target_link_libraries(normal-avro-tuple-test PUBLIC normal-avro-tuple)
 target_link_libraries(normal-avro-tuple-test PUBLIC /usr/local/lib/libavrocpp.so)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Test
+#-----------------------------------------------------------------------------------------------------------------------
+add_executable(normal-avro-tuple-delta-test
+        #test
+        test/DeltaPartitionTableTest.cpp
+        # source
+        src/DeltaPartitionTable.cpp
+        # header
+        include/normal/delta_table/DeltaPartitionTable.h
+        include/normal/avro_tuple/makeTuple.h)
+
+target_include_directories(normal-avro-tuple-delta-test PUBLIC include)
+
+target_link_libraries(normal-avro-tuple-delta-test PUBLIC normal-avro-tuple)
+target_link_libraries(normal-avro-tuple-delta-test PUBLIC /usr/local/lib/libavrocpp.so)
