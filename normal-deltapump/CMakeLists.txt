@@ -49,6 +49,17 @@ set(SOURCES
         include/deltapump/date_d.hh
         )
 
+#-----------------------------------------------------------------------------------------------------------------------
+# Target
+#-----------------------------------------------------------------------------------------------------------------------
+
+add_library(normal-deltapump STATIC ${SOURCES})
+
+target_link_libraries(normal-deltapump PUBLIC ${JNI_LIBRARIES} /usr/local/lib/libavrocpp.so)
+target_include_directories(normal-deltapump
+        PUBLIC
+        ${PROJECT_SOURCE_DIR}/include/deltapump
+        )
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Test
@@ -71,3 +82,5 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/deltapump/schemas
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/deltapump/logs/bin.000002
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/deltapump/partitions/ranges.csv
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/partitions/)
