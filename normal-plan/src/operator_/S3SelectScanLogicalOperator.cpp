@@ -38,7 +38,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
     //  validPartitions_ = (!predicate_) ? getPartitioningScheme()->partitions() : getValidPartitions(predicate_);
 
     // construct physical operators
-    return toOperatorsHTAP();
+//    return toOperatorsHTAP();
 
     auto mode = getMode();
     switch (mode->id()) {

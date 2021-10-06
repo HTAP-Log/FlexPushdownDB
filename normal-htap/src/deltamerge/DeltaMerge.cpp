@@ -71,12 +71,11 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
         this->onTuple(tupleMessage);
     } else if (msg.message().type() == "CompleteMessage") {
         auto completeMessage = dynamic_cast<const core::message::CompleteMessage &>(msg.message());
-        this->onComplete(completeMessage);
-
         // check if all producers complete sending the tuple, then we can start.
         if (allProducersComplete()) {
             deltaMerge();
         }
+        this->onComplete(completeMessage);
     } else {
         throw std::runtime_error("Unrecognized message type " + msg.message().type());
     }
@@ -300,7 +299,7 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
     }
 
     auto finalOutput = TupleSet2::make(normal::tuple::Schema::make(outputSchema_), builtColumns);
-
+    
     return finalOutput;
 }
 
@@ -333,7 +332,7 @@ void DeltaMerge::deltaMerge() {
 
     std::shared_ptr<core::message::Message>
     tupleMessage = std::make_shared<core::message::TupleMessage>(output->toTupleSetV1(), name());
-    ctx()->tell(tupleMessage);
+    ctx()->tell(tupleMessage);  // TODO: Problem might at here
 }
 
 DeltaMerge::DeltaMerge(std::string name, std::string type, long queryId1,
