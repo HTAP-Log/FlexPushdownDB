@@ -10,6 +10,8 @@ LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 # Target
 #-----------------------------------------------------------------------------------------------------------------------
 
+target_link_libraries(normal-deltapump PUBLIC include)
+
 # build Parser.java
 set(JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64)
 

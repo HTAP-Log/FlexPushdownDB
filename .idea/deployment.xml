@@ -19,8 +19,8 @@
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-7" />
             <excludedPath local="true" path="$PROJECT_DIR$/private" />
             <excludedPath local="true" path="$PROJECT_DIR$/normal-ssb/data/ssb-sf1" />
-            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-7" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-10-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-7" />
             <excludedPath local="true" path="$PROJECT_DIR$/normal-ssb/data/ssb-sf1" />
           </excludedPaths>
         </serverdata>
