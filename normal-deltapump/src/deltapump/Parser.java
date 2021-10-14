@@ -34,7 +34,14 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.*;
 
 public class Parser {
-	
+
+		public static String currentTable = null;
+    	public static String currentBinlogFile = "bin.000001"; // initial binlog file
+    	public static long currentBinlogPosition = 4; // initial position
+    	public static long counter = 0;
+    	public static long number_of_writes = 0;
+    	public static long number_of_deletes = 0;
+    	public static long number_of_updates = 0;
 	/**
 	 * parse the given binlog file and write all event info in the format of avro, added field in schema compared to HaTrickBench
 	 * @param binlogFilePath
@@ -43,13 +50,6 @@ public class Parser {
 	 */
 	private static byte [][] parseBinlogFile(String binlogFilePath) throws IOException {
 		File binlogFile = new File(binlogFilePath);
-		
-		long counter = 0;
-		long number_of_writes = 0;
-		long number_of_deletes = 0;
-		long number_of_updates = 0;
-		
-		String currentTable = null;
 		
 		double startTime = System.currentTimeMillis();
 		
@@ -164,17 +164,17 @@ public class Parser {
 
 				
 				//TODO: ignore all non LINEORDER tables, comment the code below to parse all logs
-			    if(currentTable == null || (currentTable != null && !currentTable.equals("LINEORDER"))) {
+// 			    if(currentTable == null || (currentTable != null && !currentTable.equals("LINEORDER"))) {
+// 			    	continue;
+// 			    }
+				
+				if(currentTable == null) {
 			    	continue;
 			    }
-				
-// 				if(currentTable == null) {
-// 			    	continue;
-// 			    }
-//
-// 				if(!currentTable.equals("LINEORDER") && !currentTable.equals("CUSTOMER") && !currentTable.equals("SUPPLIER") && !currentTable.equals("PART") && !currentTable.equals("DATE")) {
-// 			    	continue;
-// 			    }
+
+				if(!currentTable.equals("LINEORDER") && !currentTable.equals("CUSTOMER") && !currentTable.equals("SUPPLIER") && !currentTable.equals("PART") && !currentTable.equals("DATE")) {
+			    	continue;
+			    }
 				
 				GenericRecord record = new GenericData.Record(schemaList.get(currentTable));
 				DataFileWriter<GenericRecord> dataFileWriter = fwList.get(currentTable);

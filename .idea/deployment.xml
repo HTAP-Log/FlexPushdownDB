@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" serverName="aws-htap (f9b4df77-5bbf-42ee-97b0-4b1737dec5fe)" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="aws-htap (6a387e7d-74de-49be-82e7-5632bc4ba95a)">
+      <paths name="aws-htap (101c19de-3126-4b5e-b764-9ab1887b6c10)">
         <serverdata>
           <mappings>
             <mapping deploy="/home/ubuntu/pushdown_db_ziwei" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/private" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-remote-release" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-llvm-10-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-7" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-10-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-llvm-7-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/normal-ssb/data/ssb-sf1" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="aws-htap (6a387e7d-74de-49be-82e7-5632bc4ba95a)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ubuntu/pushdown_db_ziwei" local="$PROJECT_DIR$" web="/" />
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-llvm-10-ninja" />
@@ -21,6 +37,52 @@
             <excludedPath local="true" path="$PROJECT_DIR$/normal-ssb/data/ssb-sf1" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-10-ninja" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-7" />
+            <excludedPath local="true" path="$PROJECT_DIR$/normal-ssb/data/ssb-sf1" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="aws-htap (f9b4df77-5bbf-42ee-97b0-4b1737dec5fe)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/ubuntu/pushdown_db_ziwei" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/private" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-remote-release" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-7" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-10-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-llvm-10-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-llvm-7-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/normal-ssb/data/ssb-sf1" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="cloudlab (38b0bc48-f534-4fe9-b97c-1a74ba6a3789)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cloudlab (92f3513e-339f-48bf-8330-f5dcc03346f1)">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cloudlab_milkai (1a6a0c93-f5fc-4eea-a338-467424a86725)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.h4DqdS1Vns" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/private" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-remote-release" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-llvm-10-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-7" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-llvm-10-ninja" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-llvm-7-ninja" />
             <excludedPath local="true" path="$PROJECT_DIR$/normal-ssb/data/ssb-sf1" />
           </excludedPaths>
         </serverdata>
