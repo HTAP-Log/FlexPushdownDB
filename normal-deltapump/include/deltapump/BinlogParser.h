@@ -69,6 +69,42 @@ struct lineorder_record{
     }
 };
 
+struct customer_record{
+    int c_custkey;
+    CustomerDelta_t customer_delta;
+    bool operator<(const customer_record& c) const
+    {
+        return (this->c_custkey < c.c_custkey);
+    }
+};
+
+struct date_record{
+    int d_datekey;
+    DateDelta_t date_delta;
+    bool operator<(const date_record& d) const
+    {
+        return (this->d_datekey < d.d_datekey);
+    }
+};
+
+struct part_record{
+    int p_partkey;
+    PartDelta_t part_delta;
+    bool operator<(const part_record& p) const
+    {
+        return (this->p_partkey < p.p_partkey);
+    }
+};
+
+struct supplier_record{
+    int s_suppkey;
+    SupplierDelta_t supplier_delta;
+    bool operator<(const supplier_record& s) const
+    {
+        return (this->s_suppkey < s.s_suppkey);
+    }
+};
+
 /*
  * load avro schema from disk
  */
