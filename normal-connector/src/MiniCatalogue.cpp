@@ -267,6 +267,27 @@ readMetadataSegmentInfo(const std::string &s3Bucket, const std::string &schemaNa
     return res;
 }
 
+/**
+ * Parses delta merge metadata to extract the filename of deltas available to be merged for each table
+ *
+ * @author Xiaohan Shen
+ * @param schemaName is the path to the deltaMergeMetadata file
+ * @return parsed delta merge metadata in unordered_map with table names as the key and vector of delta filenames as value
+ */
+std::shared_ptr<std::unordered_map<std::string, std::vector<std::string>>> readDeltaMergeMetadata(const std::string &schemaName) {
+    auto res = std::make_shared<std::unordered_map<std::string, std::vector<std::string>>>();
+    auto filePath = std::filesystem::current_path().append("metadata").append(schemaName).append("deltaMergeMetadata");
+    for (auto const &str: readFileByLines(filePath)) {
+        auto tableDelta = split(str, ":");
+        if (tableDelta[1].find("]") - tableDelta[1].find("[") == 1) {
+            // list of table names is [], no delta available, still add an empty vector to uniform the check for number of deltas through size
+            res->emplace(tableDelta[0], std::vector<std::string>());
+        }
+        res->emplace(tableDelta[0], split(tableDelta[1].substr(1, tableDelta[1].length() - 2), ","));
+    }
+    return res;
+}
+
 std::shared_ptr<normal::connector::MiniCatalogue> normal::connector::MiniCatalogue::defaultMiniCatalogue(
         const std::string &s3Bucket, const std::string &schemaName) {
     // star join order
@@ -276,6 +297,7 @@ std::shared_ptr<normal::connector::MiniCatalogue> normal::connector::MiniCatalog
     defaultJoinOrder->emplace_back("customer");
     defaultJoinOrder->emplace_back("part");
 
+    auto deltaMergeMetadata = readDeltaMergeMetadata(schemaName);
     // schemas
     auto schemas = readMetadataSchemas(schemaName);
 
