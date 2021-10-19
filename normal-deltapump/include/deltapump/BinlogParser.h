@@ -105,6 +105,24 @@ struct supplier_record{
     }
 };
 
+// a global map used to contain all kind of vectors
+class Global_Map
+{
+    using Global_Vector = boost::variant<
+            std::vector<LineorderDelta_t>,
+            std::vector<CustomerDelta_t>,
+            std::vector<DateDelta_t>,
+            std::vector<PartDelta_t>,
+            std::vector<SupplierDelta_t>>;
+    std::unordered_map<std::string, Global_Vector> dataMap;
+    public:
+    Global_Map() : dataMap(){}
+    Global_Vector &operator[](const std::string& key)
+    {
+        return dataMap[key];
+    }
+};
+
 /*
  * load avro schema from disk
  */
