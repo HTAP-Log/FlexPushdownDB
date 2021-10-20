@@ -6,21 +6,34 @@ project("normal-htap" VERSION "${PROJECT_VERSION}" LANGUAGES C CXX)
 LINK_DIRECTORIES(/usr/local/opt/llvm@11/lib)
 LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 
+# Construct java home
+set(JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64)
+
+find_package(Java REQUIRED)
+include(UseJava)
+find_package(JNI REQUIRED)
+
+if (JNI_FOUND)
+    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+endif()
+
+include_directories(${JNI_INCLUDE_DIRS}/include ${JNI_INCLUDE_DIRS}/include/linux)
+
 #-----------------------------------------------------------------------------------------------------------------------
 # Target
 #-----------------------------------------------------------------------------------------------------------------------
 
 add_library(normal-htap STATIC
-        test/S3AvroTest.cpp
+        # delta merge
         include/deltamerge/DeltaMerge.h src/deltamerge/DeltaMerge.cpp
-        include/antijoin/HashAntiJoinProbe.h src/antijoin/HashAntiJoinProbeKernel.cpp
-        include/antijoin/HashAntiJoinProbeKernel.h src/antijoin/HashAntiJoinProbeKernel.cpp
-        include/antijoin/RecordBatchAntiJoiner.h src/antijoin/RecordBatchAntiJoiner.cpp
+        # get tails delta
+        include/deltamanager/GetTailDeltas.h src/deltamanager/GetTailDeltas.cpp
         )
 
-target_include_directories(normal-pushdown PUBLIC include)
+target_include_directories(normal-htap PUBLIC include)
 
-target_link_libraries(normal-htap PUBLIC normal-avro)
+target_link_libraries(normal-htap PUBLIC normal-deltapump)
 target_link_libraries(normal-htap PUBLIC aws-cpp-sdk-core)
 target_link_libraries(normal-htap PUBLIC aws-cpp-sdk-s3)
 target_link_libraries(normal-htap PUBLIC normal-pushdown)
@@ -28,17 +41,3 @@ target_link_libraries(normal-htap PUBLIC /usr/local/lib/libavrocpp.so)
 target_link_libraries(normal-htap PUBLIC normal-plan)
 target_link_libraries(normal-htap PUBLIC normal-ssb)
 target_link_libraries(normal-htap PUBLIC normal-core)
-#-----------------------------------------------------------------------------------------------------------------------
-# Test
-#-----------------------------------------------------------------------------------------------------------------------
-
-add_executable(normal-htap-test
-        test/S3AvroTest.cpp
-        )
-
-target_link_libraries(normal-htap-test PUBLIC normal-avro)
-target_link_libraries(normal-htap-test PUBLIC normal-pushdown)
-target_link_libraries(normal-htap-test PUBLIC aws-cpp-sdk-core)
-target_link_libraries(normal-htap-test PUBLIC aws-cpp-sdk-s3)
-target_link_libraries(normal-htap-test PUBLIC normal-htap)
-target_link_libraries(normal-htap-test PUBLIC /usr/local/lib/libavrocpp.so)

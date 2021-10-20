@@ -13,6 +13,7 @@
 #include <normal/cache/SegmentKey.h>
 #include <normal/connector/MiniCatalogue.h>
 #include <deltamerge/DeltaMerge.h>
+#include <deltamanager/GetTailDeltas.h>
 
 using namespace normal::plan::operator_;
 using namespace normal::pushdown;
@@ -66,6 +67,12 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
     streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
     auto queryId = getQueryId();
 
+    // Construct the global single GetTailDeltas operator to generate deltas from DeltaPump
+    std::shared_ptr<htap::deltamanager::GetTailDeltas> getTailDeltasOperator =
+            htap::deltamanager::GetTailDeltas::make(getName(), "Global GetTailDeltas Operator", queryId, miniCatalogue->getDeltaSchema(getName()));
+
+    // TODO: Figure out how to construct one-to-many relationship with actors
+
     // loop through all partitions
     for (const auto &partition: *getPartitioningScheme()->partitions()) {
 //        auto validPair = checkPartitionValid(partition);
@@ -118,7 +125,9 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             std::shared_ptr<Operator> stableScanOp;
             auto deltaScanOps = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-            std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp = normal::htap::deltamerge::DeltaMerge::make(getName(),"deltamerge-"+s3Object, queryId,miniCatalogue->getSchema(getName()));
+            // std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp = normal::htap::deltamerge::DeltaMerge::make(getName(),"deltamerge-"+s3Object, queryId,miniCatalogue->getSchema(getName()));
+            std::string operatorName = "DeltaMerge-lineorder-0";
+            std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp = normal::htap::deltamerge::DeltaMerge::make(getName(), operatorName, queryId,miniCatalogue->getSchema(getName()));
             operators->emplace_back(deltaMergeOp);
 
             stableScanOp = S3Get::make(
@@ -223,6 +232,8 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
 //            } else {
 //                streamOutPhysicalOperators_->emplace_back(scanOp);
 //            }
+
+
             streamOutPhysicalOperators_->emplace_back(scanOp);
         }
     }
