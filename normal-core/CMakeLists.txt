@@ -59,6 +59,7 @@ target_link_libraries(normal-core PUBLIC expected)
 target_link_libraries(normal-core PUBLIC normal-expression)
 target_link_libraries(normal-core PUBLIC normal-cache)
 target_link_libraries(normal-core PUBLIC normal-util)
+target_link_libraries(normal-core PUBLIC normal-htap)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

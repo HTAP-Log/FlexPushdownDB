@@ -16,4 +16,8 @@
 namespace normal::core {
 }
 
+namespace normall::htap::deltamanger {
+
+}
+
 #endif //NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_GLOBALS_H

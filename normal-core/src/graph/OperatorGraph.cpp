@@ -146,7 +146,7 @@ void graph::OperatorGraph::boot() {
 //	  element.second.setActorHandle(caf::actor_cast<caf::actor>(collateActorHandle_));
 //	}
 	else {
-	  auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor());
+	  auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor(), operatorManager_.lock()->getDeltaCacheActor());
 	  op->create(ctx);
     // Don't run more S3Get requests in parallel than # cores, earlier testing showed this did not help as S3Get
     // already utilizes the full network bandwidth with #cores requests whereas S3Select does not when

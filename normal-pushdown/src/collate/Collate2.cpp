@@ -10,13 +10,15 @@ namespace normal::pushdown::collate {
 										   const std::string &name,
 										   long queryId,
 										   const caf::actor &rootActorHandle,
-										   const caf::actor &segmentCacheActorHandle) {
+										   const caf::actor &segmentCacheActorHandle,
+                                           const caf::actor &deltaCacheActorHandle) {
 
   self->state.setState(self,
 					   name,
 					   queryId,
 					   rootActorHandle,
-					   segmentCacheActorHandle);
+					   segmentCacheActorHandle,
+                       deltaCacheActorHandle);
 
   return self->state.makeBehavior(self);
 }

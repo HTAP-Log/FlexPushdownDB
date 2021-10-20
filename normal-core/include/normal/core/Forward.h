@@ -34,4 +34,8 @@ class Envelope;
 
 }
 
+namespace normal::htap::deltamanager {
+        class DeltaCacheActor;
+}
+
 #endif //NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_FORWARD_H

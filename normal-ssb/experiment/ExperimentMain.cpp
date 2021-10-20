@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 //normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "ssb-sf1-sortlineorder/csv/");
 //  normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "ssb-sf10-sortlineorder/csv/");
   // math model test
-//  normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "ssb-sf10-sortlineorder/csv/");
+  // normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "ssb-sf10-sortlineorder/csv/");
   if (std::string(argv[1]) == "-m") {
     auto networkLimit = (size_t) (atof(argv[2]) * 1024 * 1024 * 1024 / 8);
     auto chunkSize = (size_t) (atol(argv[3]));
