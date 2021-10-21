@@ -20,17 +20,21 @@ int main() {
     std::unordered_map<int, std::set<struct supplier_record>> *supplier_record_ptr = nullptr;
     std::unordered_map<int, std::set<struct part_record>> *part_record_ptr = nullptr;
     std::unordered_map<int, std::set<struct date_record>> *date_record_ptr = nullptr;
+    Global_Map *globalMap_ptr = nullptr;
 
     const char* path = "./bin.000002"; //binlog file path
-    const char* path_range = "./partitions/ranges.csv"; //range file path
+//    const char* path_range = "./partitions/ranges.csv"; //range file path
 
     BinlogParser binlogParser;
-    binlogParser.parse(path, path_range, &lineorder_record_ptr, &customer_record_ptr, &supplier_record_ptr, &part_record_ptr, &date_record_ptr);
+    binlogParser.parse(path, &lineorder_record_ptr, &customer_record_ptr, &supplier_record_ptr, &part_record_ptr, &date_record_ptr, &globalMap_ptr);
 
     //write lineorder dealts to file (for test purpose)
 //    std::ofstream file1;
 //    file1.open("lineorder_deltas.txt", std::ios::binary);
 
+    for(auto pair : globalMap_ptr->dataMap){
+        std::cout<<"table name: "<< pair.first <<'\n';
+    }
 
     for(auto lineorder_pair : (*lineorder_record_ptr)){
 //        std::cout<<"lineorder_pair table number: "<< lineorder_pair.first <<'\n';

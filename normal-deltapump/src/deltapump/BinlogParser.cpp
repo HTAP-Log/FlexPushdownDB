@@ -78,11 +78,12 @@ void convert_to_vector_sup(std::set<struct supplier_record>* supplier_partition_
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
-void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr,
+void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr,
                          std::unordered_map<int, std::set<struct customer_record>> **customer_record_ptr,
                          std::unordered_map<int, std::set<struct supplier_record>> **supplier_record_ptr,
                          std::unordered_map<int, std::set<struct part_record>> **part_record_ptr,
-                         std::unordered_map<int, std::set<struct date_record>> **date_record_ptr ){
+                         std::unordered_map<int, std::set<struct date_record>> **date_record_ptr,
+                         Global_Map **globalMap_ptr){
 
     // code to call parser functions in java
     if (jvm == NULL) {
@@ -165,22 +166,23 @@ void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::
     avro::ValidSchema partSchema = loadSchema("./schemas/delta/part_d.json");
     avro::ValidSchema dateSchema = loadSchema("./schemas/delta/date_d.json");
 
-
+    //Global map to all kind of partition for 5 different tables as the result
+    auto *globalMap = new Global_Map();
     //maps of partitions
     auto *lineorder_record_map = new std::unordered_map<int, std::set<struct lineorder_record>>;
-    auto *lineorder_record_map_converted = new std::unordered_map<std::string, std::vector<LineorderDelta_t>>;
+//    auto *lineorder_record_map_converted = new std::unordered_map<std::string, std::vector<LineorderDelta_t>>;
 
     auto *customer_record_map = new std::unordered_map<int, std::set<struct customer_record>>;
-    auto *customer_record_map_converted = new std::unordered_map<std::string, std::vector<CustomerDelta_t>>;
+//    auto *customer_record_map_converted = new std::unordered_map<std::string, std::vector<CustomerDelta_t>>;
 
     auto *date_record_map = new std::unordered_map<int, std::set<struct date_record>>;
-    auto *date_record_map_converted = new std::unordered_map<std::string, std::vector<DateDelta_t>>;
+//    auto *date_record_map_converted = new std::unordered_map<std::string, std::vector<DateDelta_t>>;
 
     auto *part_record_map = new std::unordered_map<int, std::set<struct part_record>>;
-    auto *part_record_map_converted = new std::unordered_map<std::string, std::vector<PartDelta_t>>;
+//    auto *part_record_map_converted = new std::unordered_map<std::string, std::vector<PartDelta_t>>;
 
     auto *supplier_record_map = new std::unordered_map<int, std::set<struct supplier_record>>;
-    auto *supplier_record_map_converted = new std::unordered_map<std::string, std::vector<SupplierDelta_t>>;
+//    auto *supplier_record_map_converted = new std::unordered_map<std::string, std::vector<SupplierDelta_t>>;
 
     // read the data input stream with the given valid schema
     avro::DataFileReader <i::lineorder> lineorderReader(move(in_lineorder), lineorderSchema);
@@ -297,7 +299,8 @@ void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::
         std::string lineorder_prt= "lineorder.tbl." + std::to_string(i->first);
         std::vector<LineorderDelta_t> lineorder_vector;
         convert_to_vector_li(&(i->second),&lineorder_vector);
-        (*lineorder_record_map_converted).insert(std::make_pair(lineorder_prt, lineorder_vector));
+        (*globalMap)[lineorder_prt] = lineorder_vector;
+//        (*lineorder_record_map_converted).insert(std::make_pair(lineorder_prt, lineorder_vector));
 //        std::cout << "converted partition: " << lineorder_prt << std::endl;
     }
 
@@ -305,28 +308,32 @@ void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::
         std::string customer_prt= "customer.tbl." + std::to_string(i->first);
         std::vector<CustomerDelta_t> customer_vector;
         convert_to_vector_cu(&(i->second),&customer_vector);
-        (*customer_record_map_converted).insert(std::make_pair(customer_prt, customer_vector));
+        (*globalMap)[customer_prt] = customer_vector;
+//        (*customer_record_map_converted).insert(std::make_pair(customer_prt, customer_vector));
     }
 
     for(auto i = (*date_record_map).begin(); i != (*date_record_map).end(); i++){
         std::string date_prt= "date.tbl." + std::to_string(i->first);
         std::vector<DateDelta_t> date_vector;
         convert_to_vector_date(&(i->second),&date_vector);
-        (*date_record_map_converted).insert(std::make_pair(date_prt, date_vector));
+        (*globalMap)[date_prt] = date_vector;
+//        (*date_record_map_converted).insert(std::make_pair(date_prt, date_vector));
     }
 
     for(auto i = (*part_record_map).begin(); i != (*part_record_map).end(); i++){
         std::string part_prt= "part.tbl." + std::to_string(i->first);
         std::vector<PartDelta_t> part_vector;
         convert_to_vector_part(&(i->second),&part_vector);
-        (*part_record_map_converted).insert(std::make_pair(part_prt, part_vector));
+        (*globalMap)[part_prt] = part_vector;
+//        (*part_record_map_converted).insert(std::make_pair(part_prt, part_vector));
     }
 
     for(auto i = (*supplier_record_map).begin(); i != (*supplier_record_map).end(); i++){
         std::string supplier_prt= "supplier.tbl." + std::to_string(i->first);
         std::vector<SupplierDelta_t> supplier_vector;
         convert_to_vector_sup(&(i->second),&supplier_vector);
-        (*supplier_record_map_converted).insert(std::make_pair(supplier_prt, supplier_vector));
+        (*globalMap)[supplier_prt] = supplier_vector;
+//        (*supplier_record_map_converted).insert(std::make_pair(supplier_prt, supplier_vector));
     }
 
 
@@ -336,6 +343,7 @@ void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::
     *supplier_record_ptr = supplier_record_map;
     *part_record_ptr = part_record_map;
     *date_record_ptr = date_record_map;
+    *globalMap_ptr = globalMap;
 
 
     jvm->DetachCurrentThread();

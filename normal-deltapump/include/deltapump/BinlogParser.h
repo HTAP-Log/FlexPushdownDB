@@ -39,11 +39,31 @@
 
 using namespace normal::avro_tuple::make;
 
+// a global map used to contain all kind of vectors
+class Global_Map
+{
+    using Global_Vector = std::variant<
+            std::vector<LineorderDelta_t>,
+            std::vector<CustomerDelta_t>,
+            std::vector<DateDelta_t>,
+            std::vector<PartDelta_t>,
+            std::vector<SupplierDelta_t>>;
+//    std::unordered_map<std::string, Global_Vector> dataMap;
+public:
+    Global_Map() : dataMap(){}
+    std::unordered_map<std::string, Global_Vector> dataMap;
+    Global_Vector &operator[](const std::string& key)
+    {
+        return dataMap[key];
+    }
+};
 
 class BinlogParser
 {
     JNIEnv *g_env;
     JavaVM *jvm;
+
+
 
 public:
 
@@ -51,12 +71,13 @@ public:
     * function to call functions in java and receive serialized avro data returned from java side
     * return pointers of partitioned tables
     */
-    void parse(const char *filePath,  const char *rangeFilePath,
+    void parse(const char *filePath,
                std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr,
                std::unordered_map<int, std::set<struct customer_record>> **customer_record_ptr,
                std::unordered_map<int, std::set<struct supplier_record>> **supplier_record_ptr,
                std::unordered_map<int, std::set<struct part_record>> **part_record_ptr,
-               std::unordered_map<int, std::set<struct date_record>> **date_record_ptr);
+               std::unordered_map<int, std::set<struct date_record>> **date_record_ptr,
+               Global_Map **globalMap_ptr);
     BinlogParser();  //constructor
 
 
@@ -109,6 +130,9 @@ struct supplier_record{
         return (this->s_suppkey < s.s_suppkey);
     }
 };
+
+
+
 
 /*
  * load avro schema from disk
