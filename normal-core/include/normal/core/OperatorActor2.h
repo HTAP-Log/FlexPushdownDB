@@ -65,11 +65,13 @@ protected:
 					std::string name_,
 					unsigned long queryId,
 					::caf::actor rootActor,
-					::caf::actor segmentCacheActorHandle) {
+					::caf::actor segmentCacheActorHandle,
+                    ::caf::actor deltaCacheActorHandle) {
 	name = std::move(name_);
 	queryId_ = queryId;
 	rootActorHandle_ = std::move(rootActor);
 	segmentCacheActorHandle_ = std::move(segmentCacheActorHandle);
+    deltaCacheActorHandle_ = std::move(deltaCacheActorHandle);
   }
 
 
@@ -445,6 +447,14 @@ protected:
    */
   [[nodiscard]] const std::optional<caf::actor> &getSegmentCacheActorHandle() const {
 	return segmentCacheActorHandle_;
+  }
+
+  /**
+   *
+   * @return DeltaCache actor handle
+   */
+  [[nodiscard]] const std::optional<caf::actor> &getDeltaActorHandle() const {
+      return deltaCacheActorHandle_;
   }
 
   [[nodiscard]] const std::optional<caf::actor> &getRootActorHandle() const {

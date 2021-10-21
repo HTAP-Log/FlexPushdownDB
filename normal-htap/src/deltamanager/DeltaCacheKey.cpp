@@ -28,7 +28,7 @@ const int &DeltaCacheKey::getPartition() const{
     return partition_;
 }
 
-const int & =DeltaCacheKey::getTimestamp() const {
+const int &DeltaCacheKey::getTimestamp() const {
     return timestamp_;
 }
 

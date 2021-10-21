@@ -65,7 +65,7 @@ void graph::OperatorGraph::start() {
     }
 
     auto cm = std::make_shared<message::ConnectMessage>(operatorConnections, GraphRootActorName);
-    (*rootActor_)->anon_send(element.second.getActorHandle(), normal::core::message::Envelope(cm));
+    (*rootActor_)-> anon_send(element.second.getActorHandle(), normal::core::message::Envelope(cm));
   }
 
   // Start the actors

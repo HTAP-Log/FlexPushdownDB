@@ -1,8 +1,0 @@
-//
-// Created by Elena Milkai on 10/14/21.
-//
-
-#ifndef NORMAL_DELTACACHEOPERATOR_H
-#define NORMAL_DELTACACHEOPERATOR_H
-
-#endif //NORMAL_DELTACACHEOPERATOR_H

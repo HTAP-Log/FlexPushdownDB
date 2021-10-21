@@ -4,6 +4,7 @@
 
 #include <normal/core/OperatorManager.h>
 #include <normal/core/cache/SegmentCacheActor.h>
+#include <normal/htap/deltamanager/DeltaCacheActor.h>
 #include <normal/core/message/Envelope.h>
 
 using namespace normal::core::cache;
@@ -19,6 +20,7 @@ void OperatorManager::stop() {
 
   // Send actors a shutdown message
   (*rootActor_)->send_exit(caf::actor_cast<caf::actor>(segmentCacheActor_), caf::exit_reason::user_shutdown);
+  (*rootActor_)->send_exit(caf::actor_cast<caf::actor>(deltaCacheActor_), caf::exit_reason::user_shutdown);
 
   // Stop the root actor (seems, being defined by "scope", it needs to actually be destroyed to stop it)
   rootActor_.reset();
@@ -124,6 +126,10 @@ const std::shared_ptr<caf::actor_system> &OperatorManager::getActorSystem() cons
 
 const caf::actor &OperatorManager::getSegmentCacheActor() const {
   return segmentCacheActor_;
+}
+
+const caf::actor &OperatorManager::getDeltaCacheActor() const {
+    return deltaCacheActor_;
 }
 
 long OperatorManager::nextQueryId() {

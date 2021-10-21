@@ -33,6 +33,7 @@ private:
   std::shared_ptr<caf::actor_system> actorSystem;
   std::shared_ptr<caf::scoped_actor> rootActor_;
   caf::actor segmentCacheActor_;
+  caf::actor deltaCacheActor_;
   std::shared_ptr<CachingPolicy> cachingPolicy_;
   std::atomic<long> queryCounter_;
   bool running_;
@@ -43,6 +44,7 @@ public:
 
   virtual ~OperatorManager();
   const caf::actor &getSegmentCacheActor() const;
+  const caf::actor &getDeltaCacheActor() const;
   const std::shared_ptr<caf::actor_system> &getActorSystem() const;
   long nextQueryId();
 

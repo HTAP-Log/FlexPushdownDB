@@ -24,23 +24,9 @@ namespace normal::htap::deltamanager {
 
     class DeltasCacheActor {
     public:
-        [[maybe_unused]] static behavior makeBehaviour(stateful_actor <DeltasCacheActorState> *self,
-                                                       const std::optional <std::shared_ptr<CachingPolicy>> &cachingPolicy);
-
-        /**
-         * This function returns all the memory deltas based on the specified table schema and partition.
-         * @param msg
-         * @param self
-         * @return
-         */
         static std::shared_ptr <LoadResponseMessage> loadMemoryDeltas(const LoadRequestMessage &msg,
                                                                       stateful_actor <DeltasCacheActorState> *self);
-
         static void storeTail(const StoreRequestMessage &msg, stateful_actor <DeltasCacheActorState> *self);
-
-
-
-
     };
 }
 

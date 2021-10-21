@@ -25,10 +25,11 @@ private:
   LocalOperatorDirectory operatorMap_;
   caf::actor rootActor_;
   caf::actor segmentCacheActor_;
+  caf::actor deltaCacheActor_;
   bool complete_ = false;
 
 public:
-  OperatorContext(caf::actor rootActor, caf::actor segmentCacheActor);
+  OperatorContext(caf::actor rootActor, caf::actor segmentCacheActor, caf::actor deltaCacheActor);
 
   OperatorActor* operatorActor();
   void operatorActor(OperatorActor *operatorActor);

@@ -9,6 +9,7 @@
 #include <normal/core/message/CompleteMessage.h>
 #include <normal/core/cache/LoadRequestMessage.h>
 #include <normal/core/cache/SegmentCacheActor.h>
+#include <normal/htap/deltamanager/DeltaCacheActor.h>
 #include <normal/core/cache/CacheMetricsMessage.h>
 #include "normal/core/Globals.h"
 #include "normal/core/message/Message.h"
@@ -59,6 +60,16 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
 	return {};
   }
 
+  if(recipientId == "DeltaCache"){
+      if(msg->type() == "StoreDeltaRequestMessage"){
+          operatorActor_->anon_send(deltaCacheActor_, normal::htap::deltamanager::StoreDeltaAtom::value, std::static_pointer_cast<normal::htap::deltamanager::StoreDeltaRequestMessage>(msg));
+      }
+      else{
+          throw std::runtime_error("Unrecognized message " + msg->type());
+      }
+      return {};
+  }
+
   auto expectedOperator = operatorMap_.get(recipientId);
   if(expectedOperator.has_value()){
     auto recipientOperator = expectedOperator.value();
@@ -70,10 +81,11 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
   }
 }
 
-OperatorContext::OperatorContext(caf::actor rootActor, caf::actor segmentCacheActor):
+OperatorContext::OperatorContext(caf::actor rootActor, caf::actor segmentCacheActor, caf::actor deltaCacheActor):
     operatorActor_(nullptr),
     rootActor_(std::move(rootActor)),
-    segmentCacheActor_(std::move(segmentCacheActor))
+    segmentCacheActor_(std::move(segmentCacheActor)),
+    deltaCacheActor_(std::move(deltaCacheActor))
 {}
 
 LocalOperatorDirectory &OperatorContext::operatorMap() {
@@ -120,6 +132,7 @@ void OperatorContext::destroyActorHandles() {
   operatorMap_.destroyActorHandles();
   destroy(rootActor_);
   destroy(segmentCacheActor_);
+  destroy(deltaCacheActor_);
 }
 
 } // namespace
