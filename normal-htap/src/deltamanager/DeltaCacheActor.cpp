@@ -36,10 +36,10 @@ using namespace normal::htap::deltamanager;
 }
 
 
-/*std::shared_ptr <LoadDeltaResponseMessage> DeltaCacheActor::loadMemoryDeltas(const LoadDeltaRequestMessage &msg,
+std::shared_ptr <LoadDeltaResponseMessage> DeltaCacheActor::loadMemoryDeltas(const LoadDeltaRequestMessage &msg,
                                                                    stateful_actor <DeltaCacheActorState> *self){
 
-}*/
+}
 
 void DeltaCacheActor::storeTail(const StoreDeltaRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self){
     SPDLOG_DEBUG("Store  |  storeMessage: {}", msg.toString());

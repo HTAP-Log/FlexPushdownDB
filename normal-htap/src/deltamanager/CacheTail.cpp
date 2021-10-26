@@ -6,35 +6,44 @@
 
 using namespace normal::htap::deltamanager;
 
-CacheTail::CacheTail(const std::string& OperatorName, const std::string& tableName,  const int &partition,
-                     const int &timestamp,  const long queryId):
+CacheTail::CacheTail(const std::string& OperatorName,
+                     const std::string& tableName,
+                     const int &partition,
+                     const int &timestamp,
+                     const long queryId):
                      core::Operator(OperatorName, "CacheTail", queryId){
     tableName_ = tableName;
     partition_ = partition;
     timestamp_ = timestamp;
 }
 
-std::shared_ptr<GetTailDeltas> GetTailDeltas::make(const std::string& OperatorName, const std::string& tableName,
-                                                   const int &partition, const int &timestamp,  const long queryId) {
+std::shared_ptr<GetTailDeltas> GetTailDeltas::make(const std::string& OperatorName,
+                                                   const std::string& tableName,
+                                                   const int &partition,
+                                                   const int &timestamp,
+                                                   const long queryId) {
     return std::make_shared<CacheTail>(OperatorName, tableName, partition, timestamp, queryId);
 }
 
-void GetTailDeltas::onReceive(const core::message::Envelope &msg) {
-    // This actor simply starts
+void CacheTail::onReceive(const core::message::Envelope &msg) {
     if (msg.message().type() == "StartMessage") {
         this->onStart();
+    } else if {
+
+    } else if {
+
     } else {
-        throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}", msg.message().type(), name()));
+        throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}",
+                                             msg.message().type(),
+                                             name()));
     }
 }
 
-void GetTailDeltas::onStart() {
+void CacheTail::onStart() {
     SPDLOG_DEBUG("Starting operator '{}'", name());
-    // TODO: check if there should be a conditional check
-    GetTailDeltas::readAndSendDeltas(tableName_, partition_);
 }
 
-void GetTailDeltas::readAndSendDeltas(const std::string& tableName, const int partition, const int timestamp) {
+void CacheTail::readAndSendDeltas(const std::string& tableName, const int partition, const int timestamp) {
     std::shared_ptr<TupleSet2> deltaPartitionTable;
     if (tableName.empty()) {
         deltaPartitionTable = TupleSet2::make();

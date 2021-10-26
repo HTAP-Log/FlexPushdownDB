@@ -28,8 +28,8 @@ namespace normal::htap::deltamanager {
     class DeltaCacheActor {
     public:
         [[maybe_unused]] behavior makeBehaviour(caf::stateful_actor<DeltaCacheActorState> *self);
-        /*static std::shared_ptr <LoadDeltaResponseMessage> loadMemoryDeltas(const LoadDeltaRequestMessage &msg,
-                                                                      stateful_actor <DeltaCacheActorState> *self);*/
+        static std::shared_ptr <LoadDeltaResponseMessage> loadMemoryDeltas(const LoadDeltaRequestMessage &msg,
+                                                                      stateful_actor <DeltaCacheActorState> *self);
         static void storeTail(const StoreDeltaRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self);
     };
 }
