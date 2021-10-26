@@ -11,12 +11,13 @@ LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 #-----------------------------------------------------------------------------------------------------------------------
 
 add_library(normal-htap STATIC
-        # include
-        include/deltamanager/GetTailDeltas.h
-        # source
-        src/deltamanager/GetTailDeltas.cpp
-        # test
-        # None
+        src/deltamanager/GetTailDeltas.cpp include/deltamanager/GetTailDeltas.h
+        src/deltamanager/DeltaCacheActor.cpp include/deltamanager/DeltaCacheActor.h
+        src/deltamanager/DeltaCache.cpp include/deltamanager/DeltaCache.h
+        src/deltamanager/DeltaCacheKey.cpp include/deltamanager/DeltaCacheKey.h
+        src/deltamanager/LoadDeltaRequestMessage.cpp include/deltamanager/LoadDeltaRequestMessage.h
+        src/deltamanager/LoadDeltaResponseMessage.cpp include/deltamanager/LoadDeltaResponseMessage.h
+        src/deltamanager/StoreDeltaRequestMessage.cpp include/deltamanager/StoreDeltaRequestMessage.h
         )
 
 target_include_directories(normal-htap PUBLIC include)

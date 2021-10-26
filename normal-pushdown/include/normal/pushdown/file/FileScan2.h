@@ -43,9 +43,10 @@ public:
 				long queryId,
 				const caf::actor &rootActorHandle,
 				const caf::actor &segmentCacheActorHandle,
+                const caf::actor &deltaCacheActorHandle,
 				bool scanOnStart = false) {
 
-	OperatorActorState::setBaseState(actor, std::move(name), queryId, rootActorHandle, segmentCacheActorHandle);
+	OperatorActorState::setBaseState(actor, std::move(name), queryId, rootActorHandle, segmentCacheActorHandle, deltaCacheActorHandle);
 
 	auto canonicalColumnNames = ColumnName::canonicalize(columnNames);
 

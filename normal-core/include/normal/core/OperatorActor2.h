@@ -478,6 +478,7 @@ private:
 
   std::optional<caf::actor> rootActorHandle_;
   std::optional<caf::actor> segmentCacheActorHandle_;
+  std::optional<caf::actor> deltaCacheActorHandle_;
 
   bool running_ = false;
   bool complete_ = false;

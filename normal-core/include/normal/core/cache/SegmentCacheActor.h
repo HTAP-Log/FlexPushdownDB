@@ -6,7 +6,6 @@
 #define NORMAL_NORMAL_CORE_INCLUDE_NORMAL_CORE_CACHE_SEGMENTCACHEACTOR_H
 
 #include <caf/all.hpp>
-
 #include <normal/cache/SegmentCache.h>
 #include <normal/core/cache/LoadRequestMessage.h>
 #include <normal/core/cache/LoadResponseMessage.h>

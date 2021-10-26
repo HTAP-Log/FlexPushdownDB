@@ -7,23 +7,23 @@
 
 #include <unordered_map>
 #include <memory>
-#include "DeltaCacheKey.h"
-#include "DeltaCacheData.h"
+#include <deltamanager/DeltaCacheKey.h>
+#include <deltamanager/DeltaCacheData.h>
 
 namespace normal::htap::deltamanager {
     class DeltaCache {
     public:
         explicit DeltaCache();
         static std::shared_ptr<DeltaCache> make();
-        void store(const std::shared_ptr<DeltaKey>& key, const std::shared_ptr<DeltaData>& data);
-        tl::expected<std::shared_ptr<DeltaData>, std::string> load(const std::shared_ptr<DeltaKey>& key);
-        unsigned long remove(const std::shared_ptr<DeltaKey>& key);
-        std::shared_ptr<std::vector<std::shared_ptr<DeltaKey>>> toCache(std::shared_ptr<std::vector<std::shared_ptr<DeltaKey>>> deltaKeys);
+        void store(const std::shared_ptr<DeltaCacheKey>& key, const std::shared_ptr<DeltaCacheData>& data);
+        tl::expected<std::shared_ptr<DeltaCacheData>, std::string> load(const std::shared_ptr<DeltaCacheKey>& key);
+        unsigned long remove(const std::shared_ptr<DeltaCacheKey>& key);
+        std::shared_ptr<std::vector<std::shared_ptr<DeltaCacheKey>>> toCache(std::shared_ptr<std::vector<std::shared_ptr<DeltaCacheKey>>> deltaKeys);
         size_t getSize() const;
     private:
         // a vector of maps, each vector corresponds to a specific table and
         // partition and saves different versions of deltas
-        std::unordered_map<std::shared_ptr<DeltaKey>, std::shared_ptr<DeltaData>, DeltaKeyPointerHash, DeltaKeyPointerPredicate> deltaMap_;
+        std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>, DeltaKeyPointerHash, DeltaKeyPointerPredicate> deltaMap_;
     };
 
 }

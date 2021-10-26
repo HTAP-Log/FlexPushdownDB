@@ -8,22 +8,21 @@ using namespace normal::htap::deltamanager;
 
 DeltaCache::DeltaCache(){}
 
-static std::shared_ptr<DeltaCache> DeltaCache::make(){
+std::shared_ptr<DeltaCache> DeltaCache::make(){
     return std::make_shared<DeltaCache>();
 }
 
-void DeltaCache::store(const std::shared_ptr<DeltaKey>& key, const std::shared_ptr<DeltaData>& data){
+void DeltaCache::store(const std::shared_ptr<DeltaCacheKey>& key, const std::shared_ptr<DeltaCacheData>& data){
     deltaMap_.emplace(key, data);
 }
 
-unsigned long DeltaCache::remove(const std::shared_ptr<DeltaKey>& key){
+unsigned long DeltaCache::remove(const std::shared_ptr<DeltaCacheKey>& key){
     for(unsigned i=0; i<deltaMap_.bucket_count(); i++) {
-        for (auto it = deltamap_.begin(i); it != deltamap_.end(i); it++) {
-            if (it->first == key->getTableName() && it->second == key->getPartition() &&
-                it->third == key->getTimestamp())
-                deltamap_.erase(it);
+        for (auto it = deltaMap_.begin(i); it != deltaMap_.end(i); it++) {
+            /*if (it->first == key->getTableName() && it->second == key->getPartition() && it->third == key->getTimestamp())
+                deltaMap_.erase(i);
             else
-                break;
+                break;*/
         }
     }
 }

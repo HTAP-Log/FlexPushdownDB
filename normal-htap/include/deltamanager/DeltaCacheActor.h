@@ -3,31 +3,35 @@
 //
 
 
-#ifndef NORMAL_DELTASCACHEACTOR_H
-#define NORMAL_DELTASCACHEACTOR_H
+#ifndef NORMAL_DELTACACHEACTOR_H
+#define NORMAL_DELTACACHEACTOR_H
 
-#include <normal/core/Operator.h>
-#include <normal/core/message/CompleteMessage.h>
-#include <normal/core/message/TupleMessage.h>
-#include <normal/tuple/TupleSet2.h>
+#include <caf/all.hpp>
+#include <deltamanager/DeltaCache.h>
+#include <deltamanager/StoreDeltaRequestMessage.h>
+#include <deltamanager/LoadDeltaRequestMessage.h>
+#include <deltamanager/LoadDeltaResponseMessage.h>
 #include <string>
 
-using namespace normal::avro_tuple::make;
-using namespace normal::htap::deltamanager;
+using namespace caf;
 
 namespace normal::htap::deltamanager {
 
-    struct DeltasCacheActorState {
+    struct DeltaCacheActorState {
         std::string name = "deltas-cache";
-        std::shared_ptr<DeltasCache> deltasCache;
+        std::shared_ptr<DeltaCache> deltasCache;
     };
 
-    class DeltasCacheActor {
+    using StoreDeltaAtom = atom_constant<atom("StoreDelta")>;
+    using LoadDeltaAtom = atom_constant<atom("LoadDelta")>;
+
+    class DeltaCacheActor {
     public:
-        static std::shared_ptr <LoadResponseMessage> loadMemoryDeltas(const LoadRequestMessage &msg,
-                                                                      stateful_actor <DeltasCacheActorState> *self);
-        static void storeTail(const StoreRequestMessage &msg, stateful_actor <DeltasCacheActorState> *self);
+        [[maybe_unused]] behavior makeBehaviour(caf::stateful_actor<DeltaCacheActorState> *self);
+        /*static std::shared_ptr <LoadDeltaResponseMessage> loadMemoryDeltas(const LoadDeltaRequestMessage &msg,
+                                                                      stateful_actor <DeltaCacheActorState> *self);*/
+        static void storeTail(const StoreDeltaRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self);
     };
 }
 
-#endif //NORMAL_DELTASCACHEACTOR_H
+#endif //NORMAL_DELTACACHEACTOR_H
