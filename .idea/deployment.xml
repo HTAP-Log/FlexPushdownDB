@@ -5,7 +5,7 @@
       <paths name="aws-htap (cfad8419-f333-4f68-8700-f227200bd669)">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/ubuntu/FlexPushdownDB-elena-3" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/ubuntu/FlexPushdownDB-Elena-DM" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/private" />

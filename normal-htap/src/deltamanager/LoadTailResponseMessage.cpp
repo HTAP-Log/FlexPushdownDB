@@ -1,31 +1,34 @@
 //
+// Created by Elena Milkai on 10/28/21.
+//
+
+//
 // Created by Elena Milkai on 10/25/21.
 //
 
-#include <deltamanager/StoreDeltaRequestMessage.h>
+#include <deltamanager/LoadTailResponseMessage.h>
 
 using namespace normal::htap::deltamanager;
 
-
-StoreDeltaRequestMessage::StoreDeltaRequestMessage(
+LoadTailResponseMessage::LoadTailResponseMessage(
         std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>> deltas,
         const std::string &sender) :
-        Message("StoreRequestMessage", sender),
+        Message("LoadTailResponseMessage", sender),
         deltas_(std::move(deltas)) {}
 
-std::shared_ptr<StoreDeltaRequestMessage>
-StoreDeltaRequestMessage::make(const std::unordered_map<std::shared_ptr<DeltaCacheKey>,
+std::shared_ptr<LoadTailResponseMessage>
+LoadTailResponseMessage::make(const std::unordered_map<std::shared_ptr<DeltaCacheKey>,
         std::shared_ptr<DeltaCacheData>>& deltas,
-        const std::string &sender) {
-    return std::make_shared<StoreDeltaRequestMessage>(deltas, sender);
+                               const std::string &sender) {
+    return std::make_shared<LoadTailResponseMessage>(deltas, sender);
 }
 
 [[nodiscard]] const std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>> &
-StoreDeltaRequestMessage::getTailDelta() const {
+LoadTailResponseMessage::getTailDelta() const {
     return deltas_;
 }
 
-[[nodiscard]] std::string StoreDeltaRequestMessage::toString() const {
+[[nodiscard]] std::string LoadTailResponseMessage::toString() const {
     /*std::string s = "{";
     for (auto it = deltas_.begin(); it != deltas_.end(); ++it) {
         s += fmt::format("{}", it->first->toString());

@@ -15,9 +15,11 @@ add_library(normal-htap STATIC
         src/deltamanager/DeltaCacheActor.cpp include/deltamanager/DeltaCacheActor.h
         src/deltamanager/DeltaCache.cpp include/deltamanager/DeltaCache.h
         src/deltamanager/DeltaCacheKey.cpp include/deltamanager/DeltaCacheKey.h
-        src/deltamanager/LoadDeltaRequestMessage.cpp include/deltamanager/LoadDeltaRequestMessage.h
-        src/deltamanager/LoadDeltaResponseMessage.cpp include/deltamanager/LoadDeltaResponseMessage.h
-        src/deltamanager/StoreDeltaRequestMessage.cpp include/deltamanager/StoreDeltaRequestMessage.h
+        src/deltamanager/LoadDeltasRequestMessage.cpp include/deltamanager/LoadDeltasRequestMessage.h
+        src/deltamanager/LoadDeltasResponseMessage.cpp include/deltamanager/LoadDeltasResponseMessage.h
+        src/deltamanager/LoadTailRequestMessage.cpp include/deltamanager/LoadTailRequestMessage.h
+        src/deltamanager/LoadTailResponseMessage.cpp include/deltamanager/LoadTailResponseMessage.h
+        src/deltamanager/CacheHandler.cpp include/deltamanager/CacheHandler.h
         )
 
 target_include_directories(normal-htap PUBLIC include)

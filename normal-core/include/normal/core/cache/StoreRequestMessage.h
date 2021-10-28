@@ -28,7 +28,7 @@ public:
   make(const std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>>& segments,
 	   const std::string &sender);
 
-  [[nodiscard]] const std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>> &
+  [[nodiscard]] const  std::unordered_map<std::shared_ptr<SegmentKey>, std::shared_ptr<SegmentData>> &
   getSegments() const;
 
   [[nodiscard]] std::string toString() const;

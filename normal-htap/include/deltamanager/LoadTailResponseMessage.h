@@ -1,12 +1,11 @@
 //
-// Created by Elena Milkai on 10/25/21.
+// Created by Elena Milkai on 10/28/21.
 //
 
-#ifndef NORMAL_STOREDELTAREQUESTMESSAGE_H
-#define NORMAL_STOREDELTAREQUESTMESSAGE_H
+#ifndef NORMAL_LOADTAILRESPONSEMESSAGE_H
+#define NORMAL_LOADTAILRESPONSEMESSAGE_H
 
 #include <normal/core/message/Message.h>
-
 #include <deltamanager/DeltaCacheKey.h>
 #include <deltamanager/DeltaCacheData.h>
 
@@ -14,13 +13,13 @@ using namespace normal::core::message;
 
 namespace normal::htap::deltamanager {
 
-    class StoreDeltaRequestMessage : public Message {
+    class LoadTailResponseMessage : public Message {
 
     public:
-        StoreDeltaRequestMessage(std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>> deltas,
-                            const std::string &sender);
+        LoadTailResponseMessage(std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>> deltas,
+                                 const std::string &sender);
 
-        static std::shared_ptr<StoreDeltaRequestMessage>
+        static std::shared_ptr<LoadTailResponseMessage>
         make(const std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>>& deltas,
              const std::string &sender);
 
@@ -35,4 +34,4 @@ namespace normal::htap::deltamanager {
 
 }
 
-#endif //NORMAL_STOREDELTAREQUESTMESSAGE_H
+#endif //NORMAL_LOADTAILRESPONSEMESSAGE_H
