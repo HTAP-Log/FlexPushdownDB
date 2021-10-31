@@ -265,26 +265,14 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
         auto originalTable  = stables_[i]; // Get the original stable file
 
         for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
+            auto curCol = originalTable->getColumnByIndex(c).value();
             for (size_t r = 0; r < originalTable->numRows(); r++) {
-                if (deleteSet.find(r) == deleteSet.end()) continue;
-
-                auto x = originalTable->getColumnByIndex(c).value()->element(r).value();
+                if (deleteSet.count(r)) continue;
+                auto x = curCol->element(r).value();
                 columnBuilderArray[c]->append(x);
             }
         }
-
-        // now we try to loop through the entire file
-//        for (size_t r = 0; r < originalTable->numRows(); r++) {
-//            if (deleteSet.find(r) == deleteSet.end()) continue;
-//            // if the row is found, then copy it one column by one column
-//            for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
-//                auto x = originalTable->getColumnByIndex(c).value()->element(r).value();
-//                columnBuilderArray[c]->append(x);
-//            }
-//        }
     }
-
-
 
     // Do the same thing again to the deltas
     for (int i = 0; i < deltaTracker_.size(); i++) {
@@ -293,20 +281,12 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
         auto originalTable  = deltas_[i]; // Get the original stable file
 
         for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
+            auto curCol = originalTable->getColumnByIndex(c).value();
             for (size_t r = 0; r < originalTable->numRows(); r++) {
                 if (deleteSet.find(r) == deleteSet.end()) continue;
-                columnBuilderArray[c]->append(originalTable->getColumnByIndex(c).value()->element(r).value());
+                columnBuilderArray[c]->append(curCol->element(r).value());
             }
         }
-
-        // now we try to loop through the entire file
-//        for (size_t r = 0; r < originalTable->numRows(); r++) {
-//            if (deleteSet.find(r) == deleteSet.end()) continue;
-//            // if the row is found, then copy it one column by one column
-//            for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
-//                columnBuilderArray[c]->append(originalTable->getColumnByIndex(c).value()->element(r).value());
-//            }
-//        }
     }
 
     std::vector<std::shared_ptr<Column>> builtColumns;

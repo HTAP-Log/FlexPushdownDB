@@ -52,13 +52,13 @@ std::shared_ptr<normal::tuple::TupleSet2> Filter::evaluate(const normal::tuple::
 		throw std::runtime_error(status.message());
 	  }
 
-	  SPDLOG_DEBUG("Evaluated SelectionVector  |  vector: {}", selection_vector->ToArray()->ToString());
+	  SPDLOG_CRITICAL("Evaluated SelectionVector  |  vector: {}", selection_vector->ToArray()->ToString());
 
 	  // Evaluate the expressions
 	  std::shared_ptr<::arrow::Table> batchArrowTable;
 
 	  /**
-	   * NOTE: Gandiva fails if the projector is evaluated using an empty selection vector, so need to test for it
+	   * NOTE: Gandiva fails if the projector is evaluated using an empty selection vector, so need to test for
 	   */
 	  if(selection_vector->GetNumSlots() > 0) {
 		arrow::ArrayVector outputs;
