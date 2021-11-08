@@ -32,7 +32,7 @@ void SegmentCache::store(const std::shared_ptr<SegmentKey> &key, const std::shar
   }
 }
 
-tl::expected<std::shared_ptr<SegmentData>,
+tl::expected<std::shared_ptr<SegmentData>
 			 std::string> SegmentCache::load(const std::shared_ptr<SegmentKey> &key) {
 
   cachingPolicy_->onLoad(key);

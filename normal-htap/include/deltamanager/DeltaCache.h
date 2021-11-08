@@ -9,21 +9,42 @@
 #include <memory>
 #include <deltamanager/DeltaCacheKey.h>
 #include <deltamanager/DeltaCacheData.h>
+#include <normal/tuple/TupleSet2.h>
 
 namespace normal::htap::deltamanager {
     class DeltaCache {
     public:
         explicit DeltaCache();
         static std::shared_ptr<DeltaCache> make();
+
+        /**
+         * Function used to store to the input tail to the specific container in cache.
+         * @param key
+         * @param data
+         */
         void store(const std::shared_ptr<DeltaCacheKey>& key, const std::shared_ptr<DeltaCacheData>& data);
-        tl::expected<std::shared_ptr<DeltaCacheData>, std::string> load(const std::shared_ptr<DeltaCacheKey>& key);
-        unsigned long remove(const std::shared_ptr<DeltaCacheKey>& key);
-        std::shared_ptr<std::vector<std::shared_ptr<DeltaCacheKey>>> toCache(std::shared_ptr<std::vector<std::shared_ptr<DeltaCacheKey>>> deltaKeys);
-        size_t getSize() const;
+
+        /**
+         * Function used to return all the different versions of deltas for a specific table and partition.
+         * @param key
+         * @return the deltas in the <TupleSet2> data format.
+         */
+       std::shared_ptr<TupleSet2> load(const std::shared_ptr<DeltaCacheKey>& key);
+
+        /**
+         * Function used to evict deltas from cache when there is not enough space for the new tail  to be inserted.
+         * @param key
+         */
+        void remove(const std::shared_ptr<DeltaCacheKey>& key);
+
+
     private:
-        // a vector of maps, each vector corresponds to a specific table and
-        // partition and saves different versions of deltas
-        std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>, DeltaKeyPointerHash, DeltaKeyPointerPredicate> deltaMap_;
+        // a vector of containers (unordered_multimap), each one per table
+        // choose multimap: each bucket can have multiple entries with same key, our key is the partition
+        std::vector<std::unordered_multimap<std::shared_ptr<DeltaCacheKey>,
+                                            std::shared_ptr<DeltaCacheData>,
+                                            DeltaKeyPointerHash,
+                                            DeltaKeyPointerPredicate>> deltaMap_;
     };
 
 }

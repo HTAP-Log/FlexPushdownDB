@@ -14,7 +14,7 @@ std::shared_ptr<LoadResponseMessage> SegmentCacheActor::load(const LoadRequestMe
 
   std::unordered_map<std::shared_ptr<SegmentKey>,
 					 std::shared_ptr<SegmentData>,
-					 SegmentKeyPointerHash,
+					 SegmentKeayPointerHash,
 					 SegmentKeyPointerPredicate> segments;
 
   auto missSegmentKeys = std::make_shared<std::vector<std::shared_ptr<SegmentKey>>>();

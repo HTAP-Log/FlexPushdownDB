@@ -116,6 +116,7 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
   std::vector<std::string> missedCachingColumnNames;
   std::vector<std::string> missedPushdownColumnNames;
 
+
   // Gather missed caching segment columns
   auto segmentKeysToCache = Message.getSegmentKeysToCache();
   missedCachingColumnNames.reserve(segmentKeysToCache.size());
@@ -293,7 +294,6 @@ void CacheLoad::onCacheLoadResponse(const LoadResponseMessage &Message) {
       ctx()->send(missPushdownMessage, missOperatorToPushdown_.lock()->name());
     }
   }
-
   ctx()->notifyComplete();
 }
 

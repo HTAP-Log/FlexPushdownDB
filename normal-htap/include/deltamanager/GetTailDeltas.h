@@ -73,6 +73,9 @@ namespace normal::htap::deltamanager {
          * @return column-oriented deltas
          */
         std::shared_ptr<normal::tuple::TupleSet2> rowToColumn(std::vector<LineorderDelta_t>& deltaTuples);
+
+
+        void sendResponce();
     };
 }
 

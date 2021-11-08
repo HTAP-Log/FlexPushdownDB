@@ -8,9 +8,9 @@
 
 #include <caf/all.hpp>
 #include <deltamanager/DeltaCache.h>
-#include <deltamanager/StoreDeltaRequestMessage.h>
-#include <deltamanager/LoadDeltaRequestMessage.h>
-#include <deltamanager/LoadDeltaResponseMessage.h>
+#include <deltamanager/LoadDeltasRequestMessage.h>
+#include <deltamanager/LoadDeltasResponseMessage.h>
+#include <deltamanager/StoreTailRequestMessage.h>
 #include <string>
 
 using namespace caf;
@@ -28,9 +28,9 @@ namespace normal::htap::deltamanager {
     class DeltaCacheActor {
     public:
         [[maybe_unused]] behavior makeBehaviour(caf::stateful_actor<DeltaCacheActorState> *self);
-        static std::shared_ptr <LoadDeltaResponseMessage> loadMemoryDeltas(const LoadDeltaRequestMessage &msg,
+        static std::shared_ptr <LoadDeltasResponseMessage> loadMemoryDeltas(const LoadDeltasRequestMessage &msg,
                                                                       stateful_actor <DeltaCacheActorState> *self);
-        static void storeTail(const StoreDeltaRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self);
+        static void storeTail(const StoreTailRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self);
     };
 }
 

@@ -13,18 +13,18 @@ namespace normal::htap::deltamanager{
 
     class DeltaCacheKey{
     public:
-        explicit DeltaCacheKey(const std::string& tableName, const int& partition, const int& timestamp);
-        static std::shared_ptr<DeltaCacheKey> make(const std::string& tableName, const int& partition, const int& timestamp);
+        explicit DeltaCacheKey(const std::string& tableName, const int& partition);
+        static std::shared_ptr<DeltaCacheKey> make(const std::string& tableName, const int& partition);
         size_t hash();
+        int tableToVector();
         bool operator==(const DeltaCacheKey& other) const;
         bool operator!=(const DeltaCacheKey& other) const;
         [[nodiscard]] const std::string &getTableName() const;
         [[nodiscard]] const int &getPartition() const;
-        [[nodiscard]] const int &getTimestamp() const;
+
         std::string toString();
     private:
         std::string tableName_;
-        int timestamp_;
         int partition_;
     };
 

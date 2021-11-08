@@ -29,9 +29,8 @@ namespace normal::htap::deltamanager {
         [[nodiscard]] std::string toString() const;
 
     private:
-        std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>> deltas_;
+        std::unordered_map<std::shared_ptr<DeltaCacheKey>, std::shared_ptr<DeltaCacheData>> tail_;
     };
-
 }
 
 #endif //NORMAL_LOADTAILRESPONSEMESSAGE_H

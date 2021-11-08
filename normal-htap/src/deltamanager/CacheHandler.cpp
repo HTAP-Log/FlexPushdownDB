@@ -47,11 +47,31 @@ void CacheHandler::onStart() {
 
 void CacheHandler::OnLoadDeltas(const LoadDeltasRequestMessage &message){
 
+    const auto &deltaKeys = message.getDeltaKeys();
+    for(unsigned int i=0; i<deltaKeys.size(); i++){
+        if(deltaKeys[i]->getTimestamp())
+    }
+    std::shared_ptr<LoadTailRequestMessage>
+           tailRequest = std::make_str<normal::htap::deltamanager::LoadTailRequestMessage>(, this->name());
+    this->sendResponse(message.getDeltaKeys());  // send response with the deltas to DeltaMerge
 
 }
 
 
 void CacheHandler::OnTailResponse(const LoadTailResponseMessage &message){
 
+   //this->sendResponse();
+
+}
+
+
+void CacheHandler::sendResponse(const std::vector <std::shared_ptr<DeltaCacheKey>> &deltaKeys){
+
+    std::shared_ptr<normal::core::message::Message>
+            message = std::make_shared<core::message::TupleMessage>(deltaPartitionTable->toTupleSetV1(), this->name());
+
+    ctx()->tell(message);
+    ctx()->notifyComplete();
+    ctx()->send();
 
 }
