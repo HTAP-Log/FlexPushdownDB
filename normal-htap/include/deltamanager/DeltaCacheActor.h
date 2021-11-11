@@ -35,7 +35,8 @@ namespace normal::htap::deltamanager {
         [[maybe_unused]] static behavior makeBehaviour(caf::stateful_actor<DeltaCacheActorState> *self);
 
         /**
-         * Request for deltas coming from the DeltaMerge operators.
+         * Request for deltas coming from the DeltaMerge operators. This will also trigger a call from DeltaPump
+         * as an instant tail update.
          * @param msg
          * @param self
          * @return the response with the requested deltas (memory and tail).

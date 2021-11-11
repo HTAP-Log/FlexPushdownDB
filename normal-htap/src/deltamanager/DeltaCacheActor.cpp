@@ -6,6 +6,9 @@
 #include <deltamanager/LoadDeltasResponseMessage.h>
 #include <deltamanager/LoadDeltasRequestMessage.h>
 #include <deltamanager/StoreTailRequestMessage.h>
+#include <deltamanager/GetTailDeltas.h>
+
+#include <normal/connector/MiniCatalogue.h>
 
 using namespace normal::htap::deltamanager;
 
@@ -42,11 +45,27 @@ using namespace normal::htap::deltamanager;
 std::shared_ptr <LoadDeltasResponseMessage> DeltaCacheActor::loadMemoryDeltas(
         const LoadDeltasRequestMessage &msg,
         stateful_actor <DeltaCacheActorState> *self){
+    // instant update
+    const std::shared_ptr<DeltaCacheKey>& deltaCacheKey = msg.getDeltaKey();
+    const std::string tableName = deltaCacheKey->getTableName();
+    // TODO: once DeltaPump is called it pumps all the partitions from a table
+    auto outputSchema = normal::connector::defaultMiniCatalogue->getDeltaSchema(tableName);
+    std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> allNewDeltas = deltamanager::callDeltaPump(outputSchema);
+    // Action: we need to merge all partitions, not just the partition for this single query
+    for (const auto& delta: *allNewDeltas) {
+        int partition = delta.first;
+        std::shared_ptr<normal::tuple::TupleSet2> deltaTable = delta.second;
+        std::shared_ptr<DeltaCacheKey> key = DeltaCacheKey::make(tableName, partition);
+        std::shared_ptr<DeltaCacheData> data = DeltaCacheData::make(deltaTable, 0); // TODO: change the timestamp from 0 to a real value
+        self->state.deltasCache->store(key, data);
+    }
+    // now we load the delta
+    std::shared_ptr<TupleSet2> freshDelta = self->state.deltasCache->load(deltaCacheKey);
+    std::shared_ptr<LoadDeltasResponseMessage> response = LoadDeltasResponseMessage::make(freshDelta, msg.sender());
+    return response;
 }
 
 void DeltaCacheActor::storeTail(const StoreTailRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self){
-    //SPDLOG_DEBUG("Store  |  storeMessage: {}", msg.toString());
-    //auto key = msg.getTailKey().begin()->first;
-    //self->state.deltasCache->store(key, data);
-
+    // periodical update
+    // TODO: implement this
 }
