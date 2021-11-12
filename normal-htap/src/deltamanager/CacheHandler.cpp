@@ -1,7 +1,6 @@
 //
 // Created by Elena Milkai on 10/14/21.
 //
-
 #include <deltamanager/CacheHandler.h>
 
 using namespace normal::htap::deltamanager;
@@ -28,50 +27,40 @@ std::shared_ptr<CacheHandler> CacheHandler::make(const std::string& OperatorName
 void CacheHandler::onReceive(const core::message::Envelope &msg) {
     if (msg.message().type() == "StartMessage") {
         this->onStart();
-    } else if (msg.message().type() == "LoadDeltas") {  // DeltaMerge sends a request of m-deltas to the CacheHandler
+    } else if (msg.message().type() == "LoadDeltasRequestMessage") {  //DeltaMerge sends a request to CacheHandler
         auto loadDeltasMessage = dynamic_cast<const LoadDeltasRequestMessage &>(msg.message());
-        this->OnLoadDeltas(loadDeltasMessage);
-    } else if (msg.message().type() == "TailResponse") {  // GetTailDelta sends the response with the tail
-        auto tailMessage = dynamic_cast<const LoadTailResponseMessage &>(msg.message());
-        this->OnTailResponse(tailMessage);
+        this->OnDeltasRequest(loadDeltasMessage);
+    } else if (msg.message().type() == "StoreTailRequestMessage") {  //Request for periodic tail reading arrived
+        //auto tailMessage = dynamic_cast<const LoadTailResponseMessage &>(msg.message());
+        //this->OnTailRequest(tailMessage);
+    } else if (msg.message().type() == "LoadDeltasResponseMessage"){ //DeltaCacheActor sends response to CacheHandler
+
     } else {
-        throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}",
-                                             msg.message().type(),
-                                             name()));
-    }
+            throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}",
+                                                 msg.message().type(),
+                                                 name()));
+        }
 }
+
 
 void CacheHandler::onStart() {
     SPDLOG_DEBUG("Starting operator '{}'", name());
-}
-
-void CacheHandler::OnLoadDeltas(const LoadDeltasRequestMessage &message){
-
-    const auto &deltaKeys = message.getDeltaKeys();
-    for(unsigned int i=0; i<deltaKeys.size(); i++){
-        if(deltaKeys[i]->getTimestamp())
-    }
-    std::shared_ptr<LoadTailRequestMessage>
-           tailRequest = std::make_str<normal::htap::deltamanager::LoadTailRequestMessage>(, this->name());
-    this->sendResponse(message.getDeltaKeys());  // send response with the deltas to DeltaMerge
 
 }
 
+void CacheHandler::OnDeltasRequest(const LoadDeltasRequestMessage &message){
 
-void CacheHandler::OnTailResponse(const LoadTailResponseMessage &message){
+    const auto &deltaKey = message.getDeltaKey();
+    const auto &sender = message.sender();
 
-   //this->sendResponse();
-
+    ctx()->send(LoadDeltasRequestMessage::make(deltaKey, sender), "SegmentCache")
+            .map_error([](auto err) { throw std::runtime_error(err); });
 }
 
 
-void CacheHandler::sendResponse(const std::vector <std::shared_ptr<DeltaCacheKey>> &deltaKeys){
-
-    std::shared_ptr<normal::core::message::Message>
-            message = std::make_shared<core::message::TupleMessage>(deltaPartitionTable->toTupleSetV1(), this->name());
-
-    ctx()->tell(message);
-    ctx()->notifyComplete();
-    ctx()->send();
-
+void CacheHandler::OnTailRequest(const StoreTailRequestMessage &message){
+    //TODO: implement function
 }
+
+
+void CacheHandler::OnDeltasResponse(const LoadDeltasResponseMessage &message){}

@@ -14,6 +14,7 @@
 #include "normal/core/message/Message.h"
 #include "normal/core/ATTIC/Actors.h"
 #include <deltamanager/LoadDeltasRequestMessage.h>
+#include <deltamanager/StoreTailRequestMessage.h>
 #include <deltamanager/DeltaCacheActor.h>
 
 namespace normal::core {
@@ -61,15 +62,21 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
 	return {};
   }
 
-  /*else if(recipientId == "DeltaCache"){
-      if(msg->type() == "LoadDeltasRequestMessage"){
-          operatorActor_->anon_send(deltaCacheActor_, normal::htap::deltamanager::LoadDeltaAtom::value, std::static_pointer_cast<normal::htap::deltamanager::LoadDeltasRequestMessage>(msg));
+  else if(recipientId == "DeltaCache"){
+      if(msg->type() == "LoadDeltasRequestMessage"){  // send to the DeltaCacheActor the LoadDeltasRequestMessage
+          operatorActor_->request(deltaCacheActor_, infinite, normal::htap::deltamanager::LoadDeltaAtom::value, std::static_pointer_cast<normal::htap::deltamanager::LoadDeltasRequestMessage>(msg))
+          .then([=](const std::shared_ptr<normal::core::cache::LoadResponseMessage>& response){
+          operatorActor_->anon_send(this->operatorActor(), Envelope(response));
+          });
+      }
+      else if(msg->type() == "StoreTailRequestMessage"){  // send to DeltaCacheActor the StoreTailRequestMessage
+          operatorActor_->anon_send(deltaCacheActor_, normal::htap::deltamanager::StoreDeltaAtom::value, std::static_pointer_cast<normal::htap::deltamanager::StoreTailRequestMessage>(msg));
       }
       else{
           throw std::runtime_error("Unrecognized message " + msg->type());
       }
       return {};
-  }*/
+  }
 
 
   auto expectedOperator = operatorMap_.get(recipientId);

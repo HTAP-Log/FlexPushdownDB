@@ -23,7 +23,7 @@ namespace normal::htap::deltamanager {
     };
 
     using StoreDeltaAtom = atom_constant<atom("StoreDelta")>;
-    using LoadDeltaAtom = atom_constant<atom("LoadDelta")>;
+    using LoadDeltaAtom = atom_constant<atom("LoadDeltas")>;
 
     class DeltaCacheActor {
     public:
@@ -51,5 +51,10 @@ namespace normal::htap::deltamanager {
         static void storeTail(const StoreTailRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self);
     };
 }
+
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::LoadDeltasRequestMessage>)
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::LoadDeltasResponseMessage>)
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::StoreTailRequestMessage>)
+
 
 #endif //NORMAL_DELTACACHEACTOR_H

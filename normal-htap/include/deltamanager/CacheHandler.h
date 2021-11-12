@@ -1,7 +1,7 @@
 //
 // Created by Elena Milkai on 10/14/21.
 //
-
+// ------CacheHandler potentially used later--------
 #ifndef NORMAL_CACHEHANDLER_H
 #define NORMAL_CACHEHANDLER_H
 
@@ -9,7 +9,11 @@
 #include <normal/tuple/TupleSet2.h>
 #include <deltamanager/LoadDeltasRequestMessage.h>
 #include <deltamanager/LoadDeltasResponseMessage.h>
+#include <deltamanager/StoreTailRequestMessage.h>
+#include <normal/core/OperatorContext.h>
 #include <string>
+
+using namespace normal::core;
 
 namespace normal::htap::deltamanager {
 
@@ -30,26 +34,25 @@ namespace normal::htap::deltamanager {
         void onReceive(const core::message::Envelope &msg) override;
         void onStart();
         /**
+         * Function executed after CacheHandler receives a LoadDeltasRequestMessage message from DeltaMerge. It passes
+         * the message to DeltaCacheActor.
          * @param message
-         * When the CacheHandler receives a LoadDeltasRequest msg from the DeltaMerge then, it checks If the requested
-         * deltas' keys are already in memory. If yes, the CacheHandler sends a LoadDeltasResponse msg to
-         * DeltaMerge with the requested deltas. If not, then the CacheHandler send a LoadTailRequest msg to the
-         * GetTailDeltas.
          */
-        void OnLoadDeltas(const LoadDeltasRequestMessage &message);
+        void OnDeltasRequest(const LoadDeltasRequestMessage &message);
         /**
          * @param message
-         * When the CacheHandler receives a LoadTailResponse msg from the GetTailDeltas then, it first stores the tail
-         * delta in memory. Next, the CacheHandler collects all the deltas and send a LoadDeltasResponse msg to the
-         * DeltaMerge operator.
+         * Function executed after CacheHandler receives a ?? message for periodic reading of tail. It passes the
+         * message to the DeltaCacheActor.
+         * TODO:: need to be implemented
          */
-        void OnTailResponse(const LoadTailResponseMessage &message);
+        void OnTailRequest(const StoreTailRequestMessage &message);
 
         /**
          * @param deltaKeys
-         * Accesses memory deltas and sends response with the deltas to the DeltaMerge operator.
+         * Function that receives the memory deltas and tail from the DeltaCacheActor and sends response to
+         * the DeltaMerge operator.
          */
-        void sendResponse(const std::vector<std::shared_ptr<DeltaCacheKey>> &deltaKeys);
+        void OnDeltasResponse(const LoadDeltasResponseMessage &message);
 
     private:
         std::string tableName_;

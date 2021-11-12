@@ -3,9 +3,6 @@
 //
 
 #include <deltamanager/DeltaCacheActor.h>
-#include <deltamanager/LoadDeltasResponseMessage.h>
-#include <deltamanager/LoadDeltasRequestMessage.h>
-#include <deltamanager/StoreTailRequestMessage.h>
 #include <deltamanager/GetTailDeltas.h>
 
 #include <normal/connector/MiniCatalogue.h>

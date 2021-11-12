@@ -69,8 +69,8 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
     auto queryId = getQueryId();
 
     // Construct the global single GetTailDeltas operator to generate deltas from DeltaPump
-    std::shared_ptr<htap::deltamanager::GetTailDeltas> getTailDeltasOperator =
-            htap::deltamanager::GetTailDeltas::make(getName(), "Global GetTailDeltas Operator", queryId, miniCatalogue->getDeltaSchema(getName()));
+    /*std::shared_ptr<htap::deltamanager::GetTailDeltas> getTailDeltasOperator =
+            htap::deltamanager::GetTailDeltas::make(getName(), "Global GetTailDeltas Operator", queryId, miniCatalogue->getDeltaSchema(getName()));*/
 
     // TODO: Figure out how to construct one-to-many relationship with actors
 
