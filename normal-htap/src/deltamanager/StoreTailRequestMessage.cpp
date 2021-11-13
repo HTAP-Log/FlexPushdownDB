@@ -13,7 +13,7 @@ StoreTailRequestMessage::StoreTailRequestMessage(std::shared_ptr<DeltaCacheKey> 
 
 
 std::shared_ptr <StoreTailRequestMessage> StoreTailRequestMessage::make(
-        std::shared_ptr<DeltaCacheKey> &tailKey,
+        const std::shared_ptr<DeltaCacheKey> &tailKey,
         const std::string &sender) {
     return std::make_shared<StoreTailRequestMessage>(tailKey, sender);
 }

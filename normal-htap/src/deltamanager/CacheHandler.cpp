@@ -7,21 +7,18 @@ using namespace normal::htap::deltamanager;
 
 CacheHandler::CacheHandler(const std::string& OperatorName,
                      const std::string& tableName,
-                     const int &partition,
-                     const int &timestamp,
+                     const std::shared_ptr<Partition> partition,
                      const long queryId):
                      core::Operator(OperatorName, "CacheHandler", queryId){
     tableName_ = tableName;
     partition_ = partition;
-    timestamp_ = timestamp;
 }
 
 std::shared_ptr<CacheHandler> CacheHandler::make(const std::string& OperatorName,
                                                    const std::string& tableName,
-                                                   const int &partition,
-                                                   const int &timestamp,
+                                                   const std::shared_ptr<Partition> partition,
                                                    const long queryId) {
-    return std::make_shared<CacheHandler>(OperatorName, tableName, partition, timestamp, queryId);
+    return std::make_shared<CacheHandler>(OperatorName, tableName, partition, queryId);
 }
 
 void CacheHandler::onReceive(const core::message::Envelope &msg) {
@@ -31,8 +28,8 @@ void CacheHandler::onReceive(const core::message::Envelope &msg) {
         auto loadDeltasMessage = dynamic_cast<const LoadDeltasRequestMessage &>(msg.message());
         this->OnDeltasRequest(loadDeltasMessage);
     } else if (msg.message().type() == "StoreTailRequestMessage") {  //Request for periodic tail reading arrived
-        //auto tailMessage = dynamic_cast<const LoadTailResponseMessage &>(msg.message());
-        //this->OnTailRequest(tailMessage);
+        auto tailMessage = dynamic_cast<const StoreTailRequestMessage &>(msg.message());
+        this->OnTailRequest(tailMessage);
     } else if (msg.message().type() == "LoadDeltasResponseMessage"){ //DeltaCacheActor sends response to CacheHandler
 
     } else {
@@ -45,7 +42,6 @@ void CacheHandler::onReceive(const core::message::Envelope &msg) {
 
 void CacheHandler::onStart() {
     SPDLOG_DEBUG("Starting operator '{}'", name());
-
 }
 
 void CacheHandler::OnDeltasRequest(const LoadDeltasRequestMessage &message){
@@ -59,8 +55,9 @@ void CacheHandler::OnDeltasRequest(const LoadDeltasRequestMessage &message){
 
 
 void CacheHandler::OnTailRequest(const StoreTailRequestMessage &message){
-    //TODO: implement function
+    const auto &tailKey = message.getTailKey();
+    const auto &sender = message.sender();
+    ctx()->send(StoreTailRequestMessage::make(tailKey, sender), "SegmentCache")
+            .map_error([](auto err) {throw std::runtime_error(err); });
 }
 
-
-void CacheHandler::OnDeltasResponse(const LoadDeltasResponseMessage &message){}

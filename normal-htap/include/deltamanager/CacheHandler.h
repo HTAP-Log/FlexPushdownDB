@@ -1,7 +1,6 @@
 //
 // Created by Elena Milkai on 10/14/21.
 //
-// ------CacheHandler potentially used later--------
 #ifndef NORMAL_CACHEHANDLER_H
 #define NORMAL_CACHEHANDLER_H
 
@@ -11,6 +10,7 @@
 #include <deltamanager/LoadDeltasResponseMessage.h>
 #include <deltamanager/StoreTailRequestMessage.h>
 #include <normal/core/OperatorContext.h>
+#include <normal/connector/partition/Partition.h>
 #include <string>
 
 using namespace normal::core;
@@ -21,14 +21,12 @@ namespace normal::htap::deltamanager {
     public:
         explicit CacheHandler(const std::string& OperatorName,
                            const std::string& tableName,
-                           const int &partition,
-                           const int &timestamp,
+                           const std::shared_ptr<Partition> partition,
                            const long queryId);
 
         static std::shared_ptr<CacheHandler> make(const std::string& OperatorName,
                                                const std::string& tableName,
-                                               const int &partition,
-                                               const int &timestamp,
+                                               const std::shared_ptr<Partition> partition,
                                                const long queryId);
 
         void onReceive(const core::message::Envelope &msg) override;
@@ -47,17 +45,10 @@ namespace normal::htap::deltamanager {
          */
         void OnTailRequest(const StoreTailRequestMessage &message);
 
-        /**
-         * @param deltaKeys
-         * Function that receives the memory deltas and tail from the DeltaCacheActor and sends response to
-         * the DeltaMerge operator.
-         */
-        void OnDeltasResponse(const LoadDeltasResponseMessage &message);
 
     private:
         std::string tableName_;
-        int timestamp_;
-        int partition_;
+        std::shared_ptr<Partition> partition_;
     };
 }
 

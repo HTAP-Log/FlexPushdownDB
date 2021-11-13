@@ -132,6 +132,11 @@ void DeltaMerge::addDeltaProducer(const std::shared_ptr <Operator> &deltaProduce
     consume(deltaProducer);
 }
 
+void DeltaMerge::addMemoryDeltaProducer(const std::shared_ptr<Operator> &memoryDeltaProducer) {
+    memoryDeltaProducerNames_.insert(memoryDeltaProducer->name());
+    consume(memoryDeltaProducer);
+}
+
 void DeltaMerge::populateArrowTrackers() {
 
     // right now assume all the tuples that we have are in arrow format

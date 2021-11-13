@@ -19,7 +19,7 @@ namespace normal::htap::deltamanager {
                                 const std::string &sender);
 
         static std::shared_ptr<StoreTailRequestMessage>
-        make(std::shared_ptr<DeltaCacheKey> &tailKey,
+        make(const std::shared_ptr<DeltaCacheKey> &tailKey,
              const std::string &sender);
 
         [[nodiscard]] const std::shared_ptr<DeltaCacheKey>& getTailKey() const;

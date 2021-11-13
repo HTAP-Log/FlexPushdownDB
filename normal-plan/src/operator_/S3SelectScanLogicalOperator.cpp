@@ -14,6 +14,7 @@
 #include <normal/connector/MiniCatalogue.h>
 #include <deltamerge/DeltaMerge.h>
 #include <deltamanager/GetTailDeltas.h>
+#include <deltamanager/CacheHandler.h>
 
 using namespace normal::plan::operator_;
 using namespace normal::pushdown;
@@ -126,11 +127,21 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             std::shared_ptr<Operator> stableScanOp;
             auto deltaScanOps = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-            // std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp = normal::htap::deltamerge::DeltaMerge::make(getName(),"deltamerge-"+s3Object, queryId,miniCatalogue->getSchema(getName()));
+            std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandler =
+                    normal::htap::deltamanager::CacheHandler::make("cacheHandler",
+                                                                   getName(),
+                                                                   partition,
+                                                                   queryId);
+            operators->emplace_back(cacheHandler);
             std::string operatorName = "DeltaMerge-lineorder-0";
-            std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp = normal::htap::deltamerge::DeltaMerge::make(getName(), operatorName, queryId,miniCatalogue->getSchema(getName()));
+            std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp =
+                    normal::htap::deltamerge::DeltaMerge::make(getName(),
+                                                               operatorName,
+                                                               queryId,
+                                                               miniCatalogue->getSchema(getName()));
             operators->emplace_back(deltaMergeOp);
-
+            cacheHandler->produce(deltaMergeOp);
+            deltaMergeOp->addMemoryDeltaProducer(cacheHandler);
             stableScanOp = S3Get::make(
                     "s3get-Stable-" + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
                     s3Partition->getBucket(),
