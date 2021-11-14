@@ -31,7 +31,8 @@ void CacheHandler::onReceive(const core::message::Envelope &msg) {
         auto tailMessage = dynamic_cast<const StoreTailRequestMessage &>(msg.message());
         this->OnTailRequest(tailMessage);
     } else if (msg.message().type() == "LoadDeltasResponseMessage"){ //DeltaCacheActor sends response to CacheHandler
-
+        // probably not used since the DeltaCacheActor is directly passing the <TupleSet2> message to the consumer of
+        // CacheHandler
     } else {
             throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}",
                                                  msg.message().type(),

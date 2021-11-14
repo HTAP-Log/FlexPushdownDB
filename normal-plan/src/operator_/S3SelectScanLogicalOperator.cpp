@@ -54,6 +54,38 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
     }
 }
 
+long GetPartitionNumberFromObjectName(std::string s3Object) {
+    // STEP1: separate the string by '/'
+    std::string delimiter = "/";
+    size_t pos = 0;
+    std::string token;
+    std::vector<std::string> splittedBySlash;
+
+    while ((pos = s3Object.find(delimiter)) != std::string::npos) {
+        token = s3Object.substr(0, pos);
+        splittedBySlash.push_back(token);
+        s3Object.erase(0, pos + delimiter.length());
+    }
+
+    // STEP2: take the last element in the separated string array
+    std::string lastPart= splittedBySlash.back();
+    pos = 0;
+    token = "";
+    std::vector<std::string> splittedByDot;
+    delimiter = ".";
+
+    while ((pos = s3Object.find(delimiter)) != std::string::npos) {
+        token = lastPart.substr(0, pos);
+        splittedByDot.push_back(token);
+        lastPart.erase(0, pos + delimiter.length());
+    }
+
+    // return the last element from the previous step
+
+    //SPDLOG_DEBUG("S3ObjectKey: " + s3Object + "\n" + "parsed result: " + splittedByDot.back());
+    return std::stol(splittedByDot.back());
+}
+
 std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
 S3SelectScanLogicalOperator::toOperatorsHTAP() {
     const int numRanges = 1;  // how many threads to scan the partition
@@ -79,7 +111,7 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
     for (const auto &partition: *getPartitioningScheme()->partitions()) {
 //        auto validPair = checkPartitionValid(partition);
 //        if (!validPair.first) continue;
-//        auto finalPredicate = validPair.second;
+//        auto finalPredicate = validPair.seco
 
         auto predicateColumnNames = std::make_shared<std::vector<std::string>>();
         std::shared_ptr<pushdown::filter::FilterPredicate> filterPredicate;
@@ -138,7 +170,9 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
                     normal::htap::deltamerge::DeltaMerge::make(getName(),
                                                                operatorName,
                                                                queryId,
-                                                               miniCatalogue->getSchema(getName()));
+                                                               miniCatalogue->getSchema(getName()),
+                                                               GetPartitionNumberFromObjectName(s3Object)
+                                                               );
             operators->emplace_back(deltaMergeOp);
             cacheHandler->produce(deltaMergeOp);
             deltaMergeOp->addMemoryDeltaProducer(cacheHandler);

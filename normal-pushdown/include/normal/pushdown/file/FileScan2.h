@@ -190,6 +190,7 @@ FileScanActor::behavior_type FileScanFunctor(FileScanStatefulActor actor,
 											 long queryId,
 											 const caf::actor &rootActorHandle,
 											 const caf::actor &segmentCacheActorHandle,
+                                             const caf::actor &deltaCacheActorHandle,
 											 bool scanOnStart = false);
 
 }

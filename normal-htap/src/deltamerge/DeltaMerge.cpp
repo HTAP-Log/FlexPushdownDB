@@ -8,8 +8,18 @@
 #include <normal/tuple/ArrayAppender.h>
 #include <normal/tuple/ArrayAppenderWrapper.h>
 #include <normal/tuple/ColumnBuilder.h>
+#include <deltamanager/DeltaCacheKey.h>
+//#include "strtk.hpp"
 
 using namespace normal::htap::deltamerge;
+
+DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber) :
+        Operator(Name, "deltamerge", queryId),
+        outputSchema_(std::move(outputSchema)){
+        tableName_ = tableName;
+        Name_ = Name;
+        partitionNumber_ = partitionNumber;
+}
 
 /**
  * Constructor
@@ -19,7 +29,8 @@ using namespace normal::htap::deltamerge;
  */
 DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, long queryId) :
         Operator(Name, "deltamerge", queryId) {
-    tableName_ = tableName;
+        tableName_ = tableName;
+        Name_ = Name;
 }
 /**
  * Constructor
@@ -32,6 +43,7 @@ DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, lo
 Operator(Name, "deltamerge", queryId),
 outputSchema_(std::move(outputSchema)){
     tableName_ = tableName;
+    Name_ = Name;
 
 }
 
@@ -42,6 +54,7 @@ outputSchema_(std::move(outputSchema)){
  */
 DeltaMerge::DeltaMerge(const std::string &Name, long queryId) :
         Operator(Name, "deltamerge", queryId) {
+        Name_ = Name;
 }
 
 /**
@@ -57,6 +70,11 @@ std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &Name, long quer
 
 std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName, const std::string &Name, long queryId,std::shared_ptr<::arrow::Schema> outputSchema ) {
     return std::make_shared<DeltaMerge>(tableName, Name, queryId, outputSchema);
+}
+
+
+std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber) {
+    return std::make_shared<DeltaMerge>(tableName, Name, queryId, outputSchema, partitionNumber);
 }
 
 /**
@@ -86,6 +104,11 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
  */
 void DeltaMerge::onStart() {
     SPDLOG_DEBUG("Starting operator | name: '{}'", name());
+    // send LoadDeltasRequestMessage to CacheHandler
+    auto const &deltaKey  = deltamanager::DeltaCacheKey::make(this->tableName_, this->partitionNumber_);
+    auto const &sender = this->Name_;
+    ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender), "CacheHandler")
+            .map_error([](auto err) { throw std::runtime_error(err); });
 }
 
 /**
@@ -180,7 +203,6 @@ void DeltaMerge::populateArrowTrackers() {
 
         stableTracker_.emplace_back(columnTracker);
     }
-
 }
 
 /**

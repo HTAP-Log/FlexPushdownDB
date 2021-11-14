@@ -10,12 +10,15 @@
 #include <normal/core/message/CompleteMessage.h>
 #include <normal/core/message/TupleMessage.h>
 #include <normal/tuple/TupleSet2.h>
+#include <deltamanager/LoadDeltasRequestMessage.h>
 #include <string>
 
 namespace normal::htap::deltamerge {
     class DeltaMerge : public core::Operator {
     public:
         explicit DeltaMerge(const std::string &Name, long queryId);
+
+        DeltaMerge(const std::string& tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber);
 
         DeltaMerge(const std::__cxx11::basic_string<char>& tableName,
                    const std::__cxx11::basic_string<char> &Name,
@@ -32,6 +35,8 @@ namespace normal::htap::deltamerge {
         static std::shared_ptr <DeltaMerge> make(const std::string &Name, long queryId);
 
         static std::shared_ptr <DeltaMerge> make(const std::string &tableName, const std::string &Name, long queryId,std::shared_ptr<::arrow::Schema> outputSchema );
+
+        static std::shared_ptr <DeltaMerge> make(const std::string &tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber);
 
         void onReceive(const core::message::Envelope &msg) override;
 
@@ -50,6 +55,10 @@ namespace normal::htap::deltamerge {
 
     private:
         std::string tableName_;
+
+        long partitionNumber_;
+
+        std::string Name_;    // operator name
 
         std::shared_ptr<::arrow::Schema> outputSchema_;
 
