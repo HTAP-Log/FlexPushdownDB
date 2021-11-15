@@ -151,9 +151,11 @@ std::shared_ptr<TupleSet> execute(Interpreter &i) {
 }
 
 std::shared_ptr<TupleSet2> executeSql(Interpreter &i, const std::string &sql, bool saveMetrics, bool writeResults, const std::string& outputFileName) {
-  i.clearOperatorGraph();
+    SPDLOG_CRITICAL("In executeSQL");
+    i.clearOperatorGraph();
+  SPDLOG_CRITICAL("Before parsing!");
   i.parse(sql);
-
+  SPDLOG_CRITICAL("Successful parsing!");
   auto tuples = execute(i);
 
   // FIXME: if result is no tuples?

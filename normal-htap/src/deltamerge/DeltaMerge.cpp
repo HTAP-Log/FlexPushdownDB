@@ -17,7 +17,6 @@ DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, lo
         Operator(Name, "deltamerge", queryId),
         outputSchema_(std::move(outputSchema)){
         tableName_ = tableName;
-        Name_ = Name;
         partitionNumber_ = partitionNumber;
 }
 
@@ -30,7 +29,6 @@ DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, lo
 DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, long queryId) :
         Operator(Name, "deltamerge", queryId) {
         tableName_ = tableName;
-        Name_ = Name;
 }
 /**
  * Constructor
@@ -43,8 +41,6 @@ DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, lo
 Operator(Name, "deltamerge", queryId),
 outputSchema_(std::move(outputSchema)){
     tableName_ = tableName;
-    Name_ = Name;
-
 }
 
 /**
@@ -54,7 +50,6 @@ outputSchema_(std::move(outputSchema)){
  */
 DeltaMerge::DeltaMerge(const std::string &Name, long queryId) :
         Operator(Name, "deltamerge", queryId) {
-        Name_ = Name;
 }
 
 /**
@@ -103,11 +98,12 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
  * Called when the operator is start
  */
 void DeltaMerge::onStart() {
-    SPDLOG_DEBUG("Starting operator | name: '{}'", name());
+    SPDLOG_INFO("Starting operator | name: '{}'", name());
     // send LoadDeltasRequestMessage to CacheHandler
     auto const &deltaKey  = deltamanager::DeltaCacheKey::make(this->tableName_, this->partitionNumber_);
-    auto const &sender = this->Name_;
-    ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender), "CacheHandler")
+    auto const &sender = name();
+    ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender),
+                "CacheHandler-lineorder-0")
             .map_error([](auto err) { throw std::runtime_error(err); });
 }
 
@@ -130,7 +126,10 @@ void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
         deltas_.emplace_back(tupleSet);
     } else if (stableProducerNames_.count(message.sender())) {
         stables_.emplace_back(tupleSet);
-    } else {
+    } else if (memoryDeltaProducerNames_.count(message.sender())){
+        memoryDeltas_.emplace_back(tupleSet);
+    }
+    else {
         throw std::runtime_error(fmt::format("Unrecognized producer {}", message.sender()));
     }
 }

@@ -47,7 +47,7 @@ public:
 	OperatorActorState::setBaseState(actor, name, queryId,
                                      rootActorHandle,
                                      segmentCacheActorHandle,
-                                     deltaCacheActorHandle);
+                                    deltaCacheActorHandle);
   }
 
   template<class... Handlers>

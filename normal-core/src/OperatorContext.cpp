@@ -68,7 +68,7 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
                                   infinite,
                                   normal::htap::deltamanager::LoadDeltaAtom::value,
                                   std::static_pointer_cast<normal::htap::deltamanager::LoadDeltasRequestMessage>(msg))
-          .then([=](const std::shared_ptr<normal::core::cache::LoadResponseMessage>& response){
+          .then([=](const std::shared_ptr<normal::core::message::TupleMessage>& response){
           operatorActor_->anon_send(this->operatorActor(), Envelope(response));
           });
       }

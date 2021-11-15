@@ -56,7 +56,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
 
 long GetPartitionNumberFromObjectName(std::string s3Object) {
     // STEP1: separate the string by '/'
-    std::string delimiter = "/";
+    /*std::string delimiter = "/";
     size_t pos = 0;
     std::string token;
     std::vector<std::string> splittedBySlash;
@@ -83,7 +83,8 @@ long GetPartitionNumberFromObjectName(std::string s3Object) {
     // return the last element from the previous step
 
     //SPDLOG_DEBUG("S3ObjectKey: " + s3Object + "\n" + "parsed result: " + splittedByDot.back());
-    return std::stol(splittedByDot.back());
+    return std::stol(splittedByDot.back());*/
+    return 1;
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
@@ -106,6 +107,7 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             htap::deltamanager::GetTailDeltas::make(getName(), "Global GetTailDeltas Operator", queryId, miniCatalogue->getDeltaSchema(getName()));*/
 
     // TODO: Figure out how to construct one-to-many relationship with actors
+    SPDLOG_INFO("For each partition");
 
     // loop through all partitions
     for (const auto &partition: *getPartitioningScheme()->partitions()) {
@@ -159,11 +161,12 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             std::shared_ptr<Operator> stableScanOp;
             auto deltaScanOps = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-            std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandler =
-                    normal::htap::deltamanager::CacheHandler::make("cacheHandler",
+           std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandler =
+                    normal::htap::deltamanager::CacheHandler::make("CacheHandler-lineorder-0",
                                                                    getName(),
                                                                    partition,
                                                                    queryId);
+
             operators->emplace_back(cacheHandler);
             std::string operatorName = "DeltaMerge-lineorder-0";
             std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp =

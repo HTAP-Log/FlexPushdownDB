@@ -27,7 +27,6 @@ namespace normal::htap::deltamanager {
         [[nodiscard]] std::string toString() const;
 
     private:
-        //TODO:: change the vector
         std::shared_ptr<DeltaCacheKey> deltaKey_;
 
     };

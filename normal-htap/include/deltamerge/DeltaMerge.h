@@ -18,7 +18,8 @@ namespace normal::htap::deltamerge {
     public:
         explicit DeltaMerge(const std::string &Name, long queryId);
 
-        DeltaMerge(const std::string& tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber);
+        DeltaMerge(const std::string& tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema>
+                outputSchema, long partitionNumber);
 
         DeltaMerge(const std::__cxx11::basic_string<char>& tableName,
                    const std::__cxx11::basic_string<char> &Name,
@@ -34,9 +35,16 @@ namespace normal::htap::deltamerge {
 
         static std::shared_ptr <DeltaMerge> make(const std::string &Name, long queryId);
 
-        static std::shared_ptr <DeltaMerge> make(const std::string &tableName, const std::string &Name, long queryId,std::shared_ptr<::arrow::Schema> outputSchema );
+        static std::shared_ptr <DeltaMerge> make(const std::string &tableName,
+                                                 const std::string &Name,
+                                                 long queryId,
+                                                 std::shared_ptr<::arrow::Schema> outputSchema );
 
-        static std::shared_ptr <DeltaMerge> make(const std::string &tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber);
+        static std::shared_ptr <DeltaMerge> make(const std::string &tableName,
+                                                 const std::string &Name,
+                                                 long queryId,
+                                                 std::shared_ptr<::arrow::Schema> outputSchema,
+                                                 long partitionNumber);
 
         void onReceive(const core::message::Envelope &msg) override;
 

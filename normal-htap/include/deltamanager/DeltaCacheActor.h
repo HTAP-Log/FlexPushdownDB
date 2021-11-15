@@ -11,6 +11,7 @@
 #include <deltamanager/LoadDeltasRequestMessage.h>
 #include <deltamanager/LoadDeltasResponseMessage.h>
 #include <deltamanager/StoreTailRequestMessage.h>
+#include <normal/core/message/TupleMessage.h>
 #include <string>
 
 using namespace caf;
@@ -41,7 +42,7 @@ namespace normal::htap::deltamanager {
          * @param self
          * @return the response with the requested deltas (memory and tail).
          */
-        static std::shared_ptr <LoadDeltasResponseMessage> loadMemoryDeltas(const LoadDeltasRequestMessage &msg,
+        static std::shared_ptr<TupleMessage> loadMemoryDeltas(const LoadDeltasRequestMessage &msg,
                                                                       stateful_actor <DeltaCacheActorState> *self);
         /**
          * Request for getting the tail, this is periodically triggered from another actor.

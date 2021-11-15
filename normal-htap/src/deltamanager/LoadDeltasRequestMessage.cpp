@@ -23,14 +23,10 @@ std::shared_ptr<LoadDeltasRequestMessage> LoadDeltasRequestMessage::make(
 
 [[nodiscard]] std::string LoadDeltasRequestMessage::toString() const {
 
-    /*std::string s = "deltaKey : [";
-    for (auto it = deltaKey_.begin(); it != deltaKey_.end(); ++it) {
-    for (auto it = deltaKey_.begin(); it != deltaKey_.end(); ++it) {
-        s += fmt::format("{}", it->get()->toString());
-        if (std::next(it) != deltaKey_.end())
-            s += ",";
-    }
+    std::string s = "deltaKey : [";
+    s += fmt::format("{}", deltaKey_->getTableName());
+    s += ",";
+    s += fmt::format("{}", deltaKey_->getPartition());
     s += "]";
-
-    return s;*/
+    return s;
 }

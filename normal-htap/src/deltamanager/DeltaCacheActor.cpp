@@ -4,7 +4,6 @@
 
 #include <deltamanager/DeltaCacheActor.h>
 #include <deltamanager/GetTailDeltas.h>
-
 #include <normal/connector/MiniCatalogue.h>
 
 using namespace normal::htap::deltamanager;
@@ -39,7 +38,7 @@ using namespace normal::htap::deltamanager;
 }
 
 
-std::shared_ptr<LoadDeltasResponseMessage> DeltaCacheActor::loadMemoryDeltas(
+std::shared_ptr<TupleMessage> DeltaCacheActor::loadMemoryDeltas(
         const LoadDeltasRequestMessage &msg,
         stateful_actor <DeltaCacheActorState> *self){
     // instant update
@@ -58,10 +57,9 @@ std::shared_ptr<LoadDeltasResponseMessage> DeltaCacheActor::loadMemoryDeltas(
     }
     // now we load the delta
     std::shared_ptr<TupleSet2> freshDelta = self->state.deltasCache->load(deltaCacheKey);
-    std::shared_ptr<LoadDeltasResponseMessage> response = LoadDeltasResponseMessage::make(freshDelta, msg.sender());
-    //std::shared_ptr<core::message::TupleMessage> response = core::message::TupleMessage(freshDelta, msg.sender());
-    //std::shared_ptr<Message> message = std::make_shared<TupleMessage>(freshDelta, msg.sender());
-
+    //std::shared_ptr<LoadDeltasResponseMessage> response = LoadDeltasResponseMessage::make(freshDelta, msg.sender());
+    std::shared_ptr<TupleMessage>
+            response = std::make_shared<TupleMessage>(freshDelta->toTupleSetV1(), msg.sender());
     return response;
 }
 
