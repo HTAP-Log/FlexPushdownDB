@@ -8,8 +8,17 @@
 #include <normal/tuple/ArrayAppender.h>
 #include <normal/tuple/ArrayAppenderWrapper.h>
 #include <normal/tuple/ColumnBuilder.h>
+#include <deltamanager/DeltaCacheKey.h>
+//#include "strtk.hpp"
 
 using namespace normal::htap::deltamerge;
+
+DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber) :
+        Operator(Name, "deltamerge", queryId),
+        outputSchema_(std::move(outputSchema)){
+        tableName_ = tableName;
+        partitionNumber_ = partitionNumber;
+}
 
 /**
  * Constructor
@@ -19,7 +28,7 @@ using namespace normal::htap::deltamerge;
  */
 DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, long queryId) :
         Operator(Name, "deltamerge", queryId) {
-    tableName_ = tableName;
+        tableName_ = tableName;
 }
 /**
  * Constructor
@@ -32,7 +41,6 @@ DeltaMerge::DeltaMerge(const std::string& tableName, const std::string &Name, lo
 Operator(Name, "deltamerge", queryId),
 outputSchema_(std::move(outputSchema)){
     tableName_ = tableName;
-
 }
 
 /**
@@ -57,6 +65,11 @@ std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &Name, long quer
 
 std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName, const std::string &Name, long queryId,std::shared_ptr<::arrow::Schema> outputSchema ) {
     return std::make_shared<DeltaMerge>(tableName, Name, queryId, outputSchema);
+}
+
+
+std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber) {
+    return std::make_shared<DeltaMerge>(tableName, Name, queryId, outputSchema, partitionNumber);
 }
 
 /**
@@ -85,7 +98,13 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
  * Called when the operator is start
  */
 void DeltaMerge::onStart() {
-    SPDLOG_DEBUG("Starting operator | name: '{}'", name());
+    SPDLOG_INFO("Starting operator | name: '{}'", name());
+    // send LoadDeltasRequestMessage to CacheHandler
+    auto const &deltaKey  = deltamanager::DeltaCacheKey::make(this->tableName_, this->partitionNumber_);
+    auto const &sender = name();
+    ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender),
+                "CacheHandler-lineorder-0")
+                .map_error([](auto err) { throw std::runtime_error(err); });
 }
 
 /**
@@ -107,7 +126,10 @@ void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
         deltas_.emplace_back(tupleSet);
     } else if (stableProducerNames_.count(message.sender())) {
         stables_.emplace_back(tupleSet);
-    } else {
+    } else if (memoryDeltaProducerNames_.count(message.sender())){
+        memoryDeltas_.emplace_back(tupleSet);
+    }
+    else {
         throw std::runtime_error(fmt::format("Unrecognized producer {}", message.sender()));
     }
 }
@@ -130,6 +152,11 @@ void DeltaMerge::addStableProducer(const std::shared_ptr <Operator> &stableProdu
 void DeltaMerge::addDeltaProducer(const std::shared_ptr <Operator> &deltaProducer) {
     deltaProducerNames_.insert(deltaProducer->name());
     consume(deltaProducer);
+}
+
+void DeltaMerge::addMemoryDeltaProducer(const std::shared_ptr<Operator> &memoryDeltaProducer) {
+    memoryDeltaProducerNames_.insert(memoryDeltaProducer->name());
+    consume(memoryDeltaProducer);
 }
 
 void DeltaMerge::populateArrowTrackers() {
@@ -175,7 +202,6 @@ void DeltaMerge::populateArrowTrackers() {
 
         stableTracker_.emplace_back(columnTracker);
     }
-
 }
 
 /**
@@ -259,18 +285,16 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
         columnBuilderArray[i] = newColumnBuilder;
     }
 
-    // TODO: Change to column first
     // We first try to append the stable data to the new table
     for (int i = 0; i < stableTracker_.size(); i++) {
         auto deleteSet = deleteMap_.at(i); // get the deleteMap for this file
         auto originalTable  = stables_[i]; // Get the original stable file
 
-        // now we try to loop through the entire file
-        for (size_t r = 0; r < originalTable->numRows(); r++) {
-            if (deleteSet.find(r) == deleteSet.end()) continue;
-            // if the row is found, then copy it one column by one column
-            for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
-                auto x = originalTable->getColumnByIndex(c).value()->element(r).value();
+        for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
+            auto curCol = originalTable->getColumnByIndex(c).value();
+            for (size_t r = 0; r < originalTable->numRows(); r++) {
+                if (deleteSet.count(r)) continue;
+                auto x = curCol->element(r).value();
                 columnBuilderArray[c]->append(x);
             }
         }
@@ -282,12 +306,11 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
         auto deleteSet = deleteMap_.at(offsetted_i); // get the deleteMap for this file
         auto originalTable  = deltas_[i]; // Get the original stable file
 
-        // now we try to loop through the entire file
-        for (size_t r = 0; r < originalTable->numRows(); r++) {
-            if (deleteSet.find(r) == deleteSet.end()) continue;
-            // if the row is found, then copy it one column by one column
-            for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
-                columnBuilderArray[c]->append(originalTable->getColumnByIndex(c).value()->element(r).value());
+        for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
+            auto curCol = originalTable->getColumnByIndex(c).value();
+            for (size_t r = 0; r < originalTable->numRows(); r++) {
+                if (deleteSet.find(r) == deleteSet.end()) continue;
+                columnBuilderArray[c]->append(curCol->element(r).value());
             }
         }
     }

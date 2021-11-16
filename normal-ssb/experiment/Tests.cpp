@@ -496,7 +496,7 @@ void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType
     }
     auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", index));
     auto sql = read_file(sql_file_path.string());
-    executeSql(i, sql, true, writeResults, fmt::format("{}output.txt", index));
+      executeSql(i, sql, true, writeResults, fmt::format("{}output.txt", index));
     sql_file_dir_path = sql_file_dir_path.parent_path();
   }
   SPDLOG_CRITICAL("Execution phase finished");

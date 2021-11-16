@@ -11,72 +11,30 @@
 #include <normal/tuple/TupleSet2.h>
 
 #include <string>
-#include "../../../normal-deltapump/include/deltapump/makeTuple.h"
+#include "../../../normal-deltapump/include/deltapump/makeTuple.h" // TODO: change the import directory
 #include "BinlogParser.h"
 
 using namespace normal::avro_tuple::make;
 
+/**
+ * This file contains helper functions to call DeltaPump-exposed APIs and do necessary conversions
+ * from row-oriented data format to column-oriented data format.
+ */
 namespace normal::htap::deltamanager {
-    class GetTailDeltas : public core::Operator {
-    public:
 
-        /**
-         * Explicit constructor
-         * @param OperatorName
-         * @param queryId from the analytical query for foreground merging (to answer the query result)
-         */
-        explicit GetTailDeltas(const std::string& OperatorName, const long queryId);
+    /**
+     * Calls DeltaPump API to parse the binlog
+     * @return a map from partition number to a specific column-oriented delta table (Arrow) parsed from tail of the log
+     */
+    std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> callDeltaPump(const std::shared_ptr<::arrow::Schema>& outputSchema);
 
-        /**
-         *
-         * @param tableName table associated with the foreground merging
-         * @param OperatorName
-         * @param queryId
-         * @param outputSchema the schema we need to output from the chain of the operator
-         */
-        GetTailDeltas(const std::string& tableName, const std::string& OperatorName, const long queryId, std::shared_ptr<::arrow::Schema>  outputSchema);
+    /**
+     * Converts the row-oriented delta table to column-oriented delta table (Arrow)
+     * @param deltaTuples the row-oriented delta table given by DeltaPump
+     * @return column-oriented delta table (Arrow)
+     */
+    std::shared_ptr<normal::tuple::TupleSet2> rowToColumn(const std::vector<LineorderDelta_t>& deltaTuples, const std::shared_ptr<::arrow::Schema>& outputSchema);
 
-        GetTailDeltas(const std::string& tableName, const std::string& OperatorName, const long queryId);
-
-        static std::shared_ptr<GetTailDeltas> make(const std::string& tableName, const std::string& OperatorName, const long queryId, const std::shared_ptr<::arrow::Schema>& outputSchema);
-
-        void onReceive(const core::message::Envelope &msg) override;
-
-        /**
-         * This function will call ctx->complete() and notifyAll by itself
-         */
-        void onStart();
-
-    private:
-
-        std::string tableName_;
-        std::shared_ptr<::arrow::Schema> outputSchema_;
-        int timestamp_{};
-
-        /**
-         * Call the DeltaPump API and transfer all the partitions from row to column format
-         * @return
-         */
-        std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> callDeltaPump();
-
-        /**
-         * Get relevant deltas from binlog
-         * TODO: we also need timestamp from the query, this should be a functionality of deltapump.
-         * @param tableName the table that we are getting
-         * @param partition the partition that we are getting out of this table
-         * @return column-oriented delta data
-         */
-        void readAndSendDeltas(const std::string& tableName, const int partition, const int timestamp = 0);
-
-
-        /**
-         * Helper function that converts row-oriented deltas to column-oriented deltas
-         * TODO: we need to be able to get a list of builders from metadata API
-         * @param deltaTuples row-oriented deltas
-         * @return column-oriented deltas
-         */
-        std::shared_ptr<normal::tuple::TupleSet2> rowToColumn(std::vector<LineorderDelta_t>& deltaTuples);
-    };
 }
 
 #endif //NORMAL_GETTAILDELTAS_H

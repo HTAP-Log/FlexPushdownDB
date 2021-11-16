@@ -10,7 +10,7 @@
 #include <normal/core/Forward.h>
 #include <normal/core/OperatorActor2.h>
 #include <normal/core/cache/SegmentCacheActor.h>
-
+#include <deltamanager/DeltaCacheActor.h>
 #include <normal/pushdown/Forward.h>
 #include <normal/core/message/TupleMessage.h>
 
@@ -41,9 +41,13 @@ public:
 				const std::string &name,
 				long queryId,
 				const caf::actor &rootActorHandle,
-				const caf::actor &segmentCacheActorHandle) {
+				const caf::actor &segmentCacheActorHandle,
+                const caf::actor &deltaCacheActorHandle) {
 
-	OperatorActorState::setBaseState(actor, name, queryId, rootActorHandle, segmentCacheActorHandle);
+	OperatorActorState::setBaseState(actor, name, queryId,
+                                     rootActorHandle,
+                                     segmentCacheActorHandle,
+                                    deltaCacheActorHandle);
   }
 
   template<class... Handlers>
@@ -128,7 +132,8 @@ private:
 										   const std::string &name,
 										   long queryId,
 										   const caf::actor &rootActorHandle,
-										   const caf::actor &segmentCacheActorHandle);
+										   const caf::actor &segmentCacheActorHandle,
+                                           const caf::actor &deltaCacheActorHandle);
 
 }
 

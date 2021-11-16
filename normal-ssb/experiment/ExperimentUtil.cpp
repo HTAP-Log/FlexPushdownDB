@@ -141,9 +141,13 @@ void configureS3ConnectorMultiPartition(Interpreter &i, const std::string& bucke
 
 std::shared_ptr<TupleSet> execute(Interpreter &i) {
   i.getCachingPolicy()->onNewQuery();
+  SPDLOG_CRITICAL("After caching policy!");
   i.getOperatorGraph()->boot();
+  SPDLOG_CRITICAL("After operator greph!");
   i.getOperatorGraph()->start();
+  SPDLOG_CRITICAL("After start of operator greph!");
   i.getOperatorGraph()->join();
+  SPDLOG_CRITICAL("After join of operator greph!");
 
   auto tuples = std::static_pointer_cast<Collate>(i.getOperatorGraph()->getOperator("collate"))->tuples();
 
@@ -151,11 +155,13 @@ std::shared_ptr<TupleSet> execute(Interpreter &i) {
 }
 
 std::shared_ptr<TupleSet2> executeSql(Interpreter &i, const std::string &sql, bool saveMetrics, bool writeResults, const std::string& outputFileName) {
-  i.clearOperatorGraph();
+    SPDLOG_CRITICAL("In executeSQL");
+    i.clearOperatorGraph();
+  SPDLOG_CRITICAL("Before parsing!");
   i.parse(sql);
-
+  SPDLOG_CRITICAL("Successful parsing!");
   auto tuples = execute(i);
-
+  SPDLOG_CRITICAL("Query executed!");
   // FIXME: if result is no tuples?
   std::shared_ptr<TupleSet2> tupleSet;
   if (tuples)

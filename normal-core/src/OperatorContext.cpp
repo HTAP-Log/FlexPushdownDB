@@ -13,6 +13,9 @@
 #include "normal/core/Globals.h"
 #include "normal/core/message/Message.h"
 #include "normal/core/ATTIC/Actors.h"
+#include <deltamanager/LoadDeltasRequestMessage.h>
+#include <deltamanager/StoreTailRequestMessage.h>
+#include <deltamanager/DeltaCacheActor.h>
 
 namespace normal::core {
 
@@ -59,6 +62,28 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
 	return {};
   }
 
+  else if(recipientId == "DeltaCache"){
+      if(msg->type() == "LoadDeltasRequestMessage"){  // send to the DeltaCacheActor the LoadDeltasRequestMessage
+          operatorActor_->request(deltaCacheActor_,
+                                  infinite,
+                                  normal::htap::deltamanager::LoadDeltaAtom::value,
+                                  std::static_pointer_cast<normal::htap::deltamanager::LoadDeltasRequestMessage>(msg))
+          .then([=](const std::shared_ptr<normal::core::message::TupleMessage>& response){
+          operatorActor_->anon_send(this->operatorActor(), Envelope(response));
+          });
+      }
+      else if(msg->type() == "StoreTailRequestMessage"){  // send to DeltaCacheActor the StoreTailRequestMessage
+          operatorActor_->anon_send(deltaCacheActor_,
+                                    normal::htap::deltamanager::StoreDeltaAtom::value,
+                                    std::static_pointer_cast<normal::htap::deltamanager::StoreTailRequestMessage>(msg));
+      }
+      else{
+          throw std::runtime_error("Unrecognized message " + msg->type());
+      }
+      return {};
+  }
+
+
   auto expectedOperator = operatorMap_.get(recipientId);
   if(expectedOperator.has_value()){
     auto recipientOperator = expectedOperator.value();
@@ -70,10 +95,11 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
   }
 }
 
-OperatorContext::OperatorContext(caf::actor rootActor, caf::actor segmentCacheActor):
+OperatorContext::OperatorContext(caf::actor rootActor, caf::actor segmentCacheActor, caf::actor deltaCacheActor):
     operatorActor_(nullptr),
     rootActor_(std::move(rootActor)),
-    segmentCacheActor_(std::move(segmentCacheActor))
+    segmentCacheActor_(std::move(segmentCacheActor)),
+    deltaCacheActor_(std::move(deltaCacheActor))
 {}
 
 LocalOperatorDirectory &OperatorContext::operatorMap() {
@@ -120,6 +146,7 @@ void OperatorContext::destroyActorHandles() {
   operatorMap_.destroyActorHandles();
   destroy(rootActor_);
   destroy(segmentCacheActor_);
+  destroy(deltaCacheActor_);
 }
 
 } // namespace

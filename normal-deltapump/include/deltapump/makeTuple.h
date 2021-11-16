@@ -31,7 +31,7 @@ typedef std::tuple<
 
 class MakeTuple {
 public:
-    static LineorderDelta_t makeLineorderDeltaTuple(i::lineorder& linorderDeltaStruct);
+    static LineorderDelta_t makeLineorderDeltaTuple(i::lineorder linorderDeltaStruct);
 
 };
 

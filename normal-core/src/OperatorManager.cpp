@@ -5,9 +5,11 @@
 #include <normal/core/OperatorManager.h>
 #include <normal/core/cache/SegmentCacheActor.h>
 #include <normal/core/message/Envelope.h>
+#include <deltamanager/DeltaCacheActor.h>
 
 using namespace normal::core::cache;
 using namespace normal::core::message;
+using namespace normal::htap::deltamanager;
 
 namespace normal::core {
 
@@ -19,6 +21,7 @@ void OperatorManager::stop() {
 
   // Send actors a shutdown message
   (*rootActor_)->send_exit(caf::actor_cast<caf::actor>(segmentCacheActor_), caf::exit_reason::user_shutdown);
+  (*rootActor_)->send_exit(caf::actor_cast<caf::actor>(deltaCacheActor_), caf::exit_reason::user_shutdown);
 
   // Stop the root actor (seems, being defined by "scope", it needs to actually be destroyed to stop it)
   rootActor_.reset();
@@ -44,8 +47,10 @@ OperatorManager::OperatorManager(std::shared_ptr<CachingPolicy>  cachingPolicy) 
 void OperatorManager::boot() {
   if (cachingPolicy_) {
   	segmentCacheActor_ = actorSystem->spawn(SegmentCacheActor::makeBehaviour, cachingPolicy_);
+    deltaCacheActor_ = actorSystem->spawn(DeltaCacheActor::makeBehaviour);
   } else {
     segmentCacheActor_ = actorSystem->spawn(SegmentCacheActor::makeBehaviour, std::nullopt);
+    deltaCacheActor_ = actorSystem->spawn(DeltaCacheActor::makeBehaviour);
   }
 }
 
@@ -124,6 +129,10 @@ const std::shared_ptr<caf::actor_system> &OperatorManager::getActorSystem() cons
 
 const caf::actor &OperatorManager::getSegmentCacheActor() const {
   return segmentCacheActor_;
+}
+
+const caf::actor &OperatorManager::getDeltaCacheActor() const {
+    return deltaCacheActor_;
 }
 
 long OperatorManager::nextQueryId() {

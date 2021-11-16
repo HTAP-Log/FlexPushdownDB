@@ -11,16 +11,16 @@ LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 #-----------------------------------------------------------------------------------------------------------------------
 
 # build Parser.java
-set(JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64)
-
-find_package(Java REQUIRED)
-include(UseJava)
-find_package(JNI REQUIRED)
-
-if (JNI_FOUND)
-    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
-    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
-endif()
+#set(JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64)
+#
+#find_package(Java REQUIRED)
+#include(UseJava)
+#find_package(JNI REQUIRED)
+#
+#if (JNI_FOUND)
+#    message (STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
+#    message (STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
+#endif()
 
 set(CMAKE_JAVA_INCLUDE_PATH ./include/deltapump/lib/mysql-binlog-connector-java-0.25.1.jar;./include/deltapump/lib/avro-1.10.2.jar;./include/deltapump/lib/avro-tools-1.10.2.jar)
 
@@ -29,7 +29,7 @@ add_jar(Parser src/deltapump/Parser.java)
 get_target_property(_jarFile Parser JAR_FILE)
 get_target_property(_classDir Parser CLASSDIR)
 
-include_directories(${JNI_INCLUDE_DIRS}/include ${JNI_INCLUDE_DIRS}/include/linux)
+#include_directories(${JNI_INCLUDE_DIRS}/include ${JNI_INCLUDE_DIRS}/include/linux)
 
 # Create a sources variable for BinlogParser
 set(SOURCES

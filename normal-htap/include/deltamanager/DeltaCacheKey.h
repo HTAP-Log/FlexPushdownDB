@@ -5,32 +5,37 @@
 #ifndef NORMAL_DELTACACHEKEY_H
 #define NORMAL_DELTACACHEKEY_H
 
+#include <string>
+#include <memory>
+#include <fmt/format.h>
+
 namespace normal::htap::deltamanager{
 
     class DeltaCacheKey{
     public:
-        explicit DeltaCacheKey(const std::string& tableName, const int& partition, const int& timestamp);
-        static std::shared_ptr<DeltaCacheKey> make(const std::string& tableName, const int& partition, const int& timestamp);
+        explicit DeltaCacheKey(const std::string& tableName, const int& partition);
+        static std::shared_ptr<DeltaCacheKey> make(const std::string& tableName, const int& partition);
         size_t hash();
-        bool operator==(const DeltaKey& other) const;
-        bool operator!=(const DeltaKey& other) const;
+        int tableToVector();
+        bool operator==(const DeltaCacheKey& other) const;
+        bool operator!=(const DeltaCacheKey& other) const;
         [[nodiscard]] const std::string &getTableName() const;
         [[nodiscard]] const int &getPartition() const;
-        [[nodiscard]] const int &getTimestamp() const;
+
+        std::string toString();
     private:
         std::string tableName_;
-        int timestamp_;
         int partition_;
     };
 
     struct DeltaKeyPointerHash {
-        inline size_t operator()(const std::shared_ptr<DeltaKey> &key) const {
+        inline size_t operator()(const std::shared_ptr<DeltaCacheKey> &key) const {
             return key->hash();
         }
     };
 
     struct DeltaKeyPointerPredicate {
-        inline bool operator()(const std::shared_ptr<DeltaKey>& lhs, const std::shared_ptr<DeltaKey>& rhs) const {
+        inline bool operator()(const std::shared_ptr<DeltaCacheKey>& lhs, const std::shared_ptr<DeltaCacheKey>& rhs) const {
             return *lhs == *rhs;
         }
     };

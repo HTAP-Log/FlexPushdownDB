@@ -2,7 +2,7 @@
 
 using namespace normal::avro_tuple::make;
 
-LineorderDelta_t MakeTuple::makeLineorderDeltaTuple(i::lineorder& linorderDeltaStruct) {
+LineorderDelta_t MakeTuple::makeLineorderDeltaTuple(i::lineorder linorderDeltaStruct) {
     return std::make_tuple(
             linorderDeltaStruct.lo_orderkey,
             linorderDeltaStruct.lo_linenumber,

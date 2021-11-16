@@ -4,47 +4,15 @@
 
 #include <deltamanager/GetTailDeltas.h>
 
-using namespace normal::htap::deltamanager;
-
-GetTailDeltas::GetTailDeltas(const std::string& OperatorName, const long queryId) :
-                            core::Operator(OperatorName, "GetTailDeltas", queryId) {
-    tableName_ = "undefined";
-}
-
-GetTailDeltas::GetTailDeltas(const std::string& tableName, const std::string& OperatorName, const long queryId) :
-                            core::Operator(OperatorName, "GetTailDeltas", queryId) {
-    tableName_ = tableName;
-}
-
-GetTailDeltas::GetTailDeltas(const std::string& tableName, const std::string& OperatorName, const long queryId,
-                             std::shared_ptr<::arrow::Schema> outputSchema) :
-                             core::Operator(OperatorName, "GetTailDeltas", queryId),
-                             outputSchema_(std::move(outputSchema)) {
-    tableName_ = tableName;
-}
-
-std::shared_ptr<GetTailDeltas> GetTailDeltas::make(const std::string& tableName, const std::string& OperatorName,
-                                                   const long queryId, const std::shared_ptr<::arrow::Schema>& outputSchema) {
-    return std::make_shared<GetTailDeltas>(tableName, OperatorName, queryId, outputSchema);
-}
-
-void GetTailDeltas::onReceive(const core::message::Envelope &msg) {
-    // This actor simply starts
-    if (msg.message().type() == "StartMessage") {
-        this->onStart();
-    } else {
-        throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}", msg.message().type(), name()));
-    }
-}
-
-std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> GetTailDeltas::callDeltaPump() {
+std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> normal::htap::deltamanager::callDeltaPump(const std::shared_ptr<::arrow::Schema>& outputSchema) {
     // now call binlog parser API
     std::unordered_map<int, std::set<struct lineorder_record>> *lineorder_record_ptr = nullptr;
     // TODO: change this hardcoded method
-    const char* path = "./bin.000002"; //binlog file path
-    const char* path_range = "./partitions/ranges.csv"; //range file path
+    const char* path = "/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/bin.000002"; //binlog file path
+    const char* path_range = "/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/partitions/ranges.csv"; //range file path
     BinlogParser binlogParser;
     binlogParser.parse(path, path_range, &lineorder_record_ptr);
+    SPDLOG_DEBUG("##### After parsing #####");
     if (lineorder_record_ptr == nullptr) {
         throw std::runtime_error(fmt::format("Error parsing binlog"));
     }
@@ -57,38 +25,13 @@ std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> GetTai
         for (const auto &record: record_set) {
             record_table.emplace_back(record.lineorder_delta);
         }
-        std::shared_ptr<normal::tuple::TupleSet2> column_table = GetTailDeltas::rowToColumn(record_table);
+        std::shared_ptr<normal::tuple::TupleSet2> column_table = normal::htap::deltamanager::rowToColumn(record_table, outputSchema);
         deltaRecords[part] = column_table;
     }
     return std::make_shared<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>>(deltaRecords);
 }
 
-void GetTailDeltas::onStart() {
-    SPDLOG_DEBUG("Starting operator '{}'", name());
-    // TODO: check if there should be a conditional check
-    auto allDeltas = GetTailDeltas::callDeltaPump();
-    for (const auto& deltaTable : *allDeltas) {
-        // Send each partition one by one
-        int part = deltaTable.first;
-        std::shared_ptr<normal::tuple::TupleSet2> table = deltaTable.second;
-        std::shared_ptr<normal::core::message::Message>
-                message = std::make_shared<core::message::TupleMessage>(table->toTupleSetV1(), fmt::format("{}-{}", this->name(), part));
-
-        // send message to each DeltaMerge consumer
-        // recipient id: DeltaMerge-lineorder-12 (lineorder table partition 12)
-        // TODO: verify partition number
-        SPDLOG_DEBUG("GetTailDeltas '{}' sending table '{}' partition '{}' to consumer {} ", this->name(), tableName_, part, fmt::format("DeltaMerge-{}-{}", tableName_, part));
-        ctx()->send(message, fmt::format("DeltaMerge-{}-{}", tableName_, part))
-                .map_error([](auto err) { throw std::runtime_error(err); });
-    }
-    ctx()->notifyComplete(); // TODO: can we move this into the for-loop?
-}
-
-void GetTailDeltas::readAndSendDeltas(const std::string& tableName, const int partition, const int timestamp) {
-    // TODO: remove this method
-}
-
-std::shared_ptr<normal::tuple::TupleSet2> GetTailDeltas::rowToColumn(std::vector<LineorderDelta_t>& deltaTuples) {
+std::shared_ptr<normal::tuple::TupleSet2> normal::htap::deltamanager::rowToColumn(const std::vector<LineorderDelta_t>& deltaTuples, const std::shared_ptr<::arrow::Schema>& outputSchema) {
     long arraySize = deltaTuples.size();
     // TODO: we need to be able to get a list of builders from metadata API
     // Right now just hardcode all the builders
@@ -180,5 +123,5 @@ std::shared_ptr<normal::tuple::TupleSet2> GetTailDeltas::rowToColumn(std::vector
                                                               arr9, arr10, arr11, arr12, arr13, arr14, arr15, arr16, arr17, arr18};
 
     // TODO: check the schema is correct, now we just assume it is correct
-    return TupleSet2::make(outputSchema_, arrowArrays);
+    return TupleSet2::make(outputSchema, arrowArrays);
 }

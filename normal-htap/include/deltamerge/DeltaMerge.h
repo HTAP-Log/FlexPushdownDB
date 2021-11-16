@@ -10,12 +10,16 @@
 #include <normal/core/message/CompleteMessage.h>
 #include <normal/core/message/TupleMessage.h>
 #include <normal/tuple/TupleSet2.h>
+#include <deltamanager/LoadDeltasRequestMessage.h>
 #include <string>
 
 namespace normal::htap::deltamerge {
     class DeltaMerge : public core::Operator {
     public:
         explicit DeltaMerge(const std::string &Name, long queryId);
+
+        DeltaMerge(const std::string& tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema>
+                outputSchema, long partitionNumber);
 
         DeltaMerge(const std::__cxx11::basic_string<char>& tableName,
                    const std::__cxx11::basic_string<char> &Name,
@@ -31,7 +35,16 @@ namespace normal::htap::deltamerge {
 
         static std::shared_ptr <DeltaMerge> make(const std::string &Name, long queryId);
 
-        static std::shared_ptr <DeltaMerge> make(const std::string &tableName, const std::string &Name, long queryId,std::shared_ptr<::arrow::Schema> outputSchema );
+        static std::shared_ptr <DeltaMerge> make(const std::string &tableName,
+                                                 const std::string &Name,
+                                                 long queryId,
+                                                 std::shared_ptr<::arrow::Schema> outputSchema );
+
+        static std::shared_ptr <DeltaMerge> make(const std::string &tableName,
+                                                 const std::string &Name,
+                                                 long queryId,
+                                                 std::shared_ptr<::arrow::Schema> outputSchema,
+                                                 long partitionNumber);
 
         void onReceive(const core::message::Envelope &msg) override;
 
@@ -46,8 +59,14 @@ namespace normal::htap::deltamerge {
 
         void addStableProducer(const std::shared_ptr<Operator> &stableProducer);
 
+        void addMemoryDeltaProducer(const std::shared_ptr<Operator> &memoryDeltaProducer);
+
     private:
         std::string tableName_;
+
+        long partitionNumber_;
+
+        std::string Name_;    // operator name
 
         std::shared_ptr<::arrow::Schema> outputSchema_;
 
@@ -55,15 +74,18 @@ namespace normal::htap::deltamerge {
 
         std::unordered_set<std::string> deltaProducerNames_;
         std::unordered_set<std::string> stableProducerNames_;
+        std::unordered_set<std::string> memoryDeltaProducerNames_;
 
         std::vector<std::vector<std::shared_ptr<Column>>> deltaTracker_;
         std::vector<std::vector<std::shared_ptr<Column>>> stableTracker_;
 
         std::vector<int> deltaIndexTracker_;
         std::vector<int> stableIndexTracker_;
+        std::vector<int> memoryDeltaIndexTracker_;
 
         std::vector <std::shared_ptr<TupleSet2>> deltas_;
         std::vector <std::shared_ptr<TupleSet2>> stables_;
+        std::vector <std::shared_ptr<TupleSet2>> memoryDeltas_;
 
 //        std::vector<std::array<int,2>> deleteMap_;
 

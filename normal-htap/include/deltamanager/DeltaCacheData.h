@@ -17,7 +17,10 @@ namespace normal::htap::deltamanager {
         [[nodiscard]] const std::shared_ptr<TupleSet2> &getDelta() const;
         [[nodiscard]] const int &getTimestamp() const;
     private:
-        std::shared_ptr<TupleSet2> deltas_;
+        /**
+         * Each cache unit includes the delta (coming from the tail) and the version/timestamp of it.
+         */
+        std::shared_ptr<TupleSet2> delta_;
         int timestamp_;
     };
 }

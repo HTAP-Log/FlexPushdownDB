@@ -3,45 +3,59 @@
 //
 
 
-#ifndef NORMAL_DELTASCACHEACTOR_H
-#define NORMAL_DELTASCACHEACTOR_H
+#ifndef NORMAL_DELTACACHEACTOR_H
+#define NORMAL_DELTACACHEACTOR_H
 
-#include <normal/core/Operator.h>
-#include <normal/core/message/CompleteMessage.h>
+#include <caf/all.hpp>
+#include <deltamanager/DeltaCache.h>
+#include <deltamanager/LoadDeltasRequestMessage.h>
+#include <deltamanager/LoadDeltasResponseMessage.h>
+#include <deltamanager/StoreTailRequestMessage.h>
 #include <normal/core/message/TupleMessage.h>
-#include <normal/tuple/TupleSet2.h>
 #include <string>
 
-using namespace normal::avro_tuple::make;
-using namespace normal::htap::deltamanager;
+using namespace caf;
 
 namespace normal::htap::deltamanager {
 
-    struct DeltasCacheActorState {
+    struct DeltaCacheActorState {
         std::string name = "deltas-cache";
-        std::shared_ptr<DeltasCache> deltasCache;
+        std::shared_ptr<DeltaCache> deltasCache;
     };
 
-    class DeltasCacheActor {
+    using StoreDeltaAtom = atom_constant<atom("StoreDelta")>;
+    using LoadDeltaAtom = atom_constant<atom("LoadDeltas")>;
+
+    class DeltaCacheActor {
     public:
-        [[maybe_unused]] static behavior makeBehaviour(stateful_actor <DeltasCacheActorState> *self,
-                                                       const std::optional <std::shared_ptr<CachingPolicy>> &cachingPolicy);
+        /**
+         * The function decides the behavior of the actor based on the message that is receiving.
+         * @param self
+         * @return behavior fo the actor.
+         */
+        [[maybe_unused]] static behavior makeBehaviour(caf::stateful_actor<DeltaCacheActorState> *self);
 
         /**
-         * This function returns all the memory deltas based on the specified table schema and partition.
+         * Request for deltas coming from the DeltaMerge operators. This will also trigger a call from DeltaPump
+         * as an instant tail update.
          * @param msg
          * @param self
-         * @return
+         * @return the response with the requested deltas (memory and tail).
          */
-        static std::shared_ptr <LoadResponseMessage> loadMemoryDeltas(const LoadRequestMessage &msg,
-                                                                      stateful_actor <DeltasCacheActorState> *self);
-
-        static void storeTail(const StoreRequestMessage &msg, stateful_actor <DeltasCacheActorState> *self);
-
-
-
-
+        static std::shared_ptr<TupleMessage> loadMemoryDeltas(const LoadDeltasRequestMessage &msg,
+                                                                      stateful_actor <DeltaCacheActorState> *self);
+        /**
+         * Request for getting the tail, this is periodically triggered from another actor.
+         * @param msg
+         * @param self
+         */
+        static void storeTail(const StoreTailRequestMessage &msg, stateful_actor <DeltaCacheActorState> *self);
     };
 }
 
-#endif //NORMAL_DELTASCACHEACTOR_H
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::LoadDeltasRequestMessage>)
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::LoadDeltasResponseMessage>)
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::StoreTailRequestMessage>)
+
+
+#endif //NORMAL_DELTACACHEACTOR_H

@@ -89,6 +89,8 @@ target_link_libraries(normal-pushdown PUBLIC normal-core)
 target_link_libraries(normal-pushdown PUBLIC normal-tuple)
 target_link_libraries(normal-pushdown PUBLIC normal-expression)
 target_link_libraries(normal-pushdown PUBLIC normal-expression-gandiva)
+target_link_libraries(normal-pushdown PUBLIC normal-htap)
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------

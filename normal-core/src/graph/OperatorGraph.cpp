@@ -78,7 +78,7 @@ void graph::OperatorGraph::start() {
 
 void graph::OperatorGraph::join() {
 
-  SPDLOG_DEBUG("Waiting for all operators to complete");
+  SPDLOG_CRITICAL("Waiting for all operators to complete");
 
   auto handle_err = [&](const caf::error &err) {
 	throw std::runtime_error(to_string(err));
@@ -87,7 +87,7 @@ void graph::OperatorGraph::join() {
   bool allComplete = false;
   (*rootActor_)->receive_while([&] { return !allComplete; })(
 	  [&](const normal::core::message::Envelope &msg) {
-      SPDLOG_DEBUG("Query root actor received message  |  query: '{}', messageKind: '{}', from: '{}'",
+      SPDLOG_CRITICAL("Query root actor received message  |  query: '{}', messageKind: '{}', from: '{}'",
              this->getId(), msg.message().type(), msg.message().sender());
 
       this->operatorDirectory_.setComplete(msg.message().sender());
@@ -127,6 +127,7 @@ void graph::OperatorGraph::boot() {
 																		  fileScanOp->getQueryId(),
 																		  *rootActor_,
 																		  operatorManager_.lock()->getSegmentCacheActor(),
+                                                                          operatorManager_.lock()->getDeltaCacheActor(),
 																		  fileScanOp->isScanOnStart()
 	  );
 	  if (!actorHandle)
@@ -146,7 +147,7 @@ void graph::OperatorGraph::boot() {
 //	  element.second.setActorHandle(caf::actor_cast<caf::actor>(collateActorHandle_));
 //	}
 	else {
-	  auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor());
+          auto ctx = std::make_shared<normal::core::OperatorContext>(*rootActor_, operatorManager_.lock()->getSegmentCacheActor(), operatorManager_.lock()->getDeltaCacheActor());
 	  op->create(ctx);
     // Don't run more S3Get requests in parallel than # cores, earlier testing showed this did not help as S3Get
     // already utilizes the full network bandwidth with #cores requests whereas S3Select does not when
