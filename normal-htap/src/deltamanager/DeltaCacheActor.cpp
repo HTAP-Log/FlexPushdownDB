@@ -20,7 +20,7 @@ using namespace normal::htap::deltamanager;
         // FIXME: Actor name appears to have been destroyed by this stage, it
         //  often comes out as garbage anyway, so we avoid using it. Something
         //  to raise with developers.
-        SPDLOG_DEBUG("[Actor {} ('<name unavailable>')]  Segment Cache exit  |  reason: {}",
+        SPDLOG_DEBUG("[Actor {} ('<name unavailable>')]  DeltaActor Cache exit  |  reason: {}",
                      self->id(),
                      to_string(reason));
 

@@ -104,7 +104,7 @@ void DeltaMerge::onStart() {
     auto const &sender = name();
     ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender),
                 "CacheHandler-lineorder-0")
-            .map_error([](auto err) { throw std::runtime_error(err); });
+                .map_error([](auto err) { throw std::runtime_error(err); });
 }
 
 /**

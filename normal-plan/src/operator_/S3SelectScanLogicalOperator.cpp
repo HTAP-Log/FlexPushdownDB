@@ -161,13 +161,13 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             std::shared_ptr<Operator> stableScanOp;
             auto deltaScanOps = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-           std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandler =
+           std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandlerOp =
                     normal::htap::deltamanager::CacheHandler::make("CacheHandler-lineorder-0",
                                                                    getName(),
                                                                    partition,
                                                                    queryId);
 
-            operators->emplace_back(cacheHandler);
+            operators->emplace_back(cacheHandlerOp);
             std::string operatorName = "DeltaMerge-lineorder-0";
             std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp =
                     normal::htap::deltamerge::DeltaMerge::make(getName(),
@@ -177,8 +177,9 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
                                                                GetPartitionNumberFromObjectName(s3Object)
                                                                );
             operators->emplace_back(deltaMergeOp);
-            cacheHandler->produce(deltaMergeOp);
-            deltaMergeOp->addMemoryDeltaProducer(cacheHandler);
+            deltaMergeOp->addMemoryDeltaProducer(cacheHandlerOp);
+            cacheHandlerOp->produce(deltaMergeOp);
+
             stableScanOp = S3Get::make(
                     "s3get-Stable-" + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
                     s3Partition->getBucket(),

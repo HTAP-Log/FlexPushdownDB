@@ -78,7 +78,7 @@ void graph::OperatorGraph::start() {
 
 void graph::OperatorGraph::join() {
 
-  SPDLOG_DEBUG("Waiting for all operators to complete");
+  SPDLOG_CRITICAL("Waiting for all operators to complete");
 
   auto handle_err = [&](const caf::error &err) {
 	throw std::runtime_error(to_string(err));
@@ -87,7 +87,7 @@ void graph::OperatorGraph::join() {
   bool allComplete = false;
   (*rootActor_)->receive_while([&] { return !allComplete; })(
 	  [&](const normal::core::message::Envelope &msg) {
-      SPDLOG_DEBUG("Query root actor received message  |  query: '{}', messageKind: '{}', from: '{}'",
+      SPDLOG_CRITICAL("Query root actor received message  |  query: '{}', messageKind: '{}', from: '{}'",
              this->getId(), msg.message().type(), msg.message().sender());
 
       this->operatorDirectory_.setComplete(msg.message().sender());

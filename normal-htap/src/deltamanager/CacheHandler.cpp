@@ -25,7 +25,9 @@ void CacheHandler::onReceive(const core::message::Envelope &msg) {
     if (msg.message().type() == "StartMessage") {
         this->onStart();
     } else if (msg.message().type() == "LoadDeltasRequestMessage") {  //DeltaMerge sends a request to CacheHandler
+        SPDLOG_CRITICAL("Received Message {} in operator {}", msg.message().type(), name());
         auto loadDeltasMessage = dynamic_cast<const LoadDeltasRequestMessage &>(msg.message());
+        SPDLOG_CRITICAL("Passing message to OnDeltasRequest");
         this->OnDeltasRequest(loadDeltasMessage);
     } else if (msg.message().type() == "StoreTailRequestMessage") {  //Request for periodic tail reading arrived
         auto tailMessage = dynamic_cast<const StoreTailRequestMessage &>(msg.message());
@@ -42,15 +44,16 @@ void CacheHandler::onReceive(const core::message::Envelope &msg) {
 
 
 void CacheHandler::onStart() {
-    SPDLOG_DEBUG("Starting operator '{}'", name());
+    SPDLOG_CRITICAL("Starting operator '{}'", name());
 }
 
 void CacheHandler::OnDeltasRequest(const LoadDeltasRequestMessage &message){
 
     const auto &deltaKey = message.getDeltaKey();
     const auto &sender = message.sender();
-
-    ctx()->send(LoadDeltasRequestMessage::make(deltaKey, sender), "SegmentCache")
+    SPDLOG_CRITICAL("{} sends message {} for tableName {} and partition to DeltaCache",
+                    sender, deltaKey->getTableName(), deltaKey->getPartition());
+    ctx()->send(LoadDeltasRequestMessage::make(deltaKey, sender), "DeltaCache")
             .map_error([](auto err) { throw std::runtime_error(err); });
 }
 
@@ -58,7 +61,7 @@ void CacheHandler::OnDeltasRequest(const LoadDeltasRequestMessage &message){
 void CacheHandler::OnTailRequest(const StoreTailRequestMessage &message){
     const auto &tailKey = message.getTailKey();
     const auto &sender = message.sender();
-    ctx()->send(StoreTailRequestMessage::make(tailKey, sender), "SegmentCache")
+    ctx()->send(StoreTailRequestMessage::make(tailKey, sender), "DeltaCache")
             .map_error([](auto err) {throw std::runtime_error(err); });
 }
 
