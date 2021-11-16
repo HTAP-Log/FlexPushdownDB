@@ -37,7 +37,7 @@ avro::ValidSchema loadSchema(const char* filename)
 void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr ){
 
     //get table_name, offset and range(fixed) of partitions for each table
-    std::unordered_map<std::string, std::tuple<int, int>> range_result;
+    /*std::unordered_map<std::string, std::tuple<int, int>> range_result;
     std::ifstream inFile(rangeFilePath);
     if(!inFile.is_open()) throw std::runtime_error("Could not open range file");
 
@@ -172,7 +172,7 @@ void BinlogParser::parse(const char *filePath,  const char *rangeFilePath, std::
             (it->second).insert(r);
         }
 
-    }
+    }*/
     /*
      * LO_ORDERKEY,LO_LINENUMBER,LO_CUSTKEY,LO_PARTKEY,LO_SUPPKEY,LO_ORDERDATE,LO_ORDERPRIORITY,LO_SHIPPRIORITY,LO_QUANTITY,LO_EXTENDEDPRICE,LO_ORDTOTALPRICE,LO_DISCOUNT,LO_REVENUE,LO_SUPPLYCOST,LO_TAX,LO_COMMITDATE,LO_SHIPMODE, timestamp, type
 1,1,209,1552,9,"19940925","1-URGENT",0,17,2471035,11507269,4,2372193,87214,2,"19941105","TRUCK", "1", "UPDATE"

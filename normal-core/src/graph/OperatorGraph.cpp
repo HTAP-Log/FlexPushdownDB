@@ -87,7 +87,7 @@ void graph::OperatorGraph::join() {
   bool allComplete = false;
   (*rootActor_)->receive_while([&] { return !allComplete; })(
 	  [&](const normal::core::message::Envelope &msg) {
-      SPDLOG_CRITICAL("Query root actor received message  |  query: '{}', messageKind: '{}', from: '{}'",
+      SPDLOG_INFO("Query root actor received message  |  query: '{}', messageKind: '{}', from: '{}'",
              this->getId(), msg.message().type(), msg.message().sender());
 
       this->operatorDirectory_.setComplete(msg.message().sender());

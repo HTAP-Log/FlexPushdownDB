@@ -56,6 +56,6 @@ namespace normal::htap::deltamanager {
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::LoadDeltasRequestMessage>)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::LoadDeltasResponseMessage>)
 CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::htap::deltamanager::StoreTailRequestMessage>)
-
+CAF_ALLOW_UNSAFE_MESSAGE_TYPE(std::shared_ptr<normal::core::message::TupleMessage>)
 
 #endif //NORMAL_DELTACACHEACTOR_H

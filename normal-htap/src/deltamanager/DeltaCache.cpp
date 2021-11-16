@@ -25,11 +25,12 @@ std::shared_ptr<TupleSet2> DeltaCache::load(const std::shared_ptr<DeltaCacheKey>
     std::shared_ptr<TupleSet2> deltaTuples = nullptr;
     int idx = key->tableToVector();
     int bucket = key->hash();
-    for (auto it=deltaMap_[idx].begin(bucket); it!=deltaMap_[idx].end(bucket); it++){
-        if (deltaTuples)
-            deltaTuples = TupleSet2::concatenate({it->second->getDelta(), deltaTuples}).value();
-        else
-            deltaTuples = it->second->getDelta();
+    for (const auto &entry: deltaMap_[idx]){
+        if (deltaTuples){
+            deltaTuples = TupleSet2::concatenate({entry.second->getDelta(), deltaTuples}).value();
+        } else {
+            deltaTuples = entry.second->getDelta();
+        }
     }
     return deltaTuples;
 }
