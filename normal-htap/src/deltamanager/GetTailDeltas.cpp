@@ -8,10 +8,11 @@ std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> normal
     // now call binlog parser API
     std::unordered_map<int, std::set<struct lineorder_record>> *lineorder_record_ptr = nullptr;
     // TODO: change this hardcoded method
-    const char* path = "./bin.000002"; //binlog file path
-    const char* path_range = "./partitions/ranges.csv"; //range file path
+    const char* path = "/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/bin.000002"; //binlog file path
+    const char* path_range = "/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/partitions/ranges.csv"; //range file path
     BinlogParser binlogParser;
     binlogParser.parse(path, path_range, &lineorder_record_ptr);
+    SPDLOG_DEBUG("##### After parsing #####");
     if (lineorder_record_ptr == nullptr) {
         throw std::runtime_error(fmt::format("Error parsing binlog"));
     }
