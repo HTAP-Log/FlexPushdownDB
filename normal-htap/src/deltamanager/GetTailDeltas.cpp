@@ -4,13 +4,15 @@
 
 #include <deltamanager/GetTailDeltas.h>
 
+BinlogParser binlogParser; // Global java object enforced by JVM initialization
+
 std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> normal::htap::deltamanager::callDeltaPump(const std::shared_ptr<::arrow::Schema>& outputSchema) {
     // now call binlog parser API
     std::unordered_map<int, std::set<struct lineorder_record>> *lineorder_record_ptr = nullptr;
     // TODO: change this hardcoded method
     const char* path = "/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/bin.000002"; //binlog file path
     const char* path_range = "/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/partitions/ranges.csv"; //range file path
-    BinlogParser binlogParser;
+    // BinlogParser binlogParser;
     binlogParser.parse(path, path_range, &lineorder_record_ptr);
     SPDLOG_DEBUG("##### After parsing #####");
     if (lineorder_record_ptr == nullptr) {
