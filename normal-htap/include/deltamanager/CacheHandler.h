@@ -11,6 +11,7 @@
 #include <deltamanager/StoreTailRequestMessage.h>
 #include <normal/core/OperatorContext.h>
 #include <normal/connector/partition/Partition.h>
+#include <normal/core/message/TupleMessage.h>
 #include <string>
 
 using namespace normal::core;
@@ -31,20 +32,29 @@ namespace normal::htap::deltamanager {
 
         void onReceive(const core::message::Envelope &msg) override;
         void onStart();
+
         /**
          * Function executed after CacheHandler receives a LoadDeltasRequestMessage message from DeltaMerge. It passes
          * the message to DeltaCacheActor.
          * @param message
          */
         void OnDeltasRequest(const LoadDeltasRequestMessage &message);
+
         /**
-         * @param message
          * Function executed after CacheHandler receives a ?? message for periodic reading of tail. It passes the
          * message to the DeltaCacheActor.
          * TODO:: need to be implemented
+         * @param message
+         *
          */
         void OnTailRequest(const StoreTailRequestMessage &message);
 
+        /**
+         * Function executed after CacheHandler receives a TupleMessage with requested deltas from the DeltaCacheActor.
+         * Then CacheHandler passes the message to DeltaMerge and then it notifies all that is complete.
+         * @param message
+         */
+        void OnReceiveResponse(const TupleMessage &message);
 
     private:
         std::string tableName_;
