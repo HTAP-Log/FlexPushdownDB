@@ -181,7 +181,6 @@ public class Parser {
 				String[] colName = colList.get(currentTable);
 				DatumWriter<GenericRecord> datumWriter = dwList.get(currentTable);
 
-                int colIndex = 0;
 				
 				if (EventType.isWrite(type)) {
 					WriteRowsEventData data = (WriteRowsEventData) event.getData();
@@ -190,11 +189,7 @@ public class Parser {
 					//for every row in the list, put each row into one string array
 					for (Serializable[] row : list) {
 						int writeIndex = 0;
-						colIndex = 0;
 						for (Serializable val : row) {
-						    if(currentTable.equals("LINEORDER") && colIndex == 10){
-						        record.put(colName[writeIndex++], 0);
-						    }
 							String value;
 							if (val instanceof byte[]) {
 								value = new String((byte[]) val, StandardCharsets.UTF_8);
@@ -203,7 +198,6 @@ public class Parser {
 								record.put(colName[writeIndex++], val);
 							}
 
-							colIndex++;
 						}
 
 						record.put(colName[writeIndex++], type.toString());
@@ -218,11 +212,7 @@ public class Parser {
 					// TODO: handle deletes
 					for (Serializable[] row : list) {
 						int deleteIndex = 0;
-						colIndex = 0;
 						for (Serializable val : row) {
-						    if(currentTable.equals("LINEORDER") && colIndex == 10){
-                        	    record.put(colName[deleteIndex++], 0);
-                            }
 							String value;
 							if (val instanceof byte[]) {
 								value = new String((byte[]) val, StandardCharsets.UTF_8);
@@ -246,11 +236,7 @@ public class Parser {
 					for (Map.Entry<Serializable[], Serializable[]> entry : list) {
 						Serializable[] row = entry.getValue();
 						int updateIndex = 0;
-						colIndex = 0;
 						for (Serializable val : row) {
-					        if(currentTable.equals("LINEORDER") && colIndex == 10){
-                        	    record.put(colName[updateIndex++], 0);
-                        	}
 							String value;
 							if (val instanceof byte[]) {
 								value = new String((byte[]) val, StandardCharsets.UTF_8);
