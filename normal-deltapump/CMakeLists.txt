@@ -82,5 +82,3 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/deltapump/schemas
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/deltapump/logs/bin.000002
         DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/include/deltapump/partitions/ranges.csv
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/partitions/)

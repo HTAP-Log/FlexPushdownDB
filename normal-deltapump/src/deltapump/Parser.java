@@ -35,6 +35,13 @@ import org.apache.avro.io.*;
 
 public class Parser {
 
+		public static String currentTable = null;
+    	public static String currentBinlogFile = "bin.000001"; // initial binlog file
+    	public static long currentBinlogPosition = 4; // initial position
+    	public static long counter = 0;
+    	public static long number_of_writes = 0;
+    	public static long number_of_deletes = 0;
+    	public static long number_of_updates = 0;
 	/**
 	 * parse the given binlog file and write all event info in the format of avro, added field in schema compared to HaTrickBench
 	 * @param binlogFilePath
@@ -43,13 +50,6 @@ public class Parser {
 	 */
 	private static byte [][] parseBinlogFile(String binlogFilePath) throws IOException {
 		File binlogFile = new File(binlogFilePath);
-
-		long counter = 0;
-		long number_of_writes = 0;
-		long number_of_deletes = 0;
-		long number_of_updates = 0;
-
-		String currentTable = null;
 
 		double startTime = System.currentTimeMillis();
 
@@ -181,7 +181,6 @@ public class Parser {
 				String[] colName = colList.get(currentTable);
 				DatumWriter<GenericRecord> datumWriter = dwList.get(currentTable);
 
-
 				if (EventType.isWrite(type)) {
 					WriteRowsEventData data = (WriteRowsEventData) event.getData();
 					List<Serializable[]> list = data.getRows();
@@ -281,7 +280,7 @@ public class Parser {
 		}
 
 
-		//if no event for certain table, the lenth of its output stream would be 0
+		//if no event for certain table, the length of its output stream would be 0
 		output[0] = lineorderOutputStream.toByteArray();
 		output[1] = customerOutputStream.toByteArray();
 		output[2] = supplierOutputStream.toByteArray();
