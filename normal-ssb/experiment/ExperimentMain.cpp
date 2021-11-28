@@ -21,7 +21,9 @@ const char* getCurrentTestSuiteName() { return doctest::detail::g_cs->currentTes
 
 int main(int argc, char **argv) {
   // the only true defaultMiniCatalogue
-  normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "super-small-ssb-htap/csv/stables/");
+//  normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "super-small-ssb-htap/csv/stables/");
+
+  normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "ssb-sf1-sorted/csv/");
 //normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "ssb-sf1-sortlineorder/csv/");
 //  normal::connector::defaultMiniCatalogue = normal::connector::MiniCatalogue::defaultMiniCatalogue("pushdowndb-htap", "ssb-sf10-sortlineorder/csv/");
   // math model test
@@ -86,8 +88,8 @@ int main(int argc, char **argv) {
 //    std::string dirPrefix = "ssb-sf100-sortlineorder/parquet_150MB/";
 //    std::string dirPrefix = "ssb-sf1-sortlineorder/csv/";
 
-    std::string dirPrefix = "super-small-ssb-htap/csv/stables/";
-
+//    std::string dirPrefix = "super-small-ssb-htap/csv/stables/";
+    std::string dirPrefix = "ssb-sf1-sorted/csv/";
     auto cacheSize = (size_t) (atof(argv[1]) * 1024 * 1024 * 1024);
     auto modeType = atoi(argv[2]);
     auto cachingPolicyType = atoi(argv[3]);
