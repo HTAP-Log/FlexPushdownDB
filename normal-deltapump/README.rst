@@ -29,6 +29,9 @@ BinlogParser.cpp:
     avro::ValidSchema partSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/part_d.json");
     avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/date_d.json");
 
+3.
+    std::ifstream inFile("/home/ubuntu/pushdown_db_temp_e2e/normal-deltapump/include/deltapump/rangeFile/globalMins"); (only change the part "/home/ubuntu/pushdown_db_temp_e2e")
+
 GetTailDeltas.cpp (normal-htap/src/deltamanager):
 1.
     const char* path = "/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/bin.000002"; //binlog file path

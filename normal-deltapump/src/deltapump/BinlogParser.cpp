@@ -156,7 +156,7 @@ void BinlogParser::parse(const char *filePath,
     //get table_name, offset and range(fixed) of partitions for each table
     std::unordered_map<std::string, std::tuple<int, int>> range_result;
 
-    std::ifstream inFile("./rangeFile/globalMins");
+    std::ifstream inFile("/home/ubuntu/pushdown_db_temp_e2e/normal-deltapump/include/deltapump/rangeFile/globalMins");
     if(!inFile.is_open()) throw std::runtime_error("Could not open range file");
     std::string lineStr, table_name;
     int offset, fixed_range;
@@ -220,88 +220,88 @@ void BinlogParser::parse(const char *filePath,
 
 
      //TODO: partitioning process for other tables in later E2Etesting
-    while (customerReader.read(c1)) {
-        int key;
-        if ((c1).c_custkey) <= customer_offset){
-            key = 0;
-        }
-        else{
-            key = (int)((floor)((float)((c1).c_custkey - customer_offset) / customer_range));
-        }
-        customer_record r = {(c1).c_custkey, MakeTuple::makeCustomerDeltaTuple(c1)} ;
-        auto it = (*customer_record_map).find(key);
-        if(it == (*customer_record_map).end()){
-            std::set<struct customer_record> new_set;
-            new_set.insert(r);
-            (*customer_record_map).insert(std::make_pair(key, new_set));
-        }
-        else{
-            (it->second).insert(r);
-        }
-    }
-
-    while (dateReader.read(d1)) {
-        int key;
-        if ((d1).d_datekey)) <= date_offset){
-            key = 0;
-        }
-        else{
-            key = (int)((floor)((float)((d1).d_datekey) - date_offset) / date_range));
-        }
-        //key = (int)((floor)((float)((d1).d_datekey) / 500)) + 1;
-        date_record r = {(d1).d_datekey, MakeTuple::makeDateDeltaTuple(d1)} ;
-        auto it = (*date_record_map).find(key);
-        if(it == (*date_record_map).end()){
-            std::set<struct date_record> new_set;
-            new_set.insert(r);
-            (*date_record_map).insert(std::make_pair(key, new_set));
-        }
-        else{
-            (it->second).insert(r);
-        }
-    }
-
-    while (partReader.read(p1)) {
-        int key;
-        if ((p1).p_partkey) <= part_offset){
-            key = 0;
-        }
-        else{
-            key = (int)((floor)((float)((p1).p_partkey) - part_offset) / part_range));
-        }
-        //key = (int)((floor)((float)((p1).p_partkey) / 500)) + 1;
-        part_record r = {(p1).p_partkey, MakeTuple::makePartDeltaTuple(p1)} ;
-        auto it = (*part_record_map).find(key);
-        if(it == (*part_record_map).end()){
-            std::set<struct part_record> new_set;
-            new_set.insert(r);
-            (*part_record_map).insert(std::make_pair(key, new_set));
-        }
-        else{
-            (it->second).insert(r);
-        }
-    }
-
-    while (supplierReader.read(s1)) {
-        int key;
-        if ((s1).s_suppkey)) <= supplier_offset){
-            key = 0;
-        }
-        else{
-            key = (int)((floor)((float)((s1).s_suppkey) - supplier_offset) / supplier_range));
-        }
-        //key = (int)((floor)((float)((s1).s_suppkey) / 500)) + 1;
-        supplier_record r = {(s1).s_suppkey, MakeTuple::makeSupplierDeltaTuple(s1)} ;
-        auto it = (*supplier_record_map).find(key);
-        if(it == (*supplier_record_map).end()){
-            std::set<struct supplier_record> new_set;
-            new_set.insert(r);
-            (*supplier_record_map).insert(std::make_pair(key, new_set));
-        }
-        else{
-            (it->second).insert(r);
-        }
-    }
+//    while (customerReader.read(c1)) {
+//        int key;
+//        if ((c1).c_custkey) <= customer_offset){
+//            key = 0;
+//        }
+//        else{
+//            key = (int)((floor)((float)((c1).c_custkey - customer_offset) / customer_range));
+//        }
+//        customer_record r = {(c1).c_custkey, MakeTuple::makeCustomerDeltaTuple(c1)} ;
+//        auto it = (*customer_record_map).find(key);
+//        if(it == (*customer_record_map).end()){
+//            std::set<struct customer_record> new_set;
+//            new_set.insert(r);
+//            (*customer_record_map).insert(std::make_pair(key, new_set));
+//        }
+//        else{
+//            (it->second).insert(r);
+//        }
+//    }
+//
+//    while (dateReader.read(d1)) {
+//        int key;
+//        if ((d1).d_datekey)) <= date_offset){
+//            key = 0;
+//        }
+//        else{
+//            key = (int)((floor)((float)((d1).d_datekey) - date_offset) / date_range));
+//        }
+//        //key = (int)((floor)((float)((d1).d_datekey) / 500)) + 1;
+//        date_record r = {(d1).d_datekey, MakeTuple::makeDateDeltaTuple(d1)} ;
+//        auto it = (*date_record_map).find(key);
+//        if(it == (*date_record_map).end()){
+//            std::set<struct date_record> new_set;
+//            new_set.insert(r);
+//            (*date_record_map).insert(std::make_pair(key, new_set));
+//        }
+//        else{
+//            (it->second).insert(r);
+//        }
+//    }
+//
+//    while (partReader.read(p1)) {
+//        int key;
+//        if ((p1).p_partkey) <= part_offset){
+//            key = 0;
+//        }
+//        else{
+//            key = (int)((floor)((float)((p1).p_partkey) - part_offset) / part_range));
+//        }
+//        //key = (int)((floor)((float)((p1).p_partkey) / 500)) + 1;
+//        part_record r = {(p1).p_partkey, MakeTuple::makePartDeltaTuple(p1)} ;
+//        auto it = (*part_record_map).find(key);
+//        if(it == (*part_record_map).end()){
+//            std::set<struct part_record> new_set;
+//            new_set.insert(r);
+//            (*part_record_map).insert(std::make_pair(key, new_set));
+//        }
+//        else{
+//            (it->second).insert(r);
+//        }
+//    }
+//
+//    while (supplierReader.read(s1)) {
+//        int key;
+//        if ((s1).s_suppkey)) <= supplier_offset){
+//            key = 0;
+//        }
+//        else{
+//            key = (int)((floor)((float)((s1).s_suppkey) - supplier_offset) / supplier_range));
+//        }
+//        //key = (int)((floor)((float)((s1).s_suppkey) / 500)) + 1;
+//        supplier_record r = {(s1).s_suppkey, MakeTuple::makeSupplierDeltaTuple(s1)} ;
+//        auto it = (*supplier_record_map).find(key);
+//        if(it == (*supplier_record_map).end()){
+//            std::set<struct supplier_record> new_set;
+//            new_set.insert(r);
+//            (*supplier_record_map).insert(std::make_pair(key, new_set));
+//        }
+//        else{
+//            (it->second).insert(r);
+//        }
+//    }
 
 
         /*
