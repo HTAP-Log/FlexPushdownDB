@@ -62,9 +62,6 @@ public class Parser {
 		ByteArrayOutputStream dateOutputStream = new ByteArrayOutputStream();
 
 		//add column names for tables, currently hard coded
-// 		String[] lineorderCol = {"lo_orderkey", "lo_linenumber", "lo_custkey", "lo_partkey", "lo_suppkey", "lo_orderdate","lo_orderpriority",
-// 			    "lo_shippriority", "lo_quantity", "lo_extendedprice",  "lo_discount", "lo_revenue", "lo_supplycost",
-// 			    "lo_tax", "lo_commitdate", "lo_shipmode", "type", "timestamp"}; // TODO: check if "lo_ordtotalprice" should be in schema
         String[] lineorderCol = {"lo_orderkey", "lo_linenumber", "lo_custkey", "lo_partkey", "lo_suppkey", "lo_orderdate","lo_orderpriority",
 			    "lo_shippriority", "lo_quantity", "lo_extendedprice", "lo_ordtotalprice", "lo_discount", "lo_revenue", "lo_supplycost",
 			    "lo_tax", "lo_commitdate", "lo_shipmode", "type", "timestamp"}; // TODO: check if "lo_ordtotalprice" should be in schema
@@ -74,15 +71,12 @@ public class Parser {
 		String[] dateCol = {"d_datekey", "d_date", "d_dayofweek", "d_month", "d_year", "d_yearmonthnum", "d_yearmonth", "d_daynuminweek", "d_daynuminmonth",
 				"d_daynuminyear", "d_monthnuminyear", "d_weeknuminyear", "d_sellingseason", "d_lastdayinweekfl",  "d_lastdayinmonthfl", "d_holidayfl", "d_weekdayfl", "type", "timestamp"};
 
-
 		//First, we use a Parser to read our schema definition and create a Schema object.
-		Schema lineorderSchema = new Schema.Parser().parse(new File("./schemas/delta/lineorder_d.json"));
-		Schema customerSchema = new Schema.Parser().parse(new File("./schemas/delta/customer_d.json"));
-		Schema supplierSchema = new Schema.Parser().parse(new File("./schemas/delta/supplier_d.json"));
-		Schema partSchema = new Schema.Parser().parse(new File("./schemas/delta/part_d.json"));
-		Schema dateSchema = new Schema.Parser().parse(new File("./schemas/delta/date_d.json"));
-
-
+		Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/lineorder_d.json"));
+		Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/customer_d.json"));
+		Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/supplier_d.json"));
+		Schema partSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/part_d.json"));
+		Schema dateSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/date_d.json"));
 
 		//avro serializer
 		DatumWriter<GenericRecord> lineorderDatumWriter = new GenericDatumWriter<GenericRecord>(lineorderSchema);
@@ -142,13 +136,11 @@ public class Parser {
 		fwList.put("DATE", dateFileWriter);
 
 
-
 		EventDeserializer eventDeserializer = new EventDeserializer();
 		eventDeserializer.setCompatibilityMode(EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG,
 				EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY);
 
 		BinaryLogFileReader reader = new BinaryLogFileReader(binlogFile, eventDeserializer);
-
 
 		try {
 

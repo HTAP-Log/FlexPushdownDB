@@ -1,14 +1,12 @@
 #include "BinlogParser.h"
 
 // constructor of BinlogParser, which initializes JVM
-//TODO: change /home/ubuntu/pushdown_db_e2e/cmake-build-remote-release to your working directory when testing
 BinlogParser::BinlogParser(){
     const int kNumOptions = 3;
     JavaVMOption options[kNumOptions] = {
             {const_cast<char *>("-Xmx512m"),                                                          NULL},
             {const_cast<char *>("-verbose:gc"),                                                       NULL},
-//            {const_cast<char *>("-Djava.class.path=./Parser.jar:./lib/mysql-binlog-connector-java-0.25.1.jar:./lib/avro-1.10.2.jar:./lib/avro-tools-1.10.2.jar"), NULL}
-            {const_cast<char *>("-Djava.class.path=/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/Parser.jar:/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/lib/avro-1.10.2.jar:/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/lib/avro-tools-1.10.2.jar"), NULL}
+            {const_cast<char *>("-Djava.class.path=/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/Parser.jar:/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/lib/avro-1.10.2.jar:/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/lib/avro-tools-1.10.2.jar"), NULL}
     };
 
     JavaVMInitArgs vm_args;
@@ -80,6 +78,11 @@ void BinlogParser::parse(const char *filePath,
     //call API in Parser.java to parse binlog
     auto byte_arr_list = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, mid, method_args_0));
 
+    if(byte_arr_list == NULL ){
+        std::cerr << "FAILED: byte_arr_list is NULL";
+        exit(1);
+    }
+
     // extract serialized byte array for each table
     auto jlineorder = (jbyteArray) env->GetObjectArrayElement(byte_arr_list, 0);
     jsize lineorder_dim = jlineorder ? env->GetArrayLength(jlineorder) : 0;
@@ -121,11 +124,11 @@ void BinlogParser::parse(const char *filePath,
     std::unique_ptr<avro::InputStream> in_date = avro::memoryInputStream(input_date, (int) date_dim);
 
     // load schemas
-    avro::ValidSchema lineorderSchema = loadSchema("./schemas/delta/lineorder_d.json");
-    avro::ValidSchema customerSchema = loadSchema("./schemas/delta/customer_d.json");
-    avro::ValidSchema supplierSchema = loadSchema("./schemas/delta/supplier_d.json");
-    avro::ValidSchema partSchema = loadSchema("./schemas/delta/part_d.json");
-    avro::ValidSchema dateSchema = loadSchema("./schemas/delta/date_d.json");
+    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/lineorder_d.json");
+    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/customer_d.json");
+    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/supplier_d.json");
+    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/part_d.json");
+    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/date_d.json");
 
     //maps of partitions
     auto *lineorder_record_map = new std::unordered_map<int, std::set<struct lineorder_record>>;
