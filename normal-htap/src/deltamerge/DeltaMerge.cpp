@@ -80,8 +80,11 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
     if (msg.message().type() == "StartMessage") {
         this->onStart();
     } else if (msg.message().type() == "TupleMessage") {
+        SPDLOG_CRITICAL("Message of type {} was received from {} to {}.", msg.message().type(), msg.message().sender() ,name());
         auto tupleMessage = dynamic_cast<const core::message::TupleMessage &>(msg.message());
         this->onTuple(tupleMessage);
+
+
     } else if (msg.message().type() == "CompleteMessage") {
         auto completeMessage = dynamic_cast<const core::message::CompleteMessage &>(msg.message());
         // check if all producers complete sending the tuple, then we can start.
@@ -105,6 +108,7 @@ void DeltaMerge::onStart() {
     ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender),
                 "CacheHandler-lineorder-0")
                 .map_error([](auto err) { throw std::runtime_error(err); });
+    SPDLOG_CRITICAL("Message of type LoadDeltasRequestMessage was send from {} to CacheHandler-lineorder-0.", sender);
 }
 
 /**
@@ -127,6 +131,7 @@ void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
     } else if (stableProducerNames_.count(message.sender())) {
         stables_.emplace_back(tupleSet);
     } else if (memoryDeltaProducerNames_.count(message.sender())){
+        SPDLOG_CRITICAL("The message was the memory deltas.");
         memoryDeltas_.emplace_back(tupleSet);
     }
     else {

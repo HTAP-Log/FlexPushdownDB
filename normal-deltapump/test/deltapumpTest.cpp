@@ -1,5 +1,4 @@
 #include "BinlogParser.h"
-//#include "makeTuple.h"
 
 using namespace normal::avro_tuple::make;
 
@@ -14,15 +13,17 @@ int main() {
 
     // vector to stored parsed delta
     std::unordered_map<int, std::set<struct lineorder_record>> *lineorder_record_ptr = nullptr;
+    std::unordered_map<int, std::set<struct customer_record>> *customer_record_ptr = nullptr;
+    std::unordered_map<int, std::set<struct supplier_record>> *supplier_record_ptr = nullptr;
+    std::unordered_map<int, std::set<struct part_record>> *part_record_ptr = nullptr;
+    std::unordered_map<int, std::set<struct date_record>> *date_record_ptr = nullptr;
 
     const char* path = "./bin.000002"; //binlog file path
-    const char* path_range = "./partitions/ranges.csv"; //range file path
 
     BinlogParser binlogParser;
-    binlogParser.parse(path, path_range, &lineorder_record_ptr);
+    binlogParser.parse(path, &lineorder_record_ptr, &customer_record_ptr, &supplier_record_ptr, &part_record_ptr, &date_record_ptr);
 
     for(auto lineorder_pair : (*lineorder_record_ptr)){
-        std::cout<<"lineorder_pair table number: "<< lineorder_pair.first <<'\n';
         std::set<struct lineorder_record> lineorder_partition = lineorder_pair.second;
         for(auto lineorder_record : lineorder_partition){
             LineorderDelta_t lineorder_delta = lineorder_record.lineorder_delta;

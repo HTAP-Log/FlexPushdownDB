@@ -27,6 +27,7 @@ add_library(normal-htap STATIC
 
 target_include_directories(normal-htap PUBLIC include)
 
+# target_link_libraries(normal-htap PUBLIC Parser)
 target_link_libraries(normal-htap PUBLIC normal-deltapump)
 target_link_libraries(normal-htap PUBLIC aws-cpp-sdk-core)
 target_link_libraries(normal-htap PUBLIC aws-cpp-sdk-s3)
