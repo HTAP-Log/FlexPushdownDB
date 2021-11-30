@@ -4,7 +4,6 @@
 
 #ifndef NORMAL_GETTAILDELTAS_H
 #define NORMAL_GETTAILDELTAS_H
-
 #include <normal/core/Operator.h>
 #include <normal/core/message/CompleteMessage.h>
 #include <normal/core/message/TupleMessage.h>
@@ -21,6 +20,8 @@ using namespace normal::avro_tuple::make;
  * from row-oriented data format to column-oriented data format.
  */
 namespace normal::htap::deltamanager {
+
+    enum BuilderDataType {Int32, Int64, String};
 
     /**
      * Calls DeltaPump API to parse the binlog

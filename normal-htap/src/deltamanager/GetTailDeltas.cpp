@@ -34,92 +34,75 @@ std::shared_ptr<normal::tuple::TupleSet2> normal::htap::deltamanager::rowToColum
     long arraySize = deltaTuples.size();
     // TODO: we need to be able to get a list of builders from metadata API
     // Right now just hardcode all the builders
-    arrow::Int32Builder builder0, builder1, builder2, builder3, builder4, builder5, builder8, builder9, builder10, builder11, builder14, builder15, builder18;
-    arrow::StringBuilder builder6, builder7, builder16, builder17;
-    arrow::Int64Builder builder12, builder13;
 
-    // Initialize builder size for bulk processing
-    std::vector<arrow::Int32Builder*> int32Group = {&builder0, &builder1, &builder2, &builder3, &builder4, &builder5, &builder8, &builder9, &builder10, &builder11, &builder14, &builder15, &builder18};
-    std::vector<arrow::Int64Builder*> int64Group = {&builder12, &builder13};
-    std::vector<arrow::StringBuilder*> stringGroup = {&builder6, &builder7, &builder16, &builder17};
-    for (auto builder : int32Group) builder->Resize(arraySize);
-    for (auto builder : int64Group) builder->Resize(arraySize);
-    for (auto builder : stringGroup) builder->Resize(arraySize);
+    std::unordered_map<int, std::vector<int32_t>> int32Cols;
+    std::unordered_map<int, std::vector<int64_t>> int64Cols;
+    std::unordered_map<int, std::vector<std::string>> stringCols;
+    std::unordered_map<BuilderDataType, std::vector<int>> builderIndices = {
+            {Int32, {0, 1, 2, 3, 4, 5, 8, 9, 10, 11, 14, 15, 18}},
+            {String, {6, 7, 16, 17}},
+            {Int64, {12, 13}}
+    };
+    std::unordered_map<int, std::shared_ptr<arrow::Int32Builder>> int32Builders = {};
+    std::unordered_map<int, std::shared_ptr<arrow::Int64Builder>> int64Builders = {};
+    std::unordered_map<int, std::shared_ptr<arrow::StringBuilder>> stringBuilders = {};
+    std::vector<std::shared_ptr<arrow::Array>> arrowArrays(19);
 
-    std::vector<int32_t> col0, col1, col2, col3, col4, col5, col8, col9, col10, col11, col14, col15, col18; // all ints
-    std::vector<int64_t> col12, col13;
-    std::vector<std::string> col6, col7, col16, col17;
+    // There is a workaround to access std::tuple elements dynamically, but not necessary right now since we are hardcoding everything
     for (auto t : deltaTuples) {
-        col0.emplace_back(std::get<0>(t));
-        col1.emplace_back(std::get<1>(t));
-        col2.emplace_back(std::get<2>(t));
-        col3.emplace_back(std::get<3>(t));
-        col4.emplace_back(std::get<4>(t));
-        col5.emplace_back(std::get<5>(t));
-        col6.emplace_back(std::get<6>(t));
-        col7.emplace_back(std::get<7>(t));
-        col8.emplace_back(std::get<8>(t));
-        col9.emplace_back(std::get<9>(t));
-        col10.emplace_back(std::get<10>(t));
-        col11.emplace_back(std::get<11>(t));
-        col12.emplace_back(std::get<12>(t));
-        col13.emplace_back(std::get<13>(t));
-        col14.emplace_back(std::get<14>(t));
-        col15.emplace_back(std::get<15>(t));
-        col16.emplace_back(std::get<16>(t));
-        col17.emplace_back(std::get<17>(t));
-        col18.emplace_back(std::get<18>(t));
+        int32Cols[0].emplace_back( std::get<0>(t));
+        int32Cols[1].emplace_back( std::get<1>(t));
+        int32Cols[2].emplace_back( std::get<2>(t));
+        int32Cols[3].emplace_back( std::get<3>(t));
+        int32Cols[4].emplace_back( std::get<4>(t));
+        int32Cols[5].emplace_back( std::get<5>(t));
+        int32Cols[8].emplace_back( std::get<8>(t));
+        int32Cols[9].emplace_back( std::get<9>(t));
+        int32Cols[10].emplace_back( std::get<10>(t));
+        int32Cols[11].emplace_back( std::get<11>(t));
+        int32Cols[14].emplace_back( std::get<14>(t));
+        int32Cols[15].emplace_back( std::get<15>(t));
+        int32Cols[18].emplace_back( std::get<18>(t));
+        int64Cols[12].emplace_back( std::get<12>(t));
+        int64Cols[13].emplace_back( std::get<13>(t));
+        stringCols[6].emplace_back(std::get<6>(t));
+        stringCols[7].emplace_back(std::get<7>(t));
+        stringCols[16].emplace_back(std::get<16>(t));
+        stringCols[17].emplace_back(std::get<17>(t));
     }
-    builder0.AppendValues(col0);
-    builder1.AppendValues(col1);
-    builder2.AppendValues(col2);
-    builder3.AppendValues(col3);
-    builder4.AppendValues(col4);
-    builder5.AppendValues(col5);
-    builder6.AppendValues(col6);
-    builder7.AppendValues(col7);
-    builder8.AppendValues(col8);
-    builder9.AppendValues(col9);
-    builder10.AppendValues(col10);
-    builder11.AppendValues(col11);
-    builder12.AppendValues(col12);
-    builder13.AppendValues(col13);
-    builder14.AppendValues(col14);
-    builder15.AppendValues(col15);
-    builder16.AppendValues(col16);
-    builder17.AppendValues(col17);
-    builder18.AppendValues(col18);
 
-    std::shared_ptr<arrow::Array> arr0, arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8, arr9, arr10, arr11, arr12, arr13, arr14, arr15, arr16, arr17, arr18;
-    arrow::Status st0, st1, st2, st3, st4, st5, st6, st7, st8, st9, st10, st11, st12, st13, st14, st15, st16, st17, st18;
-    st0 = builder0.Finish(&arr0);
-    st1 = builder1.Finish(&arr1);
-    st2 = builder2.Finish(&arr2);
-    st3 = builder3.Finish(&arr3);
-    st4 = builder4.Finish(&arr4);
-    st5 = builder5.Finish(&arr5);
-    st6 = builder6.Finish(&arr6);
-    st7 = builder7.Finish(&arr7);
-    st8 = builder8.Finish(&arr8);
-    st9 = builder9.Finish(&arr9);
-    st10 = builder10.Finish(&arr10);
-    st11 = builder11.Finish(&arr11);
-    st12 = builder12.Finish(&arr12);
-    st13 = builder13.Finish(&arr13);
-    st14 = builder14.Finish(&arr14);
-    st15 = builder15.Finish(&arr15);
-    st16 = builder16.Finish(&arr16);
-    st17 = builder17.Finish(&arr17);
-    st18 = builder18.Finish(&arr18);
-    std::vector<arrow::Status> status = {st0, st1, st2, st3, st4, st5, st6, st7, st8, st9, st10, st11, st12, st13, st14, st15, st16, st17, st18};
-    for (const auto& s : status) {
-        if (!s.ok()) {
-            throw std::runtime_error(fmt::format("Error building arrow array from delta tuples"));
+    arrow::MemoryPool* pool = arrow::default_memory_pool();
+    // Initialize all required builders according to builderIndices
+    for (std::pair<BuilderDataType, std::vector<int>> indices : builderIndices) {
+        for (std::size_t index : indices.second) {
+            switch (indices.first) {
+                case Int32:
+                    int32Builders[index] = std::make_shared<arrow::Int32Builder>(pool);
+                    int32Builders[index]->Resize(arraySize);
+                    int32Builders.at(index)->AppendValues(int32Cols.at(index));
+                    if (!int32Builders[index]->Finish(&arrowArrays[index]).ok()) {
+                        throw std::runtime_error(fmt::format("Error building arrow array from delta tuples"));
+                    }
+                    break;
+                case Int64:
+                    int64Builders[index] = std::make_shared<arrow::Int64Builder>(pool);
+                    int64Builders[index]->Resize(arraySize);
+                    int64Builders.at(index)->AppendValues(int64Cols.at(index));
+                    if (!int64Builders[index]->Finish(&arrowArrays[index]).ok()) {
+                        throw std::runtime_error(fmt::format("Error building arrow array from delta tuples"));
+                    }
+                    break;
+                case String:
+                    stringBuilders[index] = std::make_shared<arrow::StringBuilder>(pool);
+                    stringBuilders[index]->Resize(arraySize);
+                    stringBuilders.at(index)->AppendValues(stringCols.at(index));
+                    if (!stringBuilders[index]->Finish(&arrowArrays[index]).ok()) {
+                        throw std::runtime_error(fmt::format("Error building arrow array from delta tuples"));
+                    }
+                    break;
+            }
         }
     }
-
-    std::vector<std::shared_ptr<arrow::Array>> arrowArrays = {arr0, arr1, arr2, arr3, arr4, arr5, arr6, arr7, arr8,
-                                                              arr9, arr10, arr11, arr12, arr13, arr14, arr15, arr16, arr17, arr18};
 
     // TODO: check the schema is correct, now we just assume it is correct
     return TupleSet2::make(outputSchema, arrowArrays);
