@@ -14,12 +14,10 @@ std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> normal
     std::unordered_map<int, std::set<struct supplier_record>> *supplier_record_ptr = nullptr;
     std::unordered_map<int, std::set<struct part_record>> *part_record_ptr = nullptr;
     std::unordered_map<int, std::set<struct date_record>> *date_record_ptr = nullptr;
-    // TODO: change this hardcoded method
+    // TODO: change this hardcoded method and remove parameter path
     const char* path = "/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/bin.000002"; //binlog file path
     // BinlogParser binlogParser;
-//    binlogParser.parse(path, path_range, &lineorder_record_ptr);
     binlogParser.parse(path, &lineorder_record_ptr, &customer_record_ptr, &supplier_record_ptr, &part_record_ptr, &date_record_ptr);
-
     SPDLOG_DEBUG("##### After parsing #####");
     if (lineorder_record_ptr == nullptr) {
         throw std::runtime_error(fmt::format("Error parsing binlog"));

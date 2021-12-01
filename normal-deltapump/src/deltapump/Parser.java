@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.FileInputStream;
+import java.io.BufferedInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,14 +36,23 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.*;
 
 public class Parser {
-
 		public static String currentTable = null;
-    	public static String currentBinlogFile = "bin.000001"; // initial binlog file
-    	public static long currentBinlogPosition = 4; // initial position
-    	public static long counter = 0;
-    	public static long number_of_writes = 0;
-    	public static long number_of_deletes = 0;
-    	public static long number_of_updates = 0;
+    	public static long last_timestamp = 0; //timestamp of last log event in previous call
+    	private static boolean firstCall = true; //whether the deltapump is called for the first time
+        // binlog file reader
+    	private static File binlogFile = new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/bin.000002");
+        private static EventDeserializer eventDeserializer = new EventDeserializer();
+        private static BufferedInputStream bf;
+        private static BinaryLogFileReader reader;
+        static {
+            try{
+                bf = new BufferedInputStream(new FileInputStream(binlogFile));
+                reader = new BinaryLogFileReader(bf, eventDeserializer);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+
 	/**
 	 * parse the given binlog file and write all event info in the format of avro, added field in schema compared to HaTrickBench
 	 * @param binlogFilePath
@@ -49,7 +60,11 @@ public class Parser {
 	 * @throws IOException
 	 */
 	private static byte [][] parseBinlogFile(String binlogFilePath) throws IOException {
-		File binlogFile = new File(binlogFilePath);
+	    long counter = 0;
+	    long number_of_writes = 0;
+        long number_of_deletes = 0;
+        long number_of_updates = 0;
+// 		File binlogFile = new File(binlogFilePath);
 
 		double startTime = System.currentTimeMillis();
 
@@ -136,11 +151,10 @@ public class Parser {
 		fwList.put("DATE", dateFileWriter);
 
 
-		EventDeserializer eventDeserializer = new EventDeserializer();
+// 		EventDeserializer eventDeserializer = new EventDeserializer();
 		eventDeserializer.setCompatibilityMode(EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG,
 				EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY);
-
-		BinaryLogFileReader reader = new BinaryLogFileReader(binlogFile, eventDeserializer);
+// 		BinaryLogFileReader reader = new BinaryLogFileReader(binlogFile, eventDeserializer);
 
 		try {
 
@@ -148,6 +162,12 @@ public class Parser {
 				EventHeaderV4 header = event.getHeader();
 				EventType type = header.getEventType();
 				long timestamp = header.getTimestamp();
+
+                if(firstCall){
+                    last_timestamp = timestamp;
+                    firstCall = false;
+                }
+
 
 				if (type == EventType.TABLE_MAP) {
 					currentTable = ((TableMapEventData) event.getData()).getTable();
@@ -248,13 +268,19 @@ public class Parser {
 
 				dataFileWriter.append(record);
 				counter++;
+
+                // every time deltapump is called, it sends next 5 seconds transaction starting from the previous position
+				if(timestamp >= (last_timestamp + 1 * 5 * 1000)){
+				    last_timestamp = timestamp;
+				    break;
+				}
 			}
 
 
 
 			double endTime = System.currentTimeMillis();
 			double duration = (endTime - startTime) / 1000;
-			System.out.println("Process time: " + duration + " s");
+// 			System.out.println("Process time: " + duration + " s");
 			System.out.println("Number of events: " + counter);
 			System.out.println("Number of wrtites: " + number_of_writes);
 			System.out.println("Number of deletes: " + number_of_deletes);
@@ -268,7 +294,7 @@ public class Parser {
 					o.close();
 				}
 			}
-			reader.close();
+// 			reader.close();
 		}
 
 

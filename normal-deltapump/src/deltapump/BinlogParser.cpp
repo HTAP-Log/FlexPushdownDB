@@ -41,7 +41,7 @@ void BinlogParser::parse(const char *filePath,
                          std::unordered_map<int, std::set<struct supplier_record>> **supplier_record_ptr,
                          std::unordered_map<int, std::set<struct part_record>> **part_record_ptr,
                          std::unordered_map<int, std::set<struct date_record>> **date_record_ptr){
-
+    //TODO: remove parameter filepath
     // code to call parser functions in java
     if (jvm == NULL) {
         std::cerr << "FAILED: jvm not initialized" << std::endl;
