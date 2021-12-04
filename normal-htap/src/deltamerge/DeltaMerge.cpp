@@ -63,12 +63,17 @@ std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &Name, long quer
 }
 
 
-std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName, const std::string &Name, long queryId,std::shared_ptr<::arrow::Schema> outputSchema ) {
+std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName,
+                                              const std::string &Name,
+                                              long queryId,std::shared_ptr<::arrow::Schema> outputSchema ) {
     return std::make_shared<DeltaMerge>(tableName, Name, queryId, outputSchema);
 }
 
 
-std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName, const std::string &Name, long queryId, std::shared_ptr<::arrow::Schema> outputSchema, long partitionNumber) {
+std::shared_ptr <DeltaMerge> DeltaMerge::make(const std::string &tableName,
+                                              const std::string &Name,
+                                              long queryId, std::shared_ptr<::arrow::Schema> outputSchema,
+                                              long partitionNumber) {
     return std::make_shared<DeltaMerge>(tableName, Name, queryId, outputSchema, partitionNumber);
 }
 
@@ -80,11 +85,15 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
     if (msg.message().type() == "StartMessage") {
         this->onStart();
     } else if (msg.message().type() == "TupleMessage") {
-        SPDLOG_CRITICAL("Message of type {} was received from {} to {}.", msg.message().type(), msg.message().sender() ,name());
+        SPDLOG_CRITICAL("{}: Message of type {} was received from {}.", name(),
+                        msg.message().type(), msg.message().sender());
         auto tupleMessage = dynamic_cast<const core::message::TupleMessage &>(msg.message());
         this->onTuple(tupleMessage);
-
-
+    } else if (msg.message().type() == "LoadDeltasResponseMessage"){
+        SPDLOG_CRITICAL("[7]. {}: Message of type {} was received from {}.", name(),
+                        msg.message().type(), msg.message().sender());
+        auto deltasMessage = dynamic_cast<const normal::htap::deltamanager::LoadDeltasResponseMessage &>(msg.message());
+        this->onDeltas(deltasMessage);
     } else if (msg.message().type() == "CompleteMessage") {
         auto completeMessage = dynamic_cast<const core::message::CompleteMessage &>(msg.message());
         // check if all producers complete sending the tuple, then we can start.
@@ -108,7 +117,7 @@ void DeltaMerge::onStart() {
     ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender),
                 "CacheHandler-lineorder-0")
                 .map_error([](auto err) { throw std::runtime_error(err); });
-    SPDLOG_CRITICAL("Message of type LoadDeltasRequestMessage was send from {} to CacheHandler-lineorder-0.", sender);
+    SPDLOG_CRITICAL("[1]. {}: Message of type LoadDeltasRequestMessage was send to CacheHandler-lineorder-0.", name());
 }
 
 /**
@@ -130,13 +139,21 @@ void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
         deltas_.emplace_back(tupleSet);
     } else if (stableProducerNames_.count(message.sender())) {
         stables_.emplace_back(tupleSet);
-    } else if (memoryDeltaProducerNames_.count(message.sender())){
-        SPDLOG_CRITICAL("The message was the memory deltas.");
-        memoryDeltas_.emplace_back(tupleSet);
-    }
-    else {
+    } else {
         throw std::runtime_error(fmt::format("Unrecognized producer {}", message.sender()));
     }
+}
+
+
+/**
+ * Function responsible to handle the LoadDeltaResponseMessage with the in-memory deltas and their timestamps.
+ * @param message of type LoadDeltasResponseMessage
+ */
+void DeltaMerge::onDeltas(const normal::htap::deltamanager::LoadDeltasResponseMessage &message){
+    SPDLOG_CRITICAL("OnDeltas is now handling the LoadDeltasResponseMessage.");
+    const auto &deltas = message.getDeltas();
+    const auto &timestamp = message.getTimestamps();
+    memoryDeltas_.insert(memoryDeltas_.end(), deltas.begin(), deltas.end());
 }
 
 /**
