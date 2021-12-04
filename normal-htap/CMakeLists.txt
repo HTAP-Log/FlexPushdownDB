@@ -13,7 +13,7 @@ LINK_DIRECTORIES(/usr/local/opt/binutils/lib)
 add_library(normal-htap STATIC
         # delta merge
         include/deltamerge/DeltaMerge.h src/deltamerge/DeltaMerge.cpp
-        # get tails delta
+        # delta manager
         include/deltamanager/GetTailDeltas.h src/deltamanager/GetTailDeltas.cpp
         include/deltamanager/DeltaCacheKey.h src/deltamanager/DeltaCacheKey.cpp
         include/deltamanager/DeltaCacheData.h src/deltamanager/DeltaCacheData.cpp
@@ -23,6 +23,8 @@ add_library(normal-htap STATIC
         include/deltamanager/LoadDeltasResponseMessage.h src/deltamanager/LoadDeltasResponseMessage.cpp
         include/deltamanager/StoreTailRequestMessage.h src/deltamanager/StoreTailRequestMessage.cpp
         include/deltamanager/CacheHandler.h src/deltamanager/CacheHandler.cpp
+        # conversion
+        include/conversion/Conversion.h src/conversion/Conversion.cpp
         )
 
 target_include_directories(normal-htap PUBLIC include)
@@ -36,4 +38,17 @@ target_link_libraries(normal-htap PUBLIC /usr/local/lib/libavrocpp.so)
 target_link_libraries(normal-htap PUBLIC normal-plan)
 target_link_libraries(normal-htap PUBLIC normal-ssb)
 target_link_libraries(normal-htap PUBLIC normal-core)
+target_link_libraries(normal-htap PUBLIC normal-tuple)
 target_link_libraries(normal-htap PUBLIC normal-connector)
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Executable
+#-----------------------------------------------------------------------------------------------------------------------
+
+add_executable(normal-htap-conversion-test
+        test/ConversionTest.cpp
+        )
+
+target_link_libraries(normal-htap-conversion-test spdlog::spdlog)
+target_link_libraries(normal-htap-conversion-test normal-htap)
