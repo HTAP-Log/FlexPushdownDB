@@ -6,7 +6,7 @@ BinlogParser::BinlogParser(){
     JavaVMOption options[kNumOptions] = {
             {const_cast<char *>("-Xmx512m"),                                                          NULL},
             {const_cast<char *>("-verbose:gc"),                                                       NULL},
-            {const_cast<char *>("-Djava.class.path=/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/Parser.jar:/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/lib/avro-1.10.2.jar:/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/lib/avro-tools-1.10.2.jar"), NULL}
+            {const_cast<char *>("-Djava.class.path=/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/Parser.jar:/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/lib/avro-1.10.2.jar:/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/lib/avro-tools-1.10.2.jar"), NULL}
     };
 
     JavaVMInitArgs vm_args;
@@ -124,11 +124,11 @@ void BinlogParser::parse(const char *filePath,
     std::unique_ptr<avro::InputStream> in_date = avro::memoryInputStream(input_date, (int) date_dim);
 
     // load schemas
-    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/lineorder_d.json");
-    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/customer_d.json");
-    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/supplier_d.json");
-    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/part_d.json");
-    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/date_d.json");
+    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/schemas/delta/lineorder_d.json");
+    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/customer_d.json");
+    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/supplier_d.json");
+    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/part_d.json");
+    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/date_d.json");
 
     //maps of partitions
     auto *lineorder_record_map = new std::unordered_map<int, std::set<struct lineorder_record>>;
@@ -156,7 +156,7 @@ void BinlogParser::parse(const char *filePath,
     //get table_name, offset and range(fixed) of partitions for each table
     std::unordered_map<std::string, std::tuple<int, int>> range_result;
 
-    std::ifstream inFile("/home/ubuntu/pushdown_db_temp_e2e/normal-deltapump/include/deltapump/rangeFile/globalMins");
+    std::ifstream inFile("/home/ubuntu/FPDB_oscar/normal-deltapump/include/deltapump/rangeFile/globalMins");
     if(!inFile.is_open()) throw std::runtime_error("Could not open range file");
     std::string lineStr, table_name;
     int offset, fixed_range;

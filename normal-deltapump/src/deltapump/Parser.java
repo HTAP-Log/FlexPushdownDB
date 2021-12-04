@@ -72,11 +72,11 @@ public class Parser {
 				"d_daynuminyear", "d_monthnuminyear", "d_weeknuminyear", "d_sellingseason", "d_lastdayinweekfl",  "d_lastdayinmonthfl", "d_holidayfl", "d_weekdayfl", "type", "timestamp"};
 
 		//First, we use a Parser to read our schema definition and create a Schema object.
-		Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/lineorder_d.json"));
-		Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/customer_d.json"));
-		Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/supplier_d.json"));
-		Schema partSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/part_d.json"));
-		Schema dateSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/date_d.json"));
+		Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/lineorder_d.json"));
+		Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/customer_d.json"));
+		Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/supplier_d.json"));
+		Schema partSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/part_d.json"));
+		Schema dateSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/date_d.json"));
 
 		//avro serializer
 		DatumWriter<GenericRecord> lineorderDatumWriter = new GenericDatumWriter<GenericRecord>(lineorderSchema);
