@@ -161,7 +161,7 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             std::shared_ptr<Operator> stableScanOp;
             auto deltaScanOps = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
-           std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandlerOp =
+            std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandlerOp =
                     normal::htap::deltamanager::CacheHandler::make("CacheHandler-lineorder-0",
                                                                    getName(),
                                                                    partition,

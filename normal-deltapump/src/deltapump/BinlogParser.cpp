@@ -1,22 +1,24 @@
 #include "BinlogParser.h"
+#include <filesystem>
+using namespace std::filesystem;
 
-// constructor of BinlogParser, which initializes JVM
 //TODO: change /home/ubuntu/pushdown_db_e2e/cmake-build-remote-release to your working directory when testing
 BinlogParser::BinlogParser(){
     const int kNumOptions = 3;
     JavaVMOption options[kNumOptions] = {
-            {const_cast<char *>("-Xmx512m"),                                                          NULL},
-            {const_cast<char *>("-verbose:gc"),                                                       NULL},
-//            {const_cast<char *>("-Djava.class.path=./Parser.jar:./lib/mysql-binlog-connector-java-0.25.1.jar:./lib/avro-1.10.2.jar:./lib/avro-tools-1.10.2.jar"), NULL}
-            {const_cast<char *>("-Djava.class.path=/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/Parser.jar:/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/lib/avro-1.10.2.jar:/home/ubuntu/pushdown_db_e2e/cmake-build-remote-release/normal-deltapump/lib/avro-tools-1.10.2.jar"), NULL}
-    };
-
+            {const_cast<char *>("-Xmx512m"),NULL},
+            {const_cast<char *>("-verbose:gc"),NULL},
+            {const_cast<char *>("-Djava.class.path="
+                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump/Parser.jar:"
+                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:"
+                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump/lib/avro-1.10.2.jar:"
+                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump//lib/avro-tools-1.10.2.jar"),
+                    NULL}};
     JavaVMInitArgs vm_args;
     vm_args.version = JNI_VERSION_1_6;
     vm_args.options = options;
     vm_args.nOptions = sizeof(options) / sizeof(JavaVMOption);
     assert(vm_args.nOptions == kNumOptions);
-
 
     int res = JNI_CreateJavaVM(&jvm, reinterpret_cast<void **>(&g_env), &vm_args);
     if (res != JNI_OK) {
@@ -25,9 +27,6 @@ BinlogParser::BinlogParser(){
     }
 }
 
-/*
- * load avro schema from disk
- */
 avro::ValidSchema loadSchema(const char* filename)
 {
     std::ifstream ifs(filename);
@@ -43,7 +42,6 @@ void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set
                          std::unordered_map<int, std::set<struct part_record>> **part_record_ptr,
                          std::unordered_map<int, std::set<struct date_record>> **date_record_ptr){
 
-    // code to call parser functions in java
     if (jvm == NULL) {
         std::cerr << "FAILED: jvm not initialized" << std::endl;
         exit(-1);
@@ -78,6 +76,10 @@ void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set
 
     //call API in Parser.java to parse binlog
     auto byte_arr_list = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, mid, method_args_0));
+    /*if(byte_arr_list == NULL ){
+        std::cerr << "FAILED: byte_arr_list is NULL";
+        exit(1);
+    }*/
 
     // extract serialized byte array for each table
     auto jlineorder = (jbyteArray) env->GetObjectArrayElement(byte_arr_list, 0);
@@ -120,11 +122,11 @@ void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set
     std::unique_ptr<avro::InputStream> in_date = avro::memoryInputStream(input_date, (int) date_dim);
 
     // load schemas
-    avro::ValidSchema lineorderSchema = loadSchema("./schemas/delta/lineorder_d.json");
-    avro::ValidSchema customerSchema = loadSchema("./schemas/delta/customer_d.json");
-    avro::ValidSchema supplierSchema = loadSchema("./schemas/delta/supplier_d.json");
-    avro::ValidSchema partSchema = loadSchema("./schemas/delta/part_d.json");
-    avro::ValidSchema dateSchema = loadSchema("./schemas/delta/date_d.json");
+    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json");
+    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/customer_d.json");
+    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json");
+    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/part_d.json");
+    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/date_d.json");
 
     //maps of partitions
     auto *lineorder_record_map = new std::unordered_map<int, std::set<struct lineorder_record>>;
@@ -168,8 +170,8 @@ void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set
 
     }
 
-    /*
-     //TODO: partitioning process for other tables in later E2Etesting
+
+    //TODO: partitioning process for other tables in later E2Etesting
     while (customerReader.read(c1)) {
         int key;
         key = (int)((floor)((float)((c1).c_custkey) / 500)) + 1;
@@ -228,14 +230,14 @@ void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set
         else{
             (it->second).insert(r);
         }
-    }*/
+    }
 
 
-        /*
-     * LO_ORDERKEY,LO_LINENUMBER,LO_CUSTKEY,LO_PARTKEY,LO_SUPPKEY,LO_ORDERDATE,LO_ORDERPRIORITY,LO_SHIPPRIORITY,LO_QUANTITY,LO_EXTENDEDPRICE,LO_ORDTOTALPRICE,LO_DISCOUNT,LO_REVENUE,LO_SUPPLYCOST,LO_TAX,LO_COMMITDATE,LO_SHIPMODE, timestamp, type
+    /*
+ * LO_ORDERKEY,LO_LINENUMBER,LO_CUSTKEY,LO_PARTKEY,LO_SUPPKEY,LO_ORDERDATE,LO_ORDERPRIORITY,LO_SHIPPRIORITY,LO_QUANTITY,LO_EXTENDEDPRICE,LO_ORDTOTALPRICE,LO_DISCOUNT,LO_REVENUE,LO_SUPPLYCOST,LO_TAX,LO_COMMITDATE,LO_SHIPMODE, timestamp, type
 1,1,209,1552,9,"19940925","1-URGENT",0,17,2471035,11507269,4,2372193,87214,2,"19941105","TRUCK", "1", "UPDATE"
 1,2,209,674,2,"19940925","1-URGENT",0,36,5668812,11507269,9,5158618,94481,6,"19941121","MAIL", "1", "UPDATE"
-     * */
+ * */
 //    // TODO: remove the hardcoded part
 //    i::lineorder avro_row1 = i::lineorder();
 //    avro_row1.lo_orderkey = 1;

@@ -11,6 +11,7 @@
 #include <normal/core/message/TupleMessage.h>
 #include <normal/tuple/TupleSet2.h>
 #include <deltamanager/LoadDeltasRequestMessage.h>
+#include <deltamanager/LoadDeltasResponseMessage.h>
 #include <string>
 
 namespace normal::htap::deltamerge {
@@ -54,6 +55,7 @@ namespace normal::htap::deltamerge {
 
         void onTuple(const core::message::TupleMessage &message);
 
+        void onDeltas(const normal::htap::deltamanager::LoadDeltasResponseMessage &message);
 
         void addDeltaProducer(const std::shared_ptr<Operator> &deltaProducer);
 

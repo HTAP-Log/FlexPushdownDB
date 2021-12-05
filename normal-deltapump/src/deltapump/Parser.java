@@ -35,13 +35,11 @@ import org.apache.avro.io.*;
 
 public class Parser {
 
-		public static String currentTable = null;
-    	public static String currentBinlogFile = "bin.000001"; // initial binlog file
-    	public static long currentBinlogPosition = 4; // initial position
-    	public static long counter = 0;
-    	public static long number_of_writes = 0;
-    	public static long number_of_deletes = 0;
-    	public static long number_of_updates = 0;
+    public static String currentTable = null;
+    public static long counter = 0;
+    public static long number_of_writes = 0;
+    public static long number_of_deletes = 0;
+    public static long number_of_updates = 0;
 	/**
 	 * parse the given binlog file and write all event info in the format of avro, added field in schema compared to HaTrickBench
 	 * @param binlogFilePath
@@ -49,49 +47,60 @@ public class Parser {
 	 * @throws IOException
 	 */
 	private static byte [][] parseBinlogFile(String binlogFilePath) throws IOException {
-		File binlogFile = new File(binlogFilePath);
 
+		File binlogFile = new File(binlogFilePath);
+        System.out.println("Parser.java----Binary file path:" + binlogFilePath);
 		double startTime = System.currentTimeMillis();
+        System.out.println("Parser.java----Current time:" + startTime);
 
 		byte[][] output = new byte[5][];
 
 		ByteArrayOutputStream lineorderOutputStream = new ByteArrayOutputStream();
+        if(lineorderOutputStream == null){
+            System.out.println("Parser.java----lineorderOutputStream NULL");
+        }
 		ByteArrayOutputStream customerOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream supplierOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream partOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream dateOutputStream = new ByteArrayOutputStream();
 
-		//add column names for tables, currently hard coded
-// 		String[] lineorderCol = {"lo_orderkey", "lo_linenumber", "lo_custkey", "lo_partkey", "lo_suppkey", "lo_orderdate","lo_orderpriority",
-// 			    "lo_shippriority", "lo_quantity", "lo_extendedprice",  "lo_discount", "lo_revenue", "lo_supplycost",
-// 			    "lo_tax", "lo_commitdate", "lo_shipmode", "type", "timestamp"}; // TODO: check if "lo_ordtotalprice" should be in schema
-        String[] lineorderCol = {"lo_orderkey", "lo_linenumber", "lo_custkey", "lo_partkey", "lo_suppkey", "lo_orderdate","lo_orderpriority",
-			    "lo_shippriority", "lo_quantity", "lo_extendedprice", "lo_ordtotalprice", "lo_discount", "lo_revenue", "lo_supplycost",
-			    "lo_tax", "lo_commitdate", "lo_shipmode", "type", "timestamp"}; // TODO: check if "lo_ordtotalprice" should be in schema
-		String[] customerCol = {"c_custkey", "c_name", "c_address", "c_city", "c_nation", "c_region", "c_phone", "c_mktsegment", "c_payment", "type", "timestamp"}; //TODO: check customer schema, unknown
-		String[] supplierCol = {"s_suppkey", "s_name", "s_address", "s_city", "s_nation", "s_region", "s_phone", "s_ytd", "type", "timestamp"};  //TODO: check schema, unknown
-		String[] partCol = {"p_partkey", "p_name", "p_mfgr", "p_category", "p_brand1", "p_color", "p_type", "p_size", "p_container", "type", "timestamp"};
-		String[] dateCol = {"d_datekey", "d_date", "d_dayofweek", "d_month", "d_year", "d_yearmonthnum", "d_yearmonth", "d_daynuminweek", "d_daynuminmonth",
-				"d_daynuminyear", "d_monthnuminyear", "d_weeknuminyear", "d_sellingseason", "d_lastdayinweekfl",  "d_lastdayinmonthfl", "d_holidayfl", "d_weekdayfl", "type", "timestamp"};
+        String[] lineorderCol = {"lo_orderkey", "lo_linenumber", "lo_custkey", "lo_partkey", "lo_suppkey",
+                                "lo_orderdate","lo_orderpriority","lo_shippriority", "lo_quantity",
+                                "lo_extendedprice", "lo_ordtotalprice", "lo_discount", "lo_revenue", "lo_supplycost",
+                                "lo_tax", "lo_commitdate", "lo_shipmode", "type", "timestamp"};
 
+		String[] customerCol = {"c_custkey", "c_name", "c_address", "c_city", "c_nation",
+		                        "c_region", "c_phone", "c_mktsegment", "c_payment", "type", "timestamp"};
+		String[] supplierCol = {"s_suppkey", "s_name", "s_address", "s_city", "s_nation", "s_region",
+		                        "s_phone", "s_ytd", "type", "timestamp"};
+		String[] partCol = {"p_partkey", "p_name", "p_mfgr", "p_category", "p_brand1", "p_color",
+		                    "p_type", "p_size", "p_container", "type", "timestamp"};
+		String[] dateCol = {"d_datekey", "d_date", "d_dayofweek", "d_month", "d_year", "d_yearmonthnum", "d_yearmonth",
+		                    "d_daynuminweek", "d_daynuminmonth", "d_daynuminyear", "d_monthnuminyear",
+		                    "d_weeknuminyear", "d_sellingseason", "d_lastdayinweekfl",  "d_lastdayinmonthfl",
+		                    "d_holidayfl", "d_weekdayfl", "type", "timestamp"};
 
 		//First, we use a Parser to read our schema definition and create a Schema object.
-		Schema lineorderSchema = new Schema.Parser().parse(new File("./schemas/delta/lineorder_d.json"));
-		Schema customerSchema = new Schema.Parser().parse(new File("./schemas/delta/customer_d.json"));
-		Schema supplierSchema = new Schema.Parser().parse(new File("./schemas/delta/supplier_d.json"));
-		Schema partSchema = new Schema.Parser().parse(new File("./schemas/delta/part_d.json"));
-		Schema dateSchema = new Schema.Parser().parse(new File("./schemas/delta/date_d.json"));
-
-
+		Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json"));
+		Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/customer_d.json"));
+		Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json"));
+		Schema partSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/part_d.json"));
+		Schema dateSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/date_d.json"));
 
 		//avro serializer
 		DatumWriter<GenericRecord> lineorderDatumWriter = new GenericDatumWriter<GenericRecord>(lineorderSchema);
+        if(lineorderDatumWriter == null){
+            System.out.println("Parser.java----lineorderDatumWriter NULL");
+        }
 		DatumWriter<GenericRecord> customerDatumWriter = new GenericDatumWriter<GenericRecord>(customerSchema);
 		DatumWriter<GenericRecord> supplierDatumWriter = new GenericDatumWriter<GenericRecord>(supplierSchema);
 		DatumWriter<GenericRecord> partDatumWriter = new GenericDatumWriter<GenericRecord>(partSchema);
 		DatumWriter<GenericRecord> dateDatumWriter = new GenericDatumWriter<GenericRecord>(dateSchema);
 
 		DataFileWriter<GenericRecord> lineorderFileWriter = new DataFileWriter<GenericRecord>(lineorderDatumWriter);
+        if(lineorderFileWriter == null){
+            System.out.println("Parser.java----lineorderFileWriter NULL");
+        }
 		DataFileWriter<GenericRecord> customerFileWriter = new DataFileWriter<GenericRecord>(customerDatumWriter);
 		DataFileWriter<GenericRecord> partFileWriter = new DataFileWriter<GenericRecord>(partDatumWriter);
 		DataFileWriter<GenericRecord> dateFileWriter = new DataFileWriter<GenericRecord>(dateDatumWriter);
@@ -102,7 +111,6 @@ public class Parser {
 		partFileWriter.create(partSchema, partOutputStream);
 		dateFileWriter.create(dateSchema, dateOutputStream);
 		supplierFileWriter.create(supplierSchema, supplierOutputStream);
-
 		HashMap<String, Schema> schemaList = new HashMap<String, Schema>();
 		HashMap<String, String[]> colList = new HashMap<String, String[]>();
 		HashMap<String, DatumWriter<GenericRecord>> dwList = new HashMap<String, DatumWriter<GenericRecord>>();
@@ -110,7 +118,8 @@ public class Parser {
 		HashMap<String, DataFileWriter<GenericRecord>> fwList = new HashMap<String, DataFileWriter<GenericRecord>>();
 
 		//put schemas and file writer into hash map
-		//NOTE: in HATrickbench all table names are in uppercase, may need to modify code when encounter lowercase table names (e.g. currentTable.toLowerCase())
+		//NOTE: in HATtrick benchmark all table names are in uppercase,
+		//may need to modify code when encounter lowercase table names (e.g. currentTable.toLowerCase())
 		schemaList.put("LINEORDER", lineorderSchema);
 		schemaList.put("CUSTOMER", customerSchema);
 		schemaList.put("SUPPLIER", supplierSchema);
@@ -141,17 +150,16 @@ public class Parser {
 		fwList.put("PART", partFileWriter);
 		fwList.put("DATE", dateFileWriter);
 
-
-
 		EventDeserializer eventDeserializer = new EventDeserializer();
 		eventDeserializer.setCompatibilityMode(EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG,
 				EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY);
 
 		BinaryLogFileReader reader = new BinaryLogFileReader(binlogFile, eventDeserializer);
-
+		if(reader == null){
+		    System.out.println("Parser.java----reader NULL");
+		}
 
 		try {
-
 			for (Event event; (event = reader.readEvent()) != null;) {
 				EventHeaderV4 header = event.getHeader();
 				EventType type = header.getEventType();
@@ -162,20 +170,10 @@ public class Parser {
 					continue;
 				}
 
+                if(currentTable == null)
+                    continue;
 
-				//TODO: ignore all non LINEORDER tables, comment the code below to parse all logs
-			    if(currentTable == null || (currentTable != null && !currentTable.equals("LINEORDER"))) {
-			    	continue;
-			    }
-
-// 				if(currentTable == null) {
-// 			    	continue;
-// 			    }
-//
-// 				if(!currentTable.equals("LINEORDER") && !currentTable.equals("CUSTOMER") && !currentTable.equals("SUPPLIER") && !currentTable.equals("PART") && !currentTable.equals("DATE")) {
-// 			    	continue;
-// 			    }
-
+                // Get for currentTable record, dataFileWriter, colList and datumWriter.
 				GenericRecord record = new GenericData.Record(schemaList.get(currentTable));
 				DataFileWriter<GenericRecord> dataFileWriter = fwList.get(currentTable);
 				String[] colName = colList.get(currentTable);
@@ -196,15 +194,11 @@ public class Parser {
 							} else {
 								record.put(colName[writeIndex++], val);
 							}
-
 						}
-
 						record.put(colName[writeIndex++], type.toString());
 						record.put(colName[writeIndex++], timestamp);
-
 					}
 					number_of_writes++;
-
 				} else if (EventType.isDelete(type)) {
 					DeleteRowsEventData data = (DeleteRowsEventData) event.getData();
 					List<Serializable[]> list = data.getRows();
@@ -220,13 +214,9 @@ public class Parser {
 								record.put(colName[deleteIndex++], val);
 							}
 						}
-
-
 						record.put(colName[deleteIndex++], type.toString());
 						record.put(colName[deleteIndex++], timestamp);
-
 					}
-
 					number_of_deletes++;
 				} else if (EventType.isUpdate(type)) {
 					UpdateRowsEventData data = (UpdateRowsEventData) event.getData();
@@ -244,22 +234,16 @@ public class Parser {
 								record.put(colName[updateIndex++], val);
 							}
 						}
-
 						record.put(colName[updateIndex++], type.toString());
 						record.put(colName[updateIndex++], timestamp);
-
 					}
 					number_of_updates++;
-				}else {
+				} else {
 					continue;
 				}
-
 				dataFileWriter.append(record);
 				counter++;
 			}
-
-
-
 			double endTime = System.currentTimeMillis();
 			double duration = (endTime - startTime) / 1000;
 			System.out.println("Process time: " + duration + " s");
@@ -267,9 +251,8 @@ public class Parser {
 			System.out.println("Number of wrtites: " + number_of_writes);
 			System.out.println("Number of deletes: " + number_of_deletes);
 			System.out.println("Number of updates: " + number_of_updates);
-
 		} catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		} finally {
 			for(ByteArrayOutputStream o : osList.values()) {
 				if(o != null) {
@@ -278,7 +261,6 @@ public class Parser {
 			}
 			reader.close();
 		}
-
 
 		//if no event for certain table, the length of its output stream would be 0
 		output[0] = lineorderOutputStream.toByteArray();
