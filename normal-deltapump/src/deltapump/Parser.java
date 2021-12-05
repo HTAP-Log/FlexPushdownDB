@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.FileInputStream;
+import java.io.BufferedInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,12 +36,23 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.*;
 
 public class Parser {
+		public static String currentTable = null;
+    	public static long last_timestamp = 0; //timestamp of last log event in previous call
+    	private static boolean firstCall = true; //whether the deltapump is called for the first time
+        // binlog file reader
+    	private static File binlogFile = new File("../../normal-deltapump/include/deltapump/logs/bin.000002");
+        private static EventDeserializer eventDeserializer = new EventDeserializer();
+        private static BufferedInputStream bf;
+        private static BinaryLogFileReader reader;
+        static {
+            try{
+                bf = new BufferedInputStream(new FileInputStream(binlogFile));
+                reader = new BinaryLogFileReader(bf, eventDeserializer);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }
 
-    public static String currentTable = null;
-    public static long counter = 0;
-    public static long number_of_writes = 0;
-    public static long number_of_deletes = 0;
-    public static long number_of_updates = 0;
 	/**
 	 * parse the given binlog file and write all event info in the format of avro, added field in schema compared to HaTrickBench
 	 * @param binlogFilePath
@@ -47,18 +60,17 @@ public class Parser {
 	 * @throws IOException
 	 */
 	private static byte [][] parseBinlogFile(String binlogFilePath) throws IOException {
+	    long counter = 0;
+	    long number_of_writes = 0;
+        long number_of_deletes = 0;
+        long number_of_updates = 0;
+// 		File binlogFile = new File(binlogFilePath);
 
-		File binlogFile = new File(binlogFilePath);
-        System.out.println("Parser.java----Binary file path:" + binlogFilePath);
 		double startTime = System.currentTimeMillis();
-        System.out.println("Parser.java----Current time:" + startTime);
 
 		byte[][] output = new byte[5][];
 
 		ByteArrayOutputStream lineorderOutputStream = new ByteArrayOutputStream();
-        if(lineorderOutputStream == null){
-            System.out.println("Parser.java----lineorderOutputStream NULL");
-        }
 		ByteArrayOutputStream customerOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream supplierOutputStream = new ByteArrayOutputStream();
 		ByteArrayOutputStream partOutputStream = new ByteArrayOutputStream();
@@ -81,26 +93,20 @@ public class Parser {
 		                    "d_holidayfl", "d_weekdayfl", "type", "timestamp"};
 
 		//First, we use a Parser to read our schema definition and create a Schema object.
-		Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json"));
-		Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/customer_d.json"));
-		Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json"));
-		Schema partSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/part_d.json"));
-		Schema dateSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/date_d.json"));
+		Schema lineorderSchema = new Schema.Parser().parse(new File("../../normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json"));
+		Schema customerSchema = new Schema.Parser().parse(new File("../../normal-deltapump/include/deltapump/schemas/delta/customer_d.json"));
+		Schema supplierSchema = new Schema.Parser().parse(new File("../../normal-deltapump/include/deltapump/schemas/delta/supplier_d.json"));
+		Schema partSchema = new Schema.Parser().parse(new File("../../normal-deltapump/include/deltapump/schemas/delta/part_d.json"));
+		Schema dateSchema = new Schema.Parser().parse(new File("../../normal-deltapump/include/deltapump/schemas/delta/date_d.json"));
 
 		//avro serializer
 		DatumWriter<GenericRecord> lineorderDatumWriter = new GenericDatumWriter<GenericRecord>(lineorderSchema);
-        if(lineorderDatumWriter == null){
-            System.out.println("Parser.java----lineorderDatumWriter NULL");
-        }
 		DatumWriter<GenericRecord> customerDatumWriter = new GenericDatumWriter<GenericRecord>(customerSchema);
 		DatumWriter<GenericRecord> supplierDatumWriter = new GenericDatumWriter<GenericRecord>(supplierSchema);
 		DatumWriter<GenericRecord> partDatumWriter = new GenericDatumWriter<GenericRecord>(partSchema);
 		DatumWriter<GenericRecord> dateDatumWriter = new GenericDatumWriter<GenericRecord>(dateSchema);
 
 		DataFileWriter<GenericRecord> lineorderFileWriter = new DataFileWriter<GenericRecord>(lineorderDatumWriter);
-        if(lineorderFileWriter == null){
-            System.out.println("Parser.java----lineorderFileWriter NULL");
-        }
 		DataFileWriter<GenericRecord> customerFileWriter = new DataFileWriter<GenericRecord>(customerDatumWriter);
 		DataFileWriter<GenericRecord> partFileWriter = new DataFileWriter<GenericRecord>(partDatumWriter);
 		DataFileWriter<GenericRecord> dateFileWriter = new DataFileWriter<GenericRecord>(dateDatumWriter);
@@ -111,6 +117,7 @@ public class Parser {
 		partFileWriter.create(partSchema, partOutputStream);
 		dateFileWriter.create(dateSchema, dateOutputStream);
 		supplierFileWriter.create(supplierSchema, supplierOutputStream);
+
 		HashMap<String, Schema> schemaList = new HashMap<String, Schema>();
 		HashMap<String, String[]> colList = new HashMap<String, String[]>();
 		HashMap<String, DatumWriter<GenericRecord>> dwList = new HashMap<String, DatumWriter<GenericRecord>>();
@@ -150,20 +157,23 @@ public class Parser {
 		fwList.put("PART", partFileWriter);
 		fwList.put("DATE", dateFileWriter);
 
-		EventDeserializer eventDeserializer = new EventDeserializer();
+
+// 		EventDeserializer eventDeserializer = new EventDeserializer();
 		eventDeserializer.setCompatibilityMode(EventDeserializer.CompatibilityMode.DATE_AND_TIME_AS_LONG,
 				EventDeserializer.CompatibilityMode.CHAR_AND_BINARY_AS_BYTE_ARRAY);
-
-		BinaryLogFileReader reader = new BinaryLogFileReader(binlogFile, eventDeserializer);
-		if(reader == null){
-		    System.out.println("Parser.java----reader NULL");
-		}
+// 		BinaryLogFileReader reader = new BinaryLogFileReader(binlogFile, eventDeserializer);
 
 		try {
 			for (Event event; (event = reader.readEvent()) != null;) {
 				EventHeaderV4 header = event.getHeader();
 				EventType type = header.getEventType();
 				long timestamp = header.getTimestamp();
+
+                if(firstCall){
+                    last_timestamp = timestamp;
+                    firstCall = false;
+                }
+
 
 				if (type == EventType.TABLE_MAP) {
 					currentTable = ((TableMapEventData) event.getData()).getTable();
@@ -243,6 +253,12 @@ public class Parser {
 				}
 				dataFileWriter.append(record);
 				counter++;
+
+                // every time deltapump is called, it sends next 5 seconds transaction starting from the previous position
+				if(timestamp >= (last_timestamp + 1 * 1 * 500)){
+				    last_timestamp = timestamp;
+				    break;
+				}
 			}
 			double endTime = System.currentTimeMillis();
 			double duration = (endTime - startTime) / 1000;
@@ -259,7 +275,7 @@ public class Parser {
 					o.close();
 				}
 			}
-			reader.close();
+// 			reader.close();
 		}
 
 		//if no event for certain table, the length of its output stream would be 0
