@@ -9,10 +9,10 @@ BinlogParser::BinlogParser(){
             {const_cast<char *>("-Xmx512m"),NULL},
             {const_cast<char *>("-verbose:gc"),NULL},
             {const_cast<char *>("-Djava.class.path="
-                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump/Parser.jar:"
-                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:"
-                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump/lib/avro-1.10.2.jar:"
-                                "/home/ubuntu/FPDB-elena-2/cmake-build-remote-debug/normal-deltapump//lib/avro-tools-1.10.2.jar"),
+                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump/Parser.jar:"
+                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:"
+                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump/lib/avro-1.10.2.jar:"
+                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump//lib/avro-tools-1.10.2.jar"),
                     NULL}};
     JavaVMInitArgs vm_args;
     vm_args.version = JNI_VERSION_1_6;
@@ -122,11 +122,11 @@ void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set
     std::unique_ptr<avro::InputStream> in_date = avro::memoryInputStream(input_date, (int) date_dim);
 
     // load schemas
-    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json");
-    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/customer_d.json");
-    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json");
-    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/part_d.json");
-    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/date_d.json");
+    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json");
+    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/customer_d.json");
+    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json");
+    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/part_d.json");
+    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/date_d.json");
 
     //maps of partitions
     auto *lineorder_record_map = new std::unordered_map<int, std::set<struct lineorder_record>>;

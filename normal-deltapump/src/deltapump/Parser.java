@@ -81,11 +81,12 @@ public class Parser {
 		                    "d_holidayfl", "d_weekdayfl", "type", "timestamp"};
 
 		//First, we use a Parser to read our schema definition and create a Schema object.
-		Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json"));
-		Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/customer_d.json"));
-		Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json"));
-		Schema partSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/part_d.json"));
-		Schema dateSchema = new Schema.Parser().parse(new File("/home/ubuntu/FPDB-elena-2/normal-deltapump/include/deltapump/schemas/delta/date_d.json"));
+		// TODO: Change this to relative path; if cannot do that way, user a property file. 
+		Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json"));
+		Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/customer_d.json"));
+		Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json"));
+		Schema partSchema = new Schema.Parser().parse(new File("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/part_d.json"));
+		Schema dateSchema = new Schema.Parser().parse(new File("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/date_d.json"));
 
 		//avro serializer
 		DatumWriter<GenericRecord> lineorderDatumWriter = new GenericDatumWriter<GenericRecord>(lineorderSchema);
