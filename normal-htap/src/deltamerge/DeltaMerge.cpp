@@ -154,6 +154,7 @@ void DeltaMerge::onDeltas(const normal::htap::deltamanager::LoadDeltasResponseMe
     const auto &deltas = message.getDeltas();
     const auto &timestamp = message.getTimestamps();
     memoryDeltas_.insert(memoryDeltas_.end(), deltas.begin(), deltas.end());
+    memoryDeltaTimeStamp_.insert(memoryDeltaTimeStamp_.end(), timestamp.begin(), timestamp.end());
 }
 
 /**
@@ -194,13 +195,21 @@ void DeltaMerge::populateArrowTrackers() {
     std::string pk = miniCatalogue->getPrimaryKeyColumnName(tableName_);
 //    primaryKeys.emplace_back(pk);
 
+    for (const auto& delta : memoryDeltas_) {
+        std::vector<std::shared_ptr<Column>> columnTracker;
+
+        auto pkColumn = delta->getColumnByName(pk);
+        auto typeColumn = delta->getColumnByName("type");
+        columnTracker.emplace_back(pkColumn.value());
+        columnTracker.emplace_back(typeColumn.value());
+
+        memoryDeltaTracker_.emplace_back(columnTracker);
+    }
+
     // For deltas, we obtain three things: primary key, timestamp, type
     for (const auto& delta : deltas_) {
         std::vector<std::shared_ptr<Column>> columnTracker;
-//        for (const auto& key : primaryKeys) {
-//            auto keyColumn = delta->getColumnByName(key);
-//            columnTracker.emplace_back(keyColumn.value());
-//        }
+
         auto pkColumn = delta->getColumnByName(pk);
         auto timestampColumn = delta->getColumnByName("timestamp");
         auto typeColumn = delta->getColumnByName("type");
@@ -214,10 +223,6 @@ void DeltaMerge::populateArrowTrackers() {
     // For stables, we're only obtaining the primary key
     for (const auto &stable :stables_) {
         std::vector<std::shared_ptr<Column>> columnTracker;
-//        for (const auto& key : primaryKeys) {
-//            auto keyColumn = stable->getColumnByName(key);
-//            columnTracker.emplace_back(keyColumn.value());
-//        }
 
         auto pkColumn = stable->getColumnByName(pk);
         columnTracker.emplace_back(pkColumn.value());
@@ -243,16 +248,27 @@ void DeltaMerge::generateDeleteMaps() {
         for (int i = 0; i < stableTracker_.size(); i++) {
             currPK = std::min(currPK, stableTracker_[i][0]->element(stableIndexTracker_[i]).value()->value<int32_t>());
         }
+
         for (int i = 0; i < deltaTracker_.size(); i++) {
             if (deltaIndexTracker_[i] >= deltaTracker_[i][0]->numRows()) {
                 continue;
             }
             currPK = std::min(currPK, deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>());
         }
+
+        for (int i = 0; i < memoryDeltaTracker_.size(); i++) {
+            if (memoryDeltaIndexTracker_[i] >= memoryDeltaTracker_[i][0]->numRows()) {
+                continue;
+            }
+
+            currPK = std::min(currPK, memoryDeltaTracker_[i][0]->element(memoryDeltaIndexTracker_[i]).value()->value<int32_t>());
+        }
         // now you get the smallest primary key
         // 1. Select all the deltas with the current primary key
         // 1.5 compare the timestamp and get one tuple only
-        std::string minTS = "0";
+
+//        std::string minTS = "0";
+        int minTS = 0;
 
         std::array<int, 2> position = {0, 0}; // [deltaNum, idx]
 
@@ -273,14 +289,33 @@ void DeltaMerge::generateDeleteMaps() {
             int tsIndex = deltaTracker_[0].size() - 2;
             auto currTS = deltaTracker_[i][tsIndex]->element(deltaIndexTracker_[i]).value()->toString();
 
+
             deltaIndexTracker_[i] += 1;
 
-            if (currTS < minTS) {
+            if (std::stoi(currTS) < minTS) {
                 // update position
-                minTS = currTS;
+                minTS = std::stoi(currTS);
                 position[0] = stableTracker_.size() + i;
                 position[1] = deltaIndexTracker_[i];
             }
+        }
+
+        for (int i = 0; i < memoryDeltaTracker_.size(); i++) {
+            if (memoryDeltaIndexTracker_[i] >= memoryDeltaTracker_[i][0]->numRows()) continue;
+
+            if (currPK != memoryDeltaTracker_[i][0]->element(memoryDeltaIndexTracker_[i]).value()->value<int32_t>()) continue;
+
+            auto currTS = memoryDeltaTimeStamp_[i];
+
+            memoryDeltaIndexTracker_[i] += 1;
+
+            if (*currTS < minTS) {
+                // update position
+                minTS = *currTS;
+                position[0] = stableTracker_.size() + deltaTracker_.size() + i;
+                position[1] = memoryDeltaIndexTracker_[i];
+            }
+
         }
 
         if (deleteMap_.find(position[0]) == deleteMap_.end()) {  // did not find the key
@@ -336,6 +371,22 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
             }
         }
     }
+
+    // Do the same thing again to the memory deltas
+    for (int i = 0; i < memoryDeltaTracker_.size(); i++) {
+        int offsetted_i = i + stableTracker_.size() + deltaTracker_.size();
+        auto deleteSet = deleteMap_.at(offsetted_i); // get the deleteMap for this file
+        auto originalTable  = memoryDeltas_[i]; // Get the original stable file
+
+        for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
+            auto curCol = originalTable->getColumnByIndex(c).value();
+            for (size_t r = 0; r < originalTable->numRows(); r++) {
+                if (deleteSet.find(r) == deleteSet.end()) continue;
+                columnBuilderArray[c]->append(curCol->element(r).value());
+            }
+        }
+    }
+
 
     std::vector<std::shared_ptr<Column>> builtColumns;
     // now we try to generate the final output
