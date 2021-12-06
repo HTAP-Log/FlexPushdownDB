@@ -8,6 +8,8 @@
 #include <string>
 #include <cstdio>
 #include <ctime>
+#include <cstdlib>
+#include <filesystem>
 #include <cmath> //floor
 #include <unordered_map> // std::unordered_map
 #include <utility> // std::pair

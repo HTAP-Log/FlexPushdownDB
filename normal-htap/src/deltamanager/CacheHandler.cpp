@@ -30,16 +30,15 @@ void CacheHandler::onReceive(const core::message::Envelope &msg) {
     } else if (msg.message().type() == "StoreTailRequestMessage") {  //Request for periodic tail reading arrived
         auto tailMessage = dynamic_cast<const StoreTailRequestMessage &>(msg.message());
         this->OnTailRequest(tailMessage);
-    } else if (msg.message().type() == "TupleMessage"){ //DeltaCacheActor sends response to CacheHandler
-        auto repsonseMessage = dynamic_cast<const TupleMessage &>(msg.message());
-        this->OnReceiveResponse(repsonseMessage);
+    } else if (msg.message().type() == "LoadDeltasResponseMessage"){ //DeltaCacheActor sends response to CacheHandler
+        auto responseMessage = dynamic_cast<const LoadDeltasResponseMessage &>(msg.message());
+        this->OnReceiveResponse(responseMessage);
     } else {
             throw std::runtime_error(fmt::format("Unrecognized message type: {}, {}",
                                                  msg.message().type(),
                                                  name()));
         }
 }
-
 
 void CacheHandler::onStart() {
     SPDLOG_INFO("Starting operator '{}'", name());
@@ -49,13 +48,13 @@ void CacheHandler::OnDeltasRequest(const LoadDeltasRequestMessage &message){
 
     const auto &deltaKey = message.getDeltaKey();
     const auto &sender = name();
-    SPDLOG_CRITICAL("Message of type LoadDeltasRequestMessage was received from {} to {}.", message.sender(), name());
+    SPDLOG_CRITICAL("[2]. {}: Message of type {} received from {}.",
+                    name(), message.type(),message.sender());
     ctx()->send(LoadDeltasRequestMessage::make(deltaKey, sender), "DeltaCache")
             .map_error([](auto err) { throw std::runtime_error(err); });
-    SPDLOG_CRITICAL("Message of type LoadDeltasRequestMessage was send from {} to DeltaCacheActor.", name());
+    SPDLOG_CRITICAL("[3]. {}: Message of type {} was send to DeltaCacheActor.", name(), message.type());
 
 }
-
 
 void CacheHandler::OnTailRequest(const StoreTailRequestMessage &message){
     const auto &tailKey = message.getTailKey();
@@ -64,13 +63,13 @@ void CacheHandler::OnTailRequest(const StoreTailRequestMessage &message){
             .map_error([](auto err) {throw std::runtime_error(err); });
 }
 
-
-void CacheHandler::OnReceiveResponse(const TupleMessage &message){
-    SPDLOG_CRITICAL("Message of type {} arrived to {} from DeltaCacheActor.", message.type(), name());
-    const auto &deltaTuples = message.tuples();
+void CacheHandler::OnReceiveResponse(const LoadDeltasResponseMessage &message){
+    SPDLOG_CRITICAL("[6]. {}: Message of type {} from {}.", name(), message.type(), message.sender());
+    std::vector<std::shared_ptr<TupleSet2>> deltas = message.getDeltas();
+    std::vector<int> timestamps = message.getTimestamps();
     const auto &sender = name();
-    std::shared_ptr<TupleMessage>
-            response = std::make_shared<TupleMessage>(deltaTuples, sender);
+    std::shared_ptr<LoadDeltasResponseMessage>
+            response = std::make_shared<LoadDeltasResponseMessage>(deltas, timestamps, sender);
     ctx()->send(response, "DeltaMerge-lineorder-0")
             .map_error([](auto err) { throw std::runtime_error(err); });
     ctx()->notifyComplete();

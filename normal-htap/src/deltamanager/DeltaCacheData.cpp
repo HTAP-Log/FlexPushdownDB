@@ -6,12 +6,11 @@
 
 using namespace normal::htap::deltamanager;
 
-DeltaCacheData::DeltaCacheData(std::shared_ptr<TupleSet2> delta, int timestamp)
+DeltaCacheData::DeltaCacheData(std::shared_ptr<TupleSet2> delta, const int& timestamp)
         :delta_(std::move(delta)),
-         timestamp_(std::move(timestamp)){}
+         timestamp_(timestamp){}
 
-std::shared_ptr<DeltaCacheData> DeltaCacheData::make(const std::shared_ptr<TupleSet2> &delta,
-                                                            const int &timestamp){
+std::shared_ptr<DeltaCacheData> DeltaCacheData::make(const std::shared_ptr<TupleSet2> &delta, const int& timestamp){
     return std::make_shared<DeltaCacheData>(delta, timestamp);
 }
 

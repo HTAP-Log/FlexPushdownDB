@@ -1,12 +1,23 @@
 #include "BinlogParser.h"
+#include <filesystem>
+using namespace std::filesystem;
 
-// constructor of BinlogParser, which initializes JVM
+//TODO: change /home/ubuntu/pushdown_db_e2e/cmake-build-remote-release to your working directory when testing
 BinlogParser::BinlogParser(){
     const int kNumOptions = 3;
     JavaVMOption options[kNumOptions] = {
+//            {const_cast<char *>("-Xmx512m"),NULL},
+//            {const_cast<char *>("-verbose:gc"),NULL},
+//            {const_cast<char *>("-Djava.class.path="
+//                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump/Parser.jar:"
+//                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:"
+//                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump/lib/avro-1.10.2.jar:"
+//                                "/home/ubuntu/Han/htap-e2e/cmake-build-remote-debug/normal-deltapump//lib/avro-tools-1.10.2.jar"),
+//                    NULL}};
             {const_cast<char *>("-Xmx512m"),                                                          NULL},
             {const_cast<char *>("-verbose:gc"),                                                       NULL},
-            {const_cast<char *>("-Djava.class.path=/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/Parser.jar:/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/lib/avro-1.10.2.jar:/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/lib/avro-tools-1.10.2.jar"), NULL}
+            {const_cast<char *>("-Djava.class.path=../normal-deltapump/Parser.jar:../normal-deltapump/lib/mysql-binlog-connector-java-0.25.1.jar:../normal-deltapump/lib/avro-1.10.2.jar:../normal-deltapump/lib/avro-tools-1.10.2.jar"), NULL}
+
     };
 
     JavaVMInitArgs vm_args;
@@ -15,7 +26,6 @@ BinlogParser::BinlogParser(){
     vm_args.nOptions = sizeof(options) / sizeof(JavaVMOption);
     assert(vm_args.nOptions == kNumOptions);
 
-
     int res = JNI_CreateJavaVM(&jvm, reinterpret_cast<void **>(&g_env), &vm_args);
     if (res != JNI_OK) {
         std::cerr << "FAILED: JNI_CreateJavaVM " << res << std::endl;
@@ -23,9 +33,6 @@ BinlogParser::BinlogParser(){
     }
 }
 
-/*
- * load avro schema from disk
- */
 avro::ValidSchema loadSchema(const char* filename)
 {
     std::ifstream ifs(filename);
@@ -35,14 +42,12 @@ avro::ValidSchema loadSchema(const char* filename)
 }
 
 
-void BinlogParser::parse(const char *filePath,
-                         std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr,
+void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set<struct lineorder_record>> **lineorder_record_ptr,
                          std::unordered_map<int, std::set<struct customer_record>> **customer_record_ptr,
                          std::unordered_map<int, std::set<struct supplier_record>> **supplier_record_ptr,
                          std::unordered_map<int, std::set<struct part_record>> **part_record_ptr,
                          std::unordered_map<int, std::set<struct date_record>> **date_record_ptr){
 
-    // code to call parser functions in java
     if (jvm == NULL) {
         std::cerr << "FAILED: jvm not initialized" << std::endl;
         exit(-1);
@@ -77,11 +82,10 @@ void BinlogParser::parse(const char *filePath,
 
     //call API in Parser.java to parse binlog
     auto byte_arr_list = static_cast<jobjectArray>(env->CallStaticObjectMethod(cls, mid, method_args_0));
-
-    if(byte_arr_list == NULL ){
+    /*if(byte_arr_list == NULL ){
         std::cerr << "FAILED: byte_arr_list is NULL";
         exit(1);
-    }
+    }*/
 
     // extract serialized byte array for each table
     auto jlineorder = (jbyteArray) env->GetObjectArrayElement(byte_arr_list, 0);
@@ -124,11 +128,17 @@ void BinlogParser::parse(const char *filePath,
     std::unique_ptr<avro::InputStream> in_date = avro::memoryInputStream(input_date, (int) date_dim);
 
     // load schemas
-    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/schemas/delta/lineorder_d.json");
-    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/customer_d.json");
-    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/supplier_d.json");
-    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/part_d.json");
-    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/schemas/delta/date_d.json");
+//    avro::ValidSchema lineorderSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json");
+//    avro::ValidSchema customerSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/customer_d.json");
+//    avro::ValidSchema supplierSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/supplier_d.json");
+//    avro::ValidSchema partSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/part_d.json");
+//    avro::ValidSchema dateSchema = loadSchema("/home/ubuntu/Han/htap-e2e/normal-deltapump/include/deltapump/schemas/delta/date_d.json");
+    avro::ValidSchema lineorderSchema = loadSchema("../../normal-deltapump/include/deltapump/schemas/delta/lineorder_d.json");
+    avro::ValidSchema customerSchema = loadSchema("../../normal-deltapump/include/deltapump/schemas/delta/customer_d.json");
+    avro::ValidSchema supplierSchema = loadSchema("../../normal-deltapump/include/deltapump/schemas/delta/supplier_d.json");
+    avro::ValidSchema partSchema = loadSchema("../../normal-deltapump/include/deltapump/schemas/delta/part_d.json");
+    avro::ValidSchema dateSchema = loadSchema("../../normal-deltapump/include/deltapump/schemas/delta/date_d.json");
+
 
     //maps of partitions
     auto *lineorder_record_map = new std::unordered_map<int, std::set<struct lineorder_record>>;
@@ -156,7 +166,8 @@ void BinlogParser::parse(const char *filePath,
     //get table_name, offset and range(fixed) of partitions for each table
     std::unordered_map<std::string, std::tuple<int, int>> range_result;
 
-    std::ifstream inFile("/home/ubuntu/FPDB_oscar/normal-deltapump/include/deltapump/rangeFile/globalMins");
+
+    std::ifstream inFile("../../normal-deltapump/include/deltapump/rangeFile/globalMins");
     if(!inFile.is_open()) throw std::runtime_error("Could not open range file");
     std::string lineStr, table_name;
     int offset, fixed_range;
@@ -220,95 +231,72 @@ void BinlogParser::parse(const char *filePath,
 
 
      //TODO: partitioning process for other tables in later E2Etesting
-//    while (customerReader.read(c1)) {
-//        int key;
-//        if ((c1).c_custkey) <= customer_offset){
-//            key = 0;
-//        }
-//        else{
-//            key = (int)((floor)((float)((c1).c_custkey - customer_offset) / customer_range));
-//        }
-//        customer_record r = {(c1).c_custkey, MakeTuple::makeCustomerDeltaTuple(c1)} ;
-//        auto it = (*customer_record_map).find(key);
-//        if(it == (*customer_record_map).end()){
-//            std::set<struct customer_record> new_set;
-//            new_set.insert(r);
-//            (*customer_record_map).insert(std::make_pair(key, new_set));
-//        }
-//        else{
-//            (it->second).insert(r);
-//        }
-//    }
-//
-//    while (dateReader.read(d1)) {
-//        int key;
-//        if ((d1).d_datekey)) <= date_offset){
-//            key = 0;
-//        }
-//        else{
-//            key = (int)((floor)((float)((d1).d_datekey) - date_offset) / date_range));
-//        }
-//        //key = (int)((floor)((float)((d1).d_datekey) / 500)) + 1;
-//        date_record r = {(d1).d_datekey, MakeTuple::makeDateDeltaTuple(d1)} ;
-//        auto it = (*date_record_map).find(key);
-//        if(it == (*date_record_map).end()){
-//            std::set<struct date_record> new_set;
-//            new_set.insert(r);
-//            (*date_record_map).insert(std::make_pair(key, new_set));
-//        }
-//        else{
-//            (it->second).insert(r);
-//        }
-//    }
-//
-//    while (partReader.read(p1)) {
-//        int key;
-//        if ((p1).p_partkey) <= part_offset){
-//            key = 0;
-//        }
-//        else{
-//            key = (int)((floor)((float)((p1).p_partkey) - part_offset) / part_range));
-//        }
-//        //key = (int)((floor)((float)((p1).p_partkey) / 500)) + 1;
-//        part_record r = {(p1).p_partkey, MakeTuple::makePartDeltaTuple(p1)} ;
-//        auto it = (*part_record_map).find(key);
-//        if(it == (*part_record_map).end()){
-//            std::set<struct part_record> new_set;
-//            new_set.insert(r);
-//            (*part_record_map).insert(std::make_pair(key, new_set));
-//        }
-//        else{
-//            (it->second).insert(r);
-//        }
-//    }
-//
-//    while (supplierReader.read(s1)) {
-//        int key;
-//        if ((s1).s_suppkey)) <= supplier_offset){
-//            key = 0;
-//        }
-//        else{
-//            key = (int)((floor)((float)((s1).s_suppkey) - supplier_offset) / supplier_range));
-//        }
-//        //key = (int)((floor)((float)((s1).s_suppkey) / 500)) + 1;
-//        supplier_record r = {(s1).s_suppkey, MakeTuple::makeSupplierDeltaTuple(s1)} ;
-//        auto it = (*supplier_record_map).find(key);
-//        if(it == (*supplier_record_map).end()){
-//            std::set<struct supplier_record> new_set;
-//            new_set.insert(r);
-//            (*supplier_record_map).insert(std::make_pair(key, new_set));
-//        }
-//        else{
-//            (it->second).insert(r);
-//        }
-//    }
+    while (customerReader.read(c1)) {
+        int key;
+        key = (int)((floor)((float)((c1).c_custkey) / 500)) + 1;
+        customer_record r = {(c1).c_custkey, MakeTuple::makeCustomerDeltaTuple(c1)} ;
+        auto it = (*customer_record_map).find(key);
+        if(it == (*customer_record_map).end()){
+            std::set<struct customer_record> new_set;
+            new_set.insert(r);
+            (*customer_record_map).insert(std::make_pair(key, new_set));
+        }
+        else{
+            (it->second).insert(r);
+        }
+    }
+
+    while (dateReader.read(d1)) {
+        int key;
+        key = (int)((floor)((float)((d1).d_datekey) / 500)) + 1;
+        date_record r = {(d1).d_datekey, MakeTuple::makeDateDeltaTuple(d1)} ;
+        auto it = (*date_record_map).find(key);
+        if(it == (*date_record_map).end()){
+            std::set<struct date_record> new_set;
+            new_set.insert(r);
+            (*date_record_map).insert(std::make_pair(key, new_set));
+        }
+        else{
+            (it->second).insert(r);
+        }
+    }
+
+    while (partReader.read(p1)) {
+        int key;
+        key = (int)((floor)((float)((p1).p_partkey) / 500)) + 1;
+        part_record r = {(p1).p_partkey, MakeTuple::makePartDeltaTuple(p1)} ;
+        auto it = (*part_record_map).find(key);
+        if(it == (*part_record_map).end()){
+            std::set<struct part_record> new_set;
+            new_set.insert(r);
+            (*part_record_map).insert(std::make_pair(key, new_set));
+        }
+        else{
+            (it->second).insert(r);
+        }
+    }
+
+    while (supplierReader.read(s1)) {
+        int key;
+        key = (int)((floor)((float)((s1).s_suppkey) / 500)) + 1;
+        supplier_record r = {(s1).s_suppkey, MakeTuple::makeSupplierDeltaTuple(s1)} ;
+        auto it = (*supplier_record_map).find(key);
+        if(it == (*supplier_record_map).end()){
+            std::set<struct supplier_record> new_set;
+            new_set.insert(r);
+            (*supplier_record_map).insert(std::make_pair(key, new_set));
+        }
+        else{
+            (it->second).insert(r);
+        }
+    }
 
 
-        /*
-     * LO_ORDERKEY,LO_LINENUMBER,LO_CUSTKEY,LO_PARTKEY,LO_SUPPKEY,LO_ORDERDATE,LO_ORDERPRIORITY,LO_SHIPPRIORITY,LO_QUANTITY,LO_EXTENDEDPRICE,LO_ORDTOTALPRICE,LO_DISCOUNT,LO_REVENUE,LO_SUPPLYCOST,LO_TAX,LO_COMMITDATE,LO_SHIPMODE, timestamp, type
+    /*
+ * LO_ORDERKEY,LO_LINENUMBER,LO_CUSTKEY,LO_PARTKEY,LO_SUPPKEY,LO_ORDERDATE,LO_ORDERPRIORITY,LO_SHIPPRIORITY,LO_QUANTITY,LO_EXTENDEDPRICE,LO_ORDTOTALPRICE,LO_DISCOUNT,LO_REVENUE,LO_SUPPLYCOST,LO_TAX,LO_COMMITDATE,LO_SHIPMODE, timestamp, type
 1,1,209,1552,9,"19940925","1-URGENT",0,17,2471035,11507269,4,2372193,87214,2,"19941105","TRUCK", "1", "UPDATE"
 1,2,209,674,2,"19940925","1-URGENT",0,36,5668812,11507269,9,5158618,94481,6,"19941121","MAIL", "1", "UPDATE"
-     * */
+ * */
 //    // TODO: remove the hardcoded part
 //    i::lineorder avro_row1 = i::lineorder();
 //    avro_row1.lo_orderkey = 1;

@@ -11,6 +11,7 @@
 #include <normal/core/message/TupleMessage.h>
 #include <normal/tuple/TupleSet2.h>
 #include <deltamanager/LoadDeltasRequestMessage.h>
+#include <deltamanager/LoadDeltasResponseMessage.h>
 #include <string>
 
 namespace normal::htap::deltamerge {
@@ -54,6 +55,7 @@ namespace normal::htap::deltamerge {
 
         void onTuple(const core::message::TupleMessage &message);
 
+        void onDeltas(const normal::htap::deltamanager::LoadDeltasResponseMessage &message);
 
         void addDeltaProducer(const std::shared_ptr<Operator> &deltaProducer);
 
@@ -78,6 +80,7 @@ namespace normal::htap::deltamerge {
 
         std::vector<std::vector<std::shared_ptr<Column>>> deltaTracker_;
         std::vector<std::vector<std::shared_ptr<Column>>> stableTracker_;
+        std::vector<std::vector<std::shared_ptr<Column>>> memoryDeltaTracker_;
 
         std::vector<int> deltaIndexTracker_;
         std::vector<int> stableIndexTracker_;
@@ -87,7 +90,7 @@ namespace normal::htap::deltamerge {
         std::vector <std::shared_ptr<TupleSet2>> stables_;
         std::vector <std::shared_ptr<TupleSet2>> memoryDeltas_;
 
-//        std::vector<std::array<int,2>> deleteMap_;
+        std::vector<int> memoryDeltaTimeStamp_;
 
         std::unordered_map<int, std::unordered_set<int>> deleteMap_;
 

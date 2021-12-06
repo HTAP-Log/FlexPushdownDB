@@ -16,7 +16,7 @@ namespace normal::htap::deltamanager {
     public:
         explicit DeltaCache();
         static std::shared_ptr<DeltaCache> make();
-
+        size_t getSize() const;
         /**
          * Function used to store to the input tail to the specific container in cache.
          * @param key
@@ -27,9 +27,9 @@ namespace normal::htap::deltamanager {
         /**
          * Function used to return all the different versions of deltas for a specific table and partition.
          * @param key
-         * @return the deltas in the <TupleSet2> data format.
+         * @return the deltas and the timestamps in a vector of DeltaCacheData format.
          */
-       std::shared_ptr<TupleSet2> load(const std::shared_ptr<DeltaCacheKey>& key);
+       std::vector<std::shared_ptr<DeltaCacheData>> load(const std::shared_ptr<DeltaCacheKey>& key);
 
         /**
          * Function used to evict deltas from cache when there is not enough space for the new tail  to be inserted.

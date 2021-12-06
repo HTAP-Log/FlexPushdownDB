@@ -18,21 +18,23 @@ std::shared_ptr<DeltaCache> DeltaCache::make(){
     return std::make_shared<DeltaCache>();
 }
 
+size_t DeltaCache::getSize() const {
+    return deltaMap_[0].size();
+}
+
 void DeltaCache::store(const std::shared_ptr<DeltaCacheKey>& key, const std::shared_ptr<DeltaCacheData>& data){
     deltaMap_[key->tableToVector()].emplace(key, data);
 }
-std::shared_ptr<TupleSet2> DeltaCache::load(const std::shared_ptr<DeltaCacheKey>& key){
-    std::shared_ptr<TupleSet2> deltaTuples = nullptr;
+
+std::vector<std::shared_ptr<DeltaCacheData>> DeltaCache::load(const std::shared_ptr<DeltaCacheKey>& key){
+    std::vector<std::shared_ptr<DeltaCacheData>> timestampedDeltas(0);
     int idx = key->tableToVector();
-    int bucket = key->hash();
-    for (const auto &entry: deltaMap_[idx]){
-        if (deltaTuples){
-            deltaTuples = TupleSet2::concatenate({entry.second->getDelta(), deltaTuples}).value();
-        } else {
-            deltaTuples = entry.second->getDelta();
-        }
+    for ( auto it = deltaMap_[idx].begin(); it != deltaMap_[idx].end(); ++it){
+        std::shared_ptr<DeltaCacheData> deltaCacheEntry =
+                std::make_shared<DeltaCacheData>(it->second->getDelta(), it->second->getTimestamp());
+        timestampedDeltas.emplace_back(deltaCacheEntry);
     }
-    return deltaTuples;
+    return timestampedDeltas;
 }
 
 void DeltaCache::remove(const std::shared_ptr<DeltaCacheKey>& key){

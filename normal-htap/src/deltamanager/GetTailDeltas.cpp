@@ -20,7 +20,6 @@ std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> normal
 //    binlogParser.parse(path, path_range, &lineorder_record_ptr);
     binlogParser.parse(path, &lineorder_record_ptr, &customer_record_ptr, &supplier_record_ptr, &part_record_ptr, &date_record_ptr);
 
-    SPDLOG_DEBUG("##### After parsing #####");
     if (lineorder_record_ptr == nullptr) {
         throw std::runtime_error(fmt::format("Error parsing binlog"));
     }

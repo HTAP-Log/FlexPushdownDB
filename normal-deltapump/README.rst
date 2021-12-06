@@ -6,8 +6,11 @@ Binlog Parser
 
 Change paths to your working directory in following locations before running:
 
-Parser.java:
+Parser.java (remember to rebuild Parser after modification):
 1.
+    private static File binlogFile = new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/bin.000002");
+
+2.
     Schema lineorderSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/lineorder_d.json"));
     Schema customerSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/customer_d.json"));
     Schema supplierSchema = new Schema.Parser().parse(new File("/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/schemas/delta/supplier_d.json"));
@@ -31,7 +34,3 @@ BinlogParser.cpp:
 
 3.
     std::ifstream inFile("/home/ubuntu/pushdown_db_temp_e2e/normal-deltapump/include/deltapump/rangeFile/globalMins"); (only change the part "/home/ubuntu/pushdown_db_temp_e2e")
-
-GetTailDeltas.cpp (normal-htap/src/deltamanager):
-1.
-    const char* path = "/home/ubuntu/pushdown_db_temp_e2e/cmake-build-remote-debug/normal-deltapump/bin.000002"; //binlog file path

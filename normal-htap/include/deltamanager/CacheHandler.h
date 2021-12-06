@@ -50,11 +50,11 @@ namespace normal::htap::deltamanager {
         void OnTailRequest(const StoreTailRequestMessage &message);
 
         /**
-         * Function executed after CacheHandler receives a TupleMessage with requested deltas from the DeltaCacheActor.
-         * Then CacheHandler passes the message to DeltaMerge and then it notifies all that is complete.
+         * Function executed after CacheHandler receives a LoadMessageResponseMessage with requested deltas from the
+         * DeltaCacheActor. Then CacheHandler passes the message to DeltaMerge and notifies all that is complete.
          * @param message
          */
-        void OnReceiveResponse(const TupleMessage &message);
+        void OnReceiveResponse(const LoadDeltasResponseMessage &message);
 
     private:
         std::string tableName_;

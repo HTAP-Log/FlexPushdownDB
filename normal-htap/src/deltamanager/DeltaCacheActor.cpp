@@ -27,10 +27,11 @@ using namespace normal::htap::deltamanager;
     };
 }
 
-std::shared_ptr<TupleMessage> DeltaCacheActor::loadMemoryDeltas(
+std::shared_ptr<LoadDeltasResponseMessage> DeltaCacheActor::loadMemoryDeltas(
                               const LoadDeltasRequestMessage &msg,
                               stateful_actor <DeltaCacheActorState> *self){
-    SPDLOG_CRITICAL("Message of type {} was received from {} to DeltaCacheActor.", msg.type(), msg.sender());
+
+    SPDLOG_CRITICAL("[4]. DeltaCacheActor: Message of type {} was received from {}.", msg.type(), msg.sender());
     const std::shared_ptr<DeltaCacheKey>& deltaCacheKey = msg.getDeltaKey();
     const std::string tableName = deltaCacheKey->getTableName();
     // TODO: once DeltaPump is called it pumps all the partitions from a table
@@ -43,15 +44,26 @@ std::shared_ptr<TupleMessage> DeltaCacheActor::loadMemoryDeltas(
         int partition = delta.first;
         std::shared_ptr<normal::tuple::TupleSet2> deltaTable = delta.second;
         std::shared_ptr<DeltaCacheKey> key = DeltaCacheKey::make(tableName, partition);
-        std::shared_ptr<DeltaCacheData> data = DeltaCacheData::make(deltaTable, 0); // TODO: change the timestamp from 0 to a real value
+        // TODO: change the timestamp from 0 to a real value
+        std::shared_ptr<DeltaCacheData> data = DeltaCacheData::make(deltaTable, 0);
         self->state.deltasCache->store(key, data);
+        SPDLOG_CRITICAL("Current size of cache: {}, partition added: {} for {}.",
+                        self->state.deltasCache->getSize(), key->getPartition(), key->getTableName());
     }
-    // now we load the delta
-    std::shared_ptr<TupleSet2> freshDelta = self->state.deltasCache->load(deltaCacheKey);
-    std::shared_ptr<TupleMessage>
-            response = std::make_shared<TupleMessage>(freshDelta->toTupleSetV1(), msg.sender());
+    // now we load the delta from memory
+    auto freshDelta = self->state.deltasCache->load(deltaCacheKey);
+    std::vector<std::shared_ptr<TupleSet2>> deltas;
+    std::vector<int> timestamps;
 
-    SPDLOG_CRITICAL("Message of type {} was send from DeltaCacheActor as response.", response->type());
+    for(const auto& timestampedDelta: freshDelta) {
+        deltas.push_back(timestampedDelta->getDelta());
+        timestamps.push_back(timestampedDelta->getTimestamp());
+        SPDLOG_CRITICAL("Delta:{}, Timestamp:{}", timestampedDelta->getDelta()->toString(), timestampedDelta->getTimestamp());
+    }
+    std::shared_ptr<LoadDeltasResponseMessage>
+            response = std::make_shared<LoadDeltasResponseMessage>(deltas, timestamps, msg.sender());
+
+    SPDLOG_CRITICAL("[5]. DeltaCacheActor: Message of type {} was send to CacheHandler-lineorder-0.", response->type());
     return response;
 }
 
