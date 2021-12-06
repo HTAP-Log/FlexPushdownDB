@@ -66,7 +66,7 @@ void CacheHandler::OnTailRequest(const StoreTailRequestMessage &message){
 void CacheHandler::OnReceiveResponse(const LoadDeltasResponseMessage &message){
     SPDLOG_CRITICAL("[6]. {}: Message of type {} from {}.", name(), message.type(), message.sender());
     std::vector<std::shared_ptr<TupleSet2>> deltas = message.getDeltas();
-    std::vector<std::shared_ptr<int>> timestamps = message.getTimestamps();
+    std::vector<int> timestamps = message.getTimestamps();
     const auto &sender = name();
     std::shared_ptr<LoadDeltasResponseMessage>
             response = std::make_shared<LoadDeltasResponseMessage>(deltas, timestamps, sender);

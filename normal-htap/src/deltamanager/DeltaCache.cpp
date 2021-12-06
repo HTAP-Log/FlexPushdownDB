@@ -26,11 +26,9 @@ void DeltaCache::store(const std::shared_ptr<DeltaCacheKey>& key, const std::sha
     deltaMap_[key->tableToVector()].emplace(key, data);
 }
 
-
 std::vector<std::shared_ptr<DeltaCacheData>> DeltaCache::load(const std::shared_ptr<DeltaCacheKey>& key){
     std::vector<std::shared_ptr<DeltaCacheData>> timestampedDeltas(0);
     int idx = key->tableToVector();
-    //int bucket = key->hash();
     for ( auto it = deltaMap_[idx].begin(); it != deltaMap_[idx].end(); ++it){
         std::shared_ptr<DeltaCacheData> deltaCacheEntry =
                 std::make_shared<DeltaCacheData>(it->second->getDelta(), it->second->getTimestamp());

@@ -23,22 +23,22 @@ namespace normal::htap::deltamanager {
 
     public:
         LoadDeltasResponseMessage(std::vector<std::shared_ptr<TupleSet2>> deltas,
-                                  std::vector<std::shared_ptr<int>> timestamps,
+                                  std::vector<int> timestamps,
                                   const std::string &sender);
 
         static std::shared_ptr<LoadDeltasResponseMessage> make(std::vector<std::shared_ptr<TupleSet2>> deltas,
-                                                               std::vector<std::shared_ptr<int>> timestamps,
+                                                               std::vector<int> timestamps,
                                                                const std::string &sender);
 
-        const std::vector<std::shared_ptr<TupleSet2>> &getDeltas() const;
+        [[nodiscard]] const std::vector<std::shared_ptr<TupleSet2>> &getDeltas() const;
 
-        const std::vector<std::shared_ptr<int>> &getTimestamps() const;
+        [[nodiscard]] const std::vector<int> &getTimestamps() const;
 
         [[nodiscard]] std::string toString() const;
 
     private:
         std::vector<std::shared_ptr<TupleSet2>>  deltas_;
-        std::vector<std::shared_ptr<int>> timestamps_;
+        std::vector<int> timestamps_;
 
     };
 }

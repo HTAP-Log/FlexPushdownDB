@@ -90,9 +90,7 @@ namespace normal::htap::deltamerge {
         std::vector <std::shared_ptr<TupleSet2>> stables_;
         std::vector <std::shared_ptr<TupleSet2>> memoryDeltas_;
 
-//        std::vector<std::array<int,2>> deleteMap_;
-
-        std::vector <std::shared_ptr<int>> memoryDeltaTimeStamp_;
+        std::vector<int> memoryDeltaTimeStamp_;
 
         std::unordered_map<int, std::unordered_set<int>> deleteMap_;
 

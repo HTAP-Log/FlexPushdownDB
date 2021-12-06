@@ -144,7 +144,6 @@ void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
     }
 }
 
-
 /**
  * Function responsible to handle the LoadDeltaResponseMessage with the in-memory deltas and their timestamps.
  * @param message of type LoadDeltasResponseMessage
@@ -167,7 +166,7 @@ void DeltaMerge::onComplete(const core::message::CompleteMessage &) {
 }
 
 void DeltaMerge::addStableProducer(const std::shared_ptr <Operator> &stableProducer) {
-//    SPDLOG_CRITICAL(fmt::format("Delta Merge {}; Added {} as Producer", this->name(),stableProducer->name()));
+    // SPDLOG_CRITICAL(fmt::format("Delta Merge {}; Added {} as Producer", this->name(),stableProducer->name()));
     stableProducerNames_.insert(stableProducer->name());
     consume(stableProducer);
 }
@@ -188,45 +187,41 @@ void DeltaMerge::populateArrowTrackers() {
     auto miniCatalogue = normal::connector::defaultMiniCatalogue;
     deltaIndexTracker_ = std::vector(deltas_.size(), 0);
     stableIndexTracker_ = std::vector(stables_.size(), 0);
+    memoryDeltaIndexTracker_ = std::vector(memoryDeltas_.size(), 0);
 
     // set up a process to obtain the needed columns (Primary Keys, Timestamp, Type)
     // FIXME: SUPPORT Composited PrimaryKey
-//    std::vector<std::string> primaryKeys;
+    // std::vector<std::string> primaryKeys;
     std::string pk = miniCatalogue->getPrimaryKeyColumnName(tableName_);
-//    primaryKeys.emplace_back(pk);
+    // primaryKeys.emplace_back(pk);
 
     for (const auto& delta : memoryDeltas_) {
         std::vector<std::shared_ptr<Column>> columnTracker;
-
         auto pkColumn = delta->getColumnByName(pk);
         auto typeColumn = delta->getColumnByName("type");
+        SPDLOG_CRITICAL("populateArrowTrackers: pkColumn: {}, typeColumn: {}", pkColumn.value()->toString(), typeColumn.value()->toString());
         columnTracker.emplace_back(pkColumn.value());
         columnTracker.emplace_back(typeColumn.value());
-
         memoryDeltaTracker_.emplace_back(columnTracker);
     }
 
     // For deltas, we obtain three things: primary key, timestamp, type
     for (const auto& delta : deltas_) {
         std::vector<std::shared_ptr<Column>> columnTracker;
-
         auto pkColumn = delta->getColumnByName(pk);
         auto timestampColumn = delta->getColumnByName("timestamp");
         auto typeColumn = delta->getColumnByName("type");
         columnTracker.emplace_back(pkColumn.value());
         columnTracker.emplace_back(timestampColumn.value());
         columnTracker.emplace_back(typeColumn.value());
-
         deltaTracker_.emplace_back(columnTracker);
     }
 
     // For stables, we're only obtaining the primary key
     for (const auto &stable :stables_) {
         std::vector<std::shared_ptr<Column>> columnTracker;
-
         auto pkColumn = stable->getColumnByName(pk);
         columnTracker.emplace_back(pkColumn.value());
-
         stableTracker_.emplace_back(columnTracker);
     }
 }
@@ -236,8 +231,7 @@ void DeltaMerge::populateArrowTrackers() {
  */
 void DeltaMerge::generateDeleteMaps() {
 
-//    SPDLOG_CRITICAL(fmt::format("{}, IN generateDeleteMaps", this->name()));
-
+    SPDLOG_CRITICAL(fmt::format("{}, in generateDeleteMaps", this->name()));
     // FIXME: we do not consider composited primaryKey situation for now
     std::vector<int> stablePKStates;
     std::vector<int> deltaPKStates;
@@ -260,7 +254,6 @@ void DeltaMerge::generateDeleteMaps() {
             if (memoryDeltaIndexTracker_[i] >= memoryDeltaTracker_[i][0]->numRows()) {
                 continue;
             }
-
             currPK = std::min(currPK, memoryDeltaTracker_[i][0]->element(memoryDeltaIndexTracker_[i]).value()->value<int32_t>());
         }
         // now you get the smallest primary key
@@ -288,8 +281,6 @@ void DeltaMerge::generateDeleteMaps() {
             if (currPK != deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>()) continue;
             int tsIndex = deltaTracker_[0].size() - 2;
             auto currTS = deltaTracker_[i][tsIndex]->element(deltaIndexTracker_[i]).value()->toString();
-
-
             deltaIndexTracker_[i] += 1;
 
             if (std::stoi(currTS) < minTS) {
@@ -309,9 +300,9 @@ void DeltaMerge::generateDeleteMaps() {
 
             memoryDeltaIndexTracker_[i] += 1;
 
-            if (*currTS < minTS) {
+            if (currTS < minTS) {
                 // update position
-                minTS = *currTS;
+                minTS = currTS;
                 position[0] = stableTracker_.size() + deltaTracker_.size() + i;
                 position[1] = memoryDeltaIndexTracker_[i];
             }
@@ -420,9 +411,11 @@ bool DeltaMerge::checkIfAllRecordsWereVisited() {
 void DeltaMerge::deltaMerge() {
     populateArrowTrackers();
 
-    SPDLOG_CRITICAL(fmt::format("{} populated called;", name()));
+    SPDLOG_CRITICAL(fmt::format("{} populated called.", name()));
 
     generateDeleteMaps();
+
+    SPDLOG_CRITICAL(fmt::format("{} generateDeleteMaps called.", name()));
 
     auto output = generateFinalResult();
 

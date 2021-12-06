@@ -53,11 +53,12 @@ std::shared_ptr<LoadDeltasResponseMessage> DeltaCacheActor::loadMemoryDeltas(
     // now we load the delta from memory
     auto freshDelta = self->state.deltasCache->load(deltaCacheKey);
     std::vector<std::shared_ptr<TupleSet2>> deltas;
-    std::vector<std::shared_ptr<int>> timestamps;
+    std::vector<int> timestamps;
 
     for(const auto& timestampedDelta: freshDelta) {
         deltas.push_back(timestampedDelta->getDelta());
         timestamps.push_back(timestampedDelta->getTimestamp());
+        SPDLOG_CRITICAL("Delta:{}, Timestamp:{}", timestampedDelta->getDelta()->toString(), timestampedDelta->getTimestamp());
     }
     std::shared_ptr<LoadDeltasResponseMessage>
             response = std::make_shared<LoadDeltasResponseMessage>(deltas, timestamps, msg.sender());
