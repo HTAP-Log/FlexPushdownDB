@@ -18,6 +18,7 @@ std::shared_ptr<std::map<int, std::shared_ptr<normal::tuple::TupleSet2>>> normal
     const char* path = "/home/ubuntu/FPDB_oscar/cmake-build-debug-aws-htap/normal-deltapump/bin.000002"; //binlog file path
     // BinlogParser binlogParser;
 //    binlogParser.parse(path, path_range, &lineorder_record_ptr);
+    SPDLOG_CRITICAL("#### CALLING Deltapump!!!!");
     binlogParser.parse(path, &lineorder_record_ptr, &customer_record_ptr, &supplier_record_ptr, &part_record_ptr, &date_record_ptr);
 
     if (lineorder_record_ptr == nullptr) {

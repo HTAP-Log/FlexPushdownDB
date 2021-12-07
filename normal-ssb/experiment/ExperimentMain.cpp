@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
   }
 
   else if (std::string(argv[1]) == "-htap") {
+      SPDLOG_CRITICAL("### ERROR CHECK HERER ####");
       std::string dirPrefix = "super-small-ssb-htap/csv/stables/";
 
       auto cacheSize = (size_t) (atof(argv[2]) * 1024 * 1024 * 1024);
