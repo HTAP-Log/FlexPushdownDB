@@ -260,7 +260,7 @@ void DeltaMerge::generateDeleteMaps() {
         // 1. Select all the deltas with the current primary key
         // 1.5 compare the timestamp and get one tuple only
 
-//        std::string minTS = "0";
+        std::string minTS_str = "0";
         int minTS = 0;
 
         std::array<int, 2> position = {0, 0}; // [deltaNum, idx]
@@ -269,7 +269,6 @@ void DeltaMerge::generateDeleteMaps() {
             if (currPK == stableTracker_[i][0]->element(stableIndexTracker_[i]).value()->value<int32_t>()) {
                 position[0] = i;
                 position[1] = stableIndexTracker_[i];
-
                 stableIndexTracker_[i] += 1;
             }
         }
@@ -278,23 +277,25 @@ void DeltaMerge::generateDeleteMaps() {
             if (deltaIndexTracker_[i] >= deltaTracker_[i][0]->numRows()) {
                 continue;
             }
-            if (currPK != deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>()) continue;
+            if (currPK != deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>())
+                continue;
             int tsIndex = deltaTracker_[0].size() - 2;
             auto currTS = deltaTracker_[i][tsIndex]->element(deltaIndexTracker_[i]).value()->toString();
             deltaIndexTracker_[i] += 1;
-
-            if (std::stoi(currTS) < minTS) {
+            if (currTS.compare(minTS_str)<0) {   //TODO: please find a more gentle solution
                 // update position
-                minTS = std::stoi(currTS);
+                minTS_str = currTS;
                 position[0] = stableTracker_.size() + i;
                 position[1] = deltaIndexTracker_[i];
             }
         }
 
         for (int i = 0; i < memoryDeltaTracker_.size(); i++) {
-            if (memoryDeltaIndexTracker_[i] >= memoryDeltaTracker_[i][0]->numRows()) continue;
+            if (memoryDeltaIndexTracker_[i] >= memoryDeltaTracker_[i][0]->numRows())
+                continue;
 
-            if (currPK != memoryDeltaTracker_[i][0]->element(memoryDeltaIndexTracker_[i]).value()->value<int32_t>()) continue;
+            if (currPK != memoryDeltaTracker_[i][0]->element(memoryDeltaIndexTracker_[i]).value()->value<int32_t>())
+                continue;
 
             auto currTS = memoryDeltaTimeStamp_[i];
 
@@ -322,7 +323,7 @@ void DeltaMerge::generateDeleteMaps() {
  */
 std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 
-//    SPDLOG_CRITICAL(fmt::format("{}, IN generateFinalResult", this->name()));
+//    SPDLOG_CRITICAL(fmt::format("{}, in generateFinalResult", this->name()));
 
     // initialize an array of column appender
     std::vector<std::shared_ptr<ColumnBuilder>> columnBuilderArray(outputSchema_->num_fields());
@@ -335,7 +336,11 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 
     // We first try to append the stable data to the new table
     for (int i = 0; i < stableTracker_.size(); i++) {
-        auto deleteSet = deleteMap_.at(i); // get the deleteMap for this file
+        SPDLOG_CRITICAL("StableTracker: {}", stableTracker_.size());
+        std::unordered_set<int> deleteSet = {};
+        if(deleteMap_.find(i) != deleteMap_.end())
+            deleteSet = deleteMap_[i]; // get the deleteMap for this file
+        SPDLOG_CRITICAL("StableTracker: {}", stableTracker_.size());
         auto originalTable  = stables_[i]; // Get the original stable file
 
         for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
@@ -350,8 +355,14 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 
     // Do the same thing again to the deltas
     for (int i = 0; i < deltaTracker_.size(); i++) {
+        SPDLOG_CRITICAL("DeltaTracker: {}", deltaTracker_.size());
         int offsetted_i = i + stableTracker_.size();
-        auto deleteSet = deleteMap_.at(offsetted_i); // get the deleteMap for this file
+        SPDLOG_CRITICAL("Offset: {}, deleteMap size: {}", offsetted_i, deleteMap_.size());
+        std::unordered_set<int> deleteSet = {};
+        if(deleteMap_.find(i) != deleteMap_.end())
+            deleteSet = deleteMap_[offsetted_i]; // get the deleteMap for this file
+        SPDLOG_CRITICAL("DeltaTracker: {}", deltaTracker_.size());
+
         auto originalTable  = deltas_[i]; // Get the original stable file
 
         for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
@@ -365,8 +376,11 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 
     // Do the same thing again to the memory deltas
     for (int i = 0; i < memoryDeltaTracker_.size(); i++) {
+        SPDLOG_CRITICAL("MemoryDeltaTracker: {}", i);
         int offsetted_i = i + stableTracker_.size() + deltaTracker_.size();
-        auto deleteSet = deleteMap_.at(offsetted_i); // get the deleteMap for this file
+        std::unordered_set<int> deleteSet = {};
+        if(deleteMap_.find(i) != deleteMap_.end())
+            deleteSet = deleteMap_[offsetted_i]; // get the deleteMap for this file
         auto originalTable  = memoryDeltas_[i]; // Get the original stable file
 
         for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
@@ -418,6 +432,8 @@ void DeltaMerge::deltaMerge() {
     SPDLOG_CRITICAL(fmt::format("{} generateDeleteMaps called.", name()));
 
     auto output = generateFinalResult();
+
+    SPDLOG_CRITICAL(fmt::format("{} generateFinalResult called.", name()));
 
     std::shared_ptr<core::message::Message>
     tupleMessage = std::make_shared<core::message::TupleMessage>(output->toTupleSetV1(), name());
