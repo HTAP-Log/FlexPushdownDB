@@ -260,7 +260,7 @@ void DeltaMerge::generateDeleteMaps() {
         // 1. Select all the deltas with the current primary key
         // 1.5 compare the timestamp and get one tuple only
 
-//        std::string minTS = "0";
+        std::string minTS_str = "0";
         int minTS = 0;
 
         std::array<int, 2> position = {0, 0}; // [deltaNum, idx]
@@ -280,12 +280,11 @@ void DeltaMerge::generateDeleteMaps() {
             if (currPK != deltaTracker_[i][0]->element(deltaIndexTracker_[i]).value()->value<int32_t>())
                 continue;
             int tsIndex = deltaTracker_[0].size() - 2;
-            int currTS = 1; //deltaTracker_[i][tsIndex]->element(deltaIndexTracker_[i]).value()->toString();
+            auto currTS = deltaTracker_[i][tsIndex]->element(deltaIndexTracker_[i]).value()->toString();
             deltaIndexTracker_[i] += 1;
-
-            if (currTS < minTS) {
+            if (currTS.compare(minTS_str)<0) {   //TODO: please find a more gentle solution
                 // update position
-                minTS = currTS;
+                minTS_str = currTS;
                 position[0] = stableTracker_.size() + i;
                 position[1] = deltaIndexTracker_[i];
             }
