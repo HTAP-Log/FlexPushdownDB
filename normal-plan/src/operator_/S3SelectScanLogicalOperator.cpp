@@ -57,35 +57,23 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
 
 long GetPartitionNumberFromObjectName(std::string s3Object) {
     // STEP1: separate the string by '/'
-    /*std::string delimiter = "/";
+    SPDLOG_CRITICAL("~~~~~~~~~~~s3Object: {}", s3Object);
+    std::string delimiter = "/";
     size_t pos = 0;
-    std::string token;
-    std::vector<std::string> splittedBySlash;
-
     while ((pos = s3Object.find(delimiter)) != std::string::npos) {
-        token = s3Object.substr(0, pos);
-        splittedBySlash.push_back(token);
         s3Object.erase(0, pos + delimiter.length());
     }
-
     // STEP2: take the last element in the separated string array
-    std::string lastPart= splittedBySlash.back();
     pos = 0;
-    token = "";
-    std::vector<std::string> splittedByDot;
     delimiter = ".";
-
+    int i = 0;
     while ((pos = s3Object.find(delimiter)) != std::string::npos) {
-        token = lastPart.substr(0, pos);
-        splittedByDot.push_back(token);
-        lastPart.erase(0, pos + delimiter.length());
+        s3Object.erase(0, pos + delimiter.length());
+        i++;
     }
-
-    // return the last element from the previous step
-
-    //SPDLOG_DEBUG("S3ObjectKey: " + s3Object + "\n" + "parsed result: " + splittedByDot.back());
-    return std::stol(splittedByDot.back());*/
-    return 1;
+    SPDLOG_CRITICAL("~~~~~~~~~~~Partition: {}", s3Object);
+    if(i<2) return 0;
+    else return std::stol(s3Object);
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>>
@@ -102,6 +90,9 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
 
     streamOutPhysicalOperators_ = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
     auto queryId = getQueryId();
+
+    std::string cacheHandlerName;
+    std::string deltaMergeName;
 
     // Construct the global single GetTailDeltas operator to generate deltas from DeltaPump
     /*std::shared_ptr<htap::deltamanager::GetTailDeltas> getTailDeltasOperator =
@@ -164,17 +155,18 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             std::shared_ptr<Operator> stableScanOp;
             auto deltaScanOps = std::make_shared<std::vector<std::shared_ptr<normal::core::Operator>>>();
 
+            cacheHandlerName = "CacheHandler-"+getName()+"-"+std::to_string(GetPartitionNumberFromObjectName(s3Object));
             std::shared_ptr<normal::htap::deltamanager::CacheHandler> cacheHandlerOp =
-                    normal::htap::deltamanager::CacheHandler::make("CacheHandler-lineorder-0",
+                    normal::htap::deltamanager::CacheHandler::make(cacheHandlerName,
                                                                    getName(),
-                                                                   partition,
+                                                                   GetPartitionNumberFromObjectName(s3Object),
                                                                    queryId);
 
             operators->emplace_back(cacheHandlerOp);
-            std::string operatorName = "DeltaMerge-lineorder-0";
+            deltaMergeName = "DeltaMerge-"+getName()+"-"+std::to_string(GetPartitionNumberFromObjectName(s3Object));
             std::shared_ptr<htap::deltamerge::DeltaMerge> deltaMergeOp =
                     normal::htap::deltamerge::DeltaMerge::make(getName(),
-                                                               operatorName,
+                                                               deltaMergeName,
                                                                queryId,
                                                                miniCatalogue->getSchema(getName()),
                                                                GetPartitionNumberFromObjectName(s3Object)
@@ -185,6 +177,7 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
 
             SPDLOG_CRITICAL("#### DEBUG CHECK IN OPERATOR HTAP");
             SPDLOG_CRITICAL("### BUCKET NAME {} OBJECT {}", s3Partition->getBucket(), s3Object);
+            SPDLOG_CRITICAL("DeltaMerge operator: {}, CacheHandler operator: {}",deltaMergeName, cacheHandlerName);
             stableScanOp = S3Get::make(
                     "s3get-Stable-" + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
                     s3Partition->getBucket(),

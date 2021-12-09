@@ -263,11 +263,11 @@ public class Parser {
 			}
 			double endTime = System.currentTimeMillis();
 			double duration = (endTime - startTime) / 1000;
-			System.out.println("Process time: " + duration + " s");
+			/*System.out.println("Process time: " + duration + " s");
 			System.out.println("Number of events: " + counter);
 			System.out.println("Number of wrtites: " + number_of_writes);
 			System.out.println("Number of deletes: " + number_of_deletes);
-			System.out.println("Number of updates: " + number_of_updates);
+			System.out.println("Number of updates: " + number_of_updates);*/
 		} catch (Exception e) {
 			//e.printStackTrace();
 		} finally {

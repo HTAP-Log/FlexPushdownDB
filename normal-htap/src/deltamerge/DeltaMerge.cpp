@@ -85,13 +85,13 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
     if (msg.message().type() == "StartMessage") {
         this->onStart();
     } else if (msg.message().type() == "TupleMessage") {
-        SPDLOG_CRITICAL("{}: Message of type {} was received from {}.", name(),
-                        msg.message().type(), msg.message().sender());
+        /*SPDLOG_CRITICAL("{}: Message of type {} was received from {}.", name(),
+                        msg.message().type(), msg.message().sender());*/
         auto tupleMessage = dynamic_cast<const core::message::TupleMessage &>(msg.message());
         this->onTuple(tupleMessage);
     } else if (msg.message().type() == "LoadDeltasResponseMessage"){
-        SPDLOG_CRITICAL("[7]. {}: Message of type {} was received from {}.", name(),
-                        msg.message().type(), msg.message().sender());
+        /*SPDLOG_CRITICAL("[7]. {}: Message of type {} was received from {}.", name(),
+                        msg.message().type(), msg.message().sender());*/
         auto deltasMessage = dynamic_cast<const normal::htap::deltamanager::LoadDeltasResponseMessage &>(msg.message());
         this->onDeltas(deltasMessage);
     } else if (msg.message().type() == "CompleteMessage") {
@@ -114,10 +114,12 @@ void DeltaMerge::onStart() {
     // send LoadDeltasRequestMessage to CacheHandler
     auto const &deltaKey  = deltamanager::DeltaCacheKey::make(this->tableName_, this->partitionNumber_);
     auto const &sender = name();
+    std::string cacheHandlerName = "CacheHandler-"+this->tableName_+"-"+std::to_string(this->partitionNumber_);
+    //SPDLOG_CRITICAL("{}, CacheHandler operator: {}", name(), cacheHandlerName);
     ctx()->send(deltamanager::LoadDeltasRequestMessage::make(deltaKey, sender),
-                "CacheHandler-lineorder-0")
+                cacheHandlerName)
                 .map_error([](auto err) { throw std::runtime_error(err); });
-    SPDLOG_CRITICAL("[1]. {}: Message of type LoadDeltasRequestMessage was send to CacheHandler-lineorder-0.", name());
+    //SPDLOG_CRITICAL("[1]. {}: Message of type LoadDeltasRequestMessage was send to {}.", name(), cacheHandlerName);
 }
 
 /**
@@ -149,7 +151,7 @@ void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
  * @param message of type LoadDeltasResponseMessage
  */
 void DeltaMerge::onDeltas(const normal::htap::deltamanager::LoadDeltasResponseMessage &message){
-    SPDLOG_CRITICAL("OnDeltas is now handling the LoadDeltasResponseMessage.");
+    //SPDLOG_CRITICAL("OnDeltas is now handling the LoadDeltasResponseMessage.");
     const auto &deltas = message.getDeltas();
     const auto &timestamp = message.getTimestamps();
     memoryDeltas_.insert(memoryDeltas_.end(), deltas.begin(), deltas.end());
@@ -162,6 +164,7 @@ void DeltaMerge::onDeltas(const normal::htap::deltamanager::LoadDeltasResponseMe
 void DeltaMerge::onComplete(const core::message::CompleteMessage &) {
     if (!ctx()->isComplete() && ctx()->operatorMap().allComplete(core::OperatorRelationshipType::Producer)) {
         ctx()->notifyComplete();
+        SPDLOG_CRITICAL("Notification was send for {}", name());
     }
 }
 
@@ -199,7 +202,7 @@ void DeltaMerge::populateArrowTrackers() {
         std::vector<std::shared_ptr<Column>> columnTracker;
         auto pkColumn = delta->getColumnByName(pk);
         auto typeColumn = delta->getColumnByName("type");
-        SPDLOG_CRITICAL("populateArrowTrackers: pkColumn: {}, typeColumn: {}", pkColumn.value()->toString(), typeColumn.value()->toString());
+        //SPDLOG_CRITICAL("populateArrowTrackers: pkColumn: {}, typeColumn: {}", pkColumn.value()->toString(), typeColumn.value()->toString());
         columnTracker.emplace_back(pkColumn.value());
         columnTracker.emplace_back(typeColumn.value());
         memoryDeltaTracker_.emplace_back(columnTracker);
@@ -231,7 +234,7 @@ void DeltaMerge::populateArrowTrackers() {
  */
 void DeltaMerge::generateDeleteMaps() {
 
-    SPDLOG_CRITICAL(fmt::format("{}, in generateDeleteMaps", this->name()));
+    //SPDLOG_CRITICAL(fmt::format("{}, in generateDeleteMaps", this->name()));
     // FIXME: we do not consider composited primaryKey situation for now
     std::vector<int> stablePKStates;
     std::vector<int> deltaPKStates;
@@ -336,11 +339,9 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 
     // We first try to append the stable data to the new table
     for (int i = 0; i < stableTracker_.size(); i++) {
-        SPDLOG_CRITICAL("StableTracker: {}", stableTracker_.size());
         std::unordered_set<int> deleteSet = {};
         if(deleteMap_.find(i) != deleteMap_.end())
             deleteSet = deleteMap_[i]; // get the deleteMap for this file
-        SPDLOG_CRITICAL("StableTracker: {}", stableTracker_.size());
         auto originalTable  = stables_[i]; // Get the original stable file
 
         for (size_t c = 0; c < outputSchema_->num_fields(); c++) {
@@ -355,13 +356,10 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 
     // Do the same thing again to the deltas
     for (int i = 0; i < deltaTracker_.size(); i++) {
-        SPDLOG_CRITICAL("DeltaTracker: {}", deltaTracker_.size());
         int offsetted_i = i + stableTracker_.size();
-        SPDLOG_CRITICAL("Offset: {}, deleteMap size: {}", offsetted_i, deleteMap_.size());
         std::unordered_set<int> deleteSet = {};
         if(deleteMap_.find(i) != deleteMap_.end())
             deleteSet = deleteMap_[offsetted_i]; // get the deleteMap for this file
-        SPDLOG_CRITICAL("DeltaTracker: {}", deltaTracker_.size());
 
         auto originalTable  = deltas_[i]; // Get the original stable file
 
@@ -376,7 +374,6 @@ std::shared_ptr<TupleSet2> DeltaMerge::generateFinalResult() {
 
     // Do the same thing again to the memory deltas
     for (int i = 0; i < memoryDeltaTracker_.size(); i++) {
-        SPDLOG_CRITICAL("MemoryDeltaTracker: {}", i);
         int offsetted_i = i + stableTracker_.size() + deltaTracker_.size();
         std::unordered_set<int> deleteSet = {};
         if(deleteMap_.find(i) != deleteMap_.end())
@@ -425,19 +422,21 @@ bool DeltaMerge::checkIfAllRecordsWereVisited() {
 void DeltaMerge::deltaMerge() {
     populateArrowTrackers();
 
-    SPDLOG_CRITICAL(fmt::format("{} populated called.", name()));
+    //SPDLOG_CRITICAL(fmt::format("{} populated called.", name()));
 
     generateDeleteMaps();
 
-    SPDLOG_CRITICAL(fmt::format("{} generateDeleteMaps called.", name()));
+    //SPDLOG_CRITICAL(fmt::format("{} generateDeleteMaps called.", name()));
 
     auto output = generateFinalResult();
 
-    SPDLOG_CRITICAL(fmt::format("{} generateFinalResult called.", name()));
+    //SPDLOG_CRITICAL(fmt::format("{} generateFinalResult called.", name()));
 
     std::shared_ptr<core::message::Message>
     tupleMessage = std::make_shared<core::message::TupleMessage>(output->toTupleSetV1(), name());
     ctx()->tell(tupleMessage);  // TODO: Problem might at here
+
+    SPDLOG_CRITICAL("{}: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TupleMessage was send.", name());
 }
 
 DeltaMerge::DeltaMerge(std::string name, std::string type, long queryId1,

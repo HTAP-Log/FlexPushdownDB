@@ -22,12 +22,12 @@ namespace normal::htap::deltamanager {
     public:
         explicit CacheHandler(const std::string& OperatorName,
                            const std::string& tableName,
-                           const std::shared_ptr<Partition> partition,
+                           const long partition,
                            const long queryId);
 
         static std::shared_ptr<CacheHandler> make(const std::string& OperatorName,
                                                const std::string& tableName,
-                                               const std::shared_ptr<Partition> partition,
+                                               const long partition,
                                                const long queryId);
 
         void onReceive(const core::message::Envelope &msg) override;
@@ -58,7 +58,7 @@ namespace normal::htap::deltamanager {
 
     private:
         std::string tableName_;
-        std::shared_ptr<Partition> partition_;
+        long partition_;
     };
 }
 

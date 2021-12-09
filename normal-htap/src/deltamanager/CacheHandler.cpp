@@ -7,7 +7,7 @@ using namespace normal::htap::deltamanager;
 
 CacheHandler::CacheHandler(const std::string& OperatorName,
                      const std::string& tableName,
-                     const std::shared_ptr<Partition> partition,
+                     const long partition,
                      const long queryId):
                      core::Operator(OperatorName, "CacheHandler", queryId){
     tableName_ = tableName;
@@ -16,7 +16,7 @@ CacheHandler::CacheHandler(const std::string& OperatorName,
 
 std::shared_ptr<CacheHandler> CacheHandler::make(const std::string& OperatorName,
                                                    const std::string& tableName,
-                                                   const std::shared_ptr<Partition> partition,
+                                                   const long partition,
                                                    const long queryId) {
     return std::make_shared<CacheHandler>(OperatorName, tableName, partition, queryId);
 }
@@ -48,11 +48,11 @@ void CacheHandler::OnDeltasRequest(const LoadDeltasRequestMessage &message){
 
     const auto &deltaKey = message.getDeltaKey();
     const auto &sender = name();
-    SPDLOG_CRITICAL("[2]. {}: Message of type {} received from {}.",
-                    name(), message.type(),message.sender());
+    /*SPDLOG_CRITICAL("[2]. {}: Message of type {} received from {}.",
+                    name(), message.type(),message.sender());*/
     ctx()->send(LoadDeltasRequestMessage::make(deltaKey, sender), "DeltaCache")
             .map_error([](auto err) { throw std::runtime_error(err); });
-    SPDLOG_CRITICAL("[3]. {}: Message of type {} was send to DeltaCacheActor.", name(), message.type());
+    //SPDLOG_CRITICAL("[3]. {}: Message of type {} was send to DeltaCacheActor.", name(), message.type());
 
 }
 
@@ -64,13 +64,15 @@ void CacheHandler::OnTailRequest(const StoreTailRequestMessage &message){
 }
 
 void CacheHandler::OnReceiveResponse(const LoadDeltasResponseMessage &message){
-    SPDLOG_CRITICAL("[6]. {}: Message of type {} from {}.", name(), message.type(), message.sender());
+    //SPDLOG_CRITICAL("[6]. {}: Message of type {} from {}.", name(), message.type(), message.sender());
     std::vector<std::shared_ptr<TupleSet2>> deltas = message.getDeltas();
     std::vector<int> timestamps = message.getTimestamps();
     const auto &sender = name();
     std::shared_ptr<LoadDeltasResponseMessage>
             response = std::make_shared<LoadDeltasResponseMessage>(deltas, timestamps, sender);
-    ctx()->send(response, "DeltaMerge-lineorder-0")
+    std::string deltaCacheName = "DeltaMerge-"+this->tableName_+"-"+std::to_string(this->partition_);
+    //SPDLOG_CRITICAL("~~~~~~~~~~~~~~~~~~~~~~DeltaCache operator: {}", deltaCacheName);
+    ctx()->send(response, deltaCacheName)
             .map_error([](auto err) { throw std::runtime_error(err); });
     ctx()->notifyComplete();
 }

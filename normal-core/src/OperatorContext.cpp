@@ -70,7 +70,6 @@ tl::expected<void, std::string> OperatorContext::send(const std::shared_ptr<mess
                                   std::static_pointer_cast<normal::htap::deltamanager::LoadDeltasRequestMessage>(msg))
           .then([=](const std::shared_ptr<normal::htap::deltamanager::LoadDeltasResponseMessage>& response){
           operatorActor_->anon_send(this->operatorActor(), Envelope(response));
-          SPDLOG_CRITICAL("[5]. DeltaCacheActor[OperatorContext]: Message of type {} was send to CacheHandler-lineorder-0.", response->type());
           });
       }
       else if(msg->type() == "StoreTailRequestMessage"){  // send to DeltaCacheActor the StoreTailRequestMessage
