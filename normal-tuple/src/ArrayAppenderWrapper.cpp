@@ -70,3 +70,10 @@ ArrayAppenderWrapper<std::string,
 														  const std::vector<std::string> &buffer) {
   return builder->AppendValues(buffer);
 }
+
+template<>
+::arrow::Status
+ArrayAppenderWrapper<::arrow::BooleanType::c_type, ::arrow::BooleanType>::appendValues(
+        const std::shared_ptr<ArrowBuilderType> &builder, const std::vector<bool> &buffer) {
+    return builder->AppendValues(buffer);
+}

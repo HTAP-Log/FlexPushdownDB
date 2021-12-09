@@ -113,7 +113,9 @@ public:
 	  return ArrayAppenderWrapper<::arrow::Int64Type::c_type, ::arrow::Int64Type>::make(expectedSize);
 	} else if (type->id() == ::arrow::DoubleType::type_id) {
 	  return ArrayAppenderWrapper<::arrow::DoubleType::c_type, ::arrow::DoubleType>::make(expectedSize);
-	} else {
+	} else if (type->id() == ::arrow::BooleanType::type_id) {
+        return ArrayAppenderWrapper<::arrow::BooleanType::c_type, ::arrow::BooleanType>::make(expectedSize);
+    } else {
 	  return tl::make_unexpected(
 		  fmt::format("ArrayAppender not implemented for type '{}'", type->name()));
 	}

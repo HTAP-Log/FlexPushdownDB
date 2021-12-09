@@ -29,6 +29,10 @@ void ColumnBuilder::append(const std::shared_ptr<Scalar> &scalar) {
         auto rawBuilderPtr = arrowBuilder_.get();
         auto typedArrowBuilder = dynamic_cast<::arrow::StringBuilder*>(rawBuilderPtr);
         auto status = typedArrowBuilder->Append(scalar->value<std::string>());
+    } else if (scalar->type()->id() == ::arrow::BooleanType::type_id) {
+        auto rawBuilderPtr = arrowBuilder_.get();
+        auto typedArrowBuilder = dynamic_cast<::arrow::BooleanBuilder*>(rawBuilderPtr);
+        auto status = typedArrowBuilder->Append(scalar->value<bool>());
     } else {
         throw std::runtime_error(
             "Builder for type '" + scalar->type()->ToString() + "' not implemented yet");

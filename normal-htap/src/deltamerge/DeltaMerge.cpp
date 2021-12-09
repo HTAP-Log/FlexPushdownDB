@@ -164,7 +164,7 @@ void DeltaMerge::onDeltas(const normal::htap::deltamanager::LoadDeltasResponseMe
 void DeltaMerge::onComplete(const core::message::CompleteMessage &) {
     if (!ctx()->isComplete() && ctx()->operatorMap().allComplete(core::OperatorRelationshipType::Producer)) {
         ctx()->notifyComplete();
-        SPDLOG_CRITICAL("Notification was send for {}", name());
+       //  SPDLOG_CRITICAL("Notification was send for {}", name());
     }
 }
 
@@ -436,7 +436,7 @@ void DeltaMerge::deltaMerge() {
     tupleMessage = std::make_shared<core::message::TupleMessage>(output->toTupleSetV1(), name());
     ctx()->tell(tupleMessage);  // TODO: Problem might at here
 
-    SPDLOG_CRITICAL("{}: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TupleMessage was send.", name());
+    // SPDLOG_CRITICAL("{}: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TupleMessage was send.", name());
 }
 
 DeltaMerge::DeltaMerge(std::string name, std::string type, long queryId1,
