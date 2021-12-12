@@ -467,6 +467,9 @@ void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType
       }
       auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", index));
       auto sql = read_file(sql_file_path.string());
+      SPDLOG_CRITICAL(" ############---WARMUP---################");
+      SPDLOG_CRITICAL("{}", sql);
+      SPDLOG_CRITICAL(" ############################");
       executeSql(i, sql, true, writeResults, fmt::format("{}output.txt", index));
       sql_file_dir_path = sql_file_dir_path.parent_path();
     }
@@ -476,6 +479,9 @@ void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType
     SPDLOG_CRITICAL("First-run query:");
     auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", 1));
     auto sql = read_file(sql_file_path.string());
+    SPDLOG_CRITICAL(" ############################, path: {}", sql_file_path.string());
+    SPDLOG_CRITICAL("{}", sql);
+    SPDLOG_CRITICAL(" ############################");
     executeSql(i, sql, false, false, fmt::format("{}output.txt", index));
     sql_file_dir_path = sql_file_dir_path.parent_path();
   }
@@ -497,7 +503,10 @@ void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType
     }
     auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", index));
     auto sql = read_file(sql_file_path.string());
-      executeSql(i, sql, true, writeResults, fmt::format("{}output.txt", index));
+    SPDLOG_CRITICAL(" ############---TESTING---################, path: {}", sql_file_path.string());
+    SPDLOG_CRITICAL("{}", sql);
+    SPDLOG_CRITICAL(" ############################");
+    executeSql(i, sql, true, writeResults, fmt::format("{}output.txt", index));
     sql_file_dir_path = sql_file_dir_path.parent_path();
   }
   SPDLOG_CRITICAL("Execution phase finished");

@@ -40,7 +40,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
     //  validPartitions_ = (!predicate_) ? getPartitioningScheme()->partitions() : getValidPartitions(predicate_);
 
     // construct physical operators
-    SPDLOG_CRITICAL("### We are entering into HTAP");
+    //SPDLOG_CRITICAL("### We are entering into HTAP");
     return toOperatorsHTAP();
 
     auto mode = getMode();
@@ -57,7 +57,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
 
 long GetPartitionNumberFromObjectName(std::string s3Object) {
     // STEP1: separate the string by '/'
-    SPDLOG_CRITICAL("~~~~~~~~~~~s3Object: {}", s3Object);
+    //SPDLOG_CRITICAL("~~~~~~~~~~~s3Object: {}", s3Object);
     std::string delimiter = "/";
     size_t pos = 0;
     while ((pos = s3Object.find(delimiter)) != std::string::npos) {
@@ -71,7 +71,7 @@ long GetPartitionNumberFromObjectName(std::string s3Object) {
         s3Object.erase(0, pos + delimiter.length());
         i++;
     }
-    SPDLOG_CRITICAL("~~~~~~~~~~~Partition: {}", s3Object);
+    //SPDLOG_CRITICAL("~~~~~~~~~~~Partition: {}", s3Object);
     if(i<2) return 0;
     else return std::stol(s3Object);
 }
@@ -99,7 +99,7 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             htap::deltamanager::GetTailDeltas::make(getName(), "Global GetTailDeltas Operator", queryId, miniCatalogue->getDeltaSchema(getName()));*/
 
     // TODO: Figure out how to construct one-to-many relationship with actors
-    SPDLOG_INFO("For each partition");
+    //SPDLOG_INFO("For each partition");
 
     // loop through all partitions
     for (const auto &partition: *getPartitioningScheme()->partitions()) {
@@ -143,7 +143,7 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
         int rangeId = 0;
         auto scanRange = scanRanges[0];
 
-        SPDLOG_CRITICAL("#### Number of Deltas: {}", numDeltas);
+        //SPDLOG_CRITICAL("#### Number of Deltas: {}", numDeltas);
         // TODO: hacky way to make sure DeltaMerge can run
         if (true || numDeltas != 0) {
             std::vector<std::string> deltaObjects;
@@ -175,9 +175,9 @@ S3SelectScanLogicalOperator::toOperatorsHTAP() {
             deltaMergeOp->addMemoryDeltaProducer(cacheHandlerOp);
             cacheHandlerOp->produce(deltaMergeOp);
 
-            SPDLOG_CRITICAL("#### DEBUG CHECK IN OPERATOR HTAP");
-            SPDLOG_CRITICAL("### BUCKET NAME {} OBJECT {}", s3Partition->getBucket(), s3Object);
-            SPDLOG_CRITICAL("DeltaMerge operator: {}, CacheHandler operator: {}",deltaMergeName, cacheHandlerName);
+            //SPDLOG_CRITICAL("#### DEBUG CHECK IN OPERATOR HTAP");
+            //SPDLOG_CRITICAL("### BUCKET NAME {} OBJECT {}", s3Partition->getBucket(), s3Object);
+            //SPDLOG_CRITICAL("DeltaMerge operator: {}, CacheHandler operator: {}",deltaMergeName, cacheHandlerName);
             stableScanOp = S3Get::make(
                     "s3get-Stable-" + s3Partition->getBucket() + "/" + s3Object + "-" + std::to_string(rangeId),
                     s3Partition->getBucket(),
