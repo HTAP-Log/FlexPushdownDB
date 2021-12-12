@@ -365,6 +365,23 @@ void normal::ssb::concurrentGetTest(int numRequests) {
 }
 
 void normal::ssb::htapTest() {
+
+    const std::vector<std::string> queryNames {
+//        "1.1",
+//        "1.2",
+//        "1.3",
+//        "2.1",
+//        "2.2",
+//        "2.3",
+//        "3.1",
+//        "3.2",
+        "3.3",
+        "3.4",
+        "4.1",
+        "4.2",
+        "4.3"
+    };
+
     spdlog::set_level(spdlog::level::warn);
 
     // parameters
@@ -372,7 +389,7 @@ void normal::ssb::htapTest() {
     std::string bucket_name = "pushdowndb-htap";
     NetworkLimit = 0;
     auto cacheSize = (size_t) (8.0 * 1024 * 1024 * 1024);
-    auto dirPrefix = "ssb-sf10-sortlineorder/csv/";
+    auto dirPrefix = "ssb-sf1-sorted/csv/";
 
     normal::plan::DefaultS3Client = AWSClient::defaultS3Client();
 
@@ -392,10 +409,13 @@ void normal::ssb::htapTest() {
     i.boot();
 
     SPDLOG_CRITICAL("First-run query:");
-    auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", "query1.2"));
-    auto sql = read_file(sql_file_path.string());
-    executeSql(i, sql, false, false, fmt::format("{}output.txt", index));
-    sql_file_dir_path = sql_file_dir_path.parent_path();
+    for (const auto& q : queryNames) {
+        auto sql_file_path = sql_file_dir_path.append(fmt::format("query{}.sql", q));
+        SPDLOG_CRITICAL(fmt::format("Running query: {}", q));
+        auto sql = read_file(sql_file_path.string());
+        executeSql(i, sql, false, false, fmt::format("{}output.txt", index));
+        sql_file_dir_path = sql_file_dir_path.parent_path();
+    }
 
     i.getOperatorGraph().reset();
     i.stop();
