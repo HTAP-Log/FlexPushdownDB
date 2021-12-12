@@ -367,7 +367,7 @@ void normal::ssb::concurrentGetTest(int numRequests) {
 void normal::ssb::htapTest() {
 
     const std::vector<std::string> queryNames {
-//        "1.1",
+        "1.1"
 //        "1.2",
 //        "1.3",
 //        "2.1",
@@ -375,14 +375,14 @@ void normal::ssb::htapTest() {
 //        "2.3",
 //        "3.1",
 //        "3.2",
-        "3.3",
-        "3.4",
-        "4.1",
-        "4.2",
-        "4.3"
+        // "3.3",
+        // "3.4",
+//        "4.1",
+//        "4.2",
+//        "4.3"
     };
 
-    spdlog::set_level(spdlog::level::warn);
+    spdlog::set_level(spdlog::level::info);
 
     // parameters
     const int warmBatchSize = 1, executeBatchSize = 1;

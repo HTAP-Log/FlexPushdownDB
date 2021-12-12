@@ -110,6 +110,8 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
  * Called when the operator is start
  */
 void DeltaMerge::onStart() {
+    time_start = std::chrono::system_clock::now();
+
     SPDLOG_INFO("Starting operator | name: '{}'", name());
     // send LoadDeltasRequestMessage to CacheHandler
     auto const &deltaKey  = deltamanager::DeltaCacheKey::make(this->tableName_, this->partitionNumber_);
@@ -127,6 +129,11 @@ void DeltaMerge::onStart() {
  * @return: true if all producers were finished, vice versa
  */
 bool DeltaMerge::allProducersComplete() {
+    if (ctx()->operatorMap().allComplete(core::OperatorRelationshipType::Producer))  {
+        time_end = std::chrono::system_clock::now();
+        auto diff = time_end - time_start;
+        SPDLOG_CRITICAL(fmt::format("Operator: {}, duration: {}", name(), diff.count()));
+    }
     return ctx()->operatorMap().allComplete(core::OperatorRelationshipType::Producer);
 }
 

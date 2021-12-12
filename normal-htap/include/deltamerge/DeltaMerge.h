@@ -13,6 +13,8 @@
 #include <deltamanager/LoadDeltasRequestMessage.h>
 #include <deltamanager/LoadDeltasResponseMessage.h>
 #include <string>
+#include "ctime"
+#include "chrono"
 
 namespace normal::htap::deltamerge {
     class DeltaMerge : public core::Operator {
@@ -64,6 +66,10 @@ namespace normal::htap::deltamerge {
         void addMemoryDeltaProducer(const std::shared_ptr<Operator> &memoryDeltaProducer);
 
     private:
+        std::chrono::time_point<std::chrono::system_clock> time_start;
+        std::chrono::time_point<std::chrono::system_clock> time_end;
+        // std::chrono::time_point<std::chrono::system_clock, std::chrono::duration> time_passed;
+
         std::string tableName_;
 
         long partitionNumber_;

@@ -52,7 +52,7 @@ std::shared_ptr<normal::tuple::TupleSet2> Filter::evaluate(const normal::tuple::
 		throw std::runtime_error(status.message());
 	  }
 
-	  SPDLOG_CRITICAL("Evaluated SelectionVector  |  vector: {}", selection_vector->ToArray()->ToString());
+	  // SPDLOG_CRITICAL("Evaluated SelectionVector  |  vector: {}", selection_vector->ToArray()->ToString());
 
 	  // Evaluate the expressions
 	  std::shared_ptr<::arrow::Table> batchArrowTable;
