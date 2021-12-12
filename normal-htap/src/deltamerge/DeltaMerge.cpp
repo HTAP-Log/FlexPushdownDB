@@ -436,7 +436,7 @@ void DeltaMerge::deltaMerge() {
     tupleMessage = std::make_shared<core::message::TupleMessage>(output->toTupleSetV1(), name());
     ctx()->tell(tupleMessage);  // TODO: Problem might at here
 
-    // SPDLOG_CRITICAL("{}: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TupleMessage was send.", name());
+    //SPDLOG_CRITICAL("{}: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TupleMessage was send.", name());
 }
 
 DeltaMerge::DeltaMerge(std::string name, std::string type, long queryId1,
