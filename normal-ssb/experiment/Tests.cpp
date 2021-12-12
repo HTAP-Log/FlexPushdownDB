@@ -368,7 +368,7 @@ void normal::ssb::htapTest() {
     spdlog::set_level(spdlog::level::warn);
 
     // parameters
-    const int warmBatchSize = 50, executeBatchSize = 50;
+    const int warmBatchSize = 1, executeBatchSize = 1;
     std::string bucket_name = "pushdowndb-htap";
     NetworkLimit = 0;
     auto cacheSize = (size_t) (8.0 * 1024 * 1024 * 1024);
@@ -378,6 +378,7 @@ void normal::ssb::htapTest() {
 
     auto currentPath = std::filesystem::current_path();
     auto sql_file_dir_path = currentPath.append("sql/original"); // running original SSB queries
+
 
     auto mode = normal::plan::operator_::mode::Modes::fullPullupMode();
     auto cachingPolicy = LRUCachingPolicy::make(cacheSize, mode);;
@@ -391,7 +392,7 @@ void normal::ssb::htapTest() {
     i.boot();
 
     SPDLOG_CRITICAL("First-run query:");
-    auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", 1));
+    auto sql_file_path = sql_file_dir_path.append(fmt::format("{}.sql", "query1.2"));
     auto sql = read_file(sql_file_path.string());
     executeSql(i, sql, false, false, fmt::format("{}output.txt", index));
     sql_file_dir_path = sql_file_dir_path.parent_path();
