@@ -110,7 +110,7 @@ void DeltaMerge::onReceive(const core::message::Envelope &msg) {
  * Called when the operator is start
  */
 void DeltaMerge::onStart() {
-    time_start = std::chrono::system_clock::now();
+
 
     SPDLOG_INFO("Starting operator | name: '{}'", name());
     // send LoadDeltasRequestMessage to CacheHandler
@@ -130,9 +130,9 @@ void DeltaMerge::onStart() {
  */
 bool DeltaMerge::allProducersComplete() {
     if (ctx()->operatorMap().allComplete(core::OperatorRelationshipType::Producer))  {
-        time_end = std::chrono::system_clock::now();
-        auto diff = time_end - time_start;
-        SPDLOG_CRITICAL(fmt::format("Operator: {}, duration: {}", name(), diff.count()));
+        wait_end = std::chrono::system_clock::now();
+//        auto diff = time_end - time_start;
+//        SPDLOG_CRITICAL(fmt::format("Operator: {}, duration: {}", name(), diff.count()));
     }
     return ctx()->operatorMap().allComplete(core::OperatorRelationshipType::Producer);
 }
@@ -144,6 +144,10 @@ bool DeltaMerge::allProducersComplete() {
 void DeltaMerge::onTuple(const core::message::TupleMessage &message) {
     const auto &tupleSet = TupleSet2::create(message.tuples()); // get all the useful rows
 
+    if (deltas_.empty() && stables_.empty()) {
+        wait_start = std::chrono::system_clock::now();
+    }
+    lastSenderName = message.sender();
     if (deltaProducerNames_.count(message.sender())) {
         deltas_.emplace_back(tupleSet);
     } else if (stableProducerNames_.count(message.sender())) {
@@ -240,6 +244,10 @@ void DeltaMerge::populateArrowTrackers() {
  * Determine which records to copy.
  */
 void DeltaMerge::generateDeleteMaps() {
+
+//     time_end = std::chrono::system_clock::now();
+//     auto diff = time_end - time_start;
+//     SPDLOG_CRITICAL(fmt::format("Operator: {}, duration: {}", name(), diff.count()));
 
     //SPDLOG_CRITICAL(fmt::format("{}, in generateDeleteMaps", this->name()));
     // FIXME: we do not consider composited primaryKey situation for now
@@ -430,13 +438,37 @@ void DeltaMerge::deltaMerge() {
     populateArrowTrackers();
 
     //SPDLOG_CRITICAL(fmt::format("{} populated called.", name()));
+    runtime_start = std::chrono::system_clock::now();
 
+    auto start_1 = std::chrono::system_clock::now();
     generateDeleteMaps();
+    auto end_1 = std::chrono::system_clock::now();
 
     //SPDLOG_CRITICAL(fmt::format("{} generateDeleteMaps called.", name()));
 
+    auto start_2 = std::chrono::system_clock::now();
     auto output = generateFinalResult();
+    auto end_2 = std::chrono::system_clock::now();
 
+    runtime_end = std::chrono::system_clock::now();
+
+    auto timeGenerateDeleteMap = end_1 - start_1;
+    auto timeGenerateFinalResult = end_2 - start_2;
+
+    SPDLOG_CRITICAL(fmt::format("Operator: {}, time generateDeleteMaps {}, time generateFinalResults {}", name(), timeGenerateDeleteMap.count(), timeGenerateFinalResult.count()));
+
+    // Stats
+//    auto wait_time = wait_end - wait_start;
+//    auto runtime = runtime_end - runtime_start;
+//    logical_total_time = wait_time.count() + runtime.count();
+//    auto actual_temp = runtime_end - wait_start;
+//    actual_total_time = actual_temp.count();
+//
+//    auto bench_msg = fmt::format("Operator: {}, wait time: {}, runtime: {}, logical total time: {}, actual total time: {}"
+//            , name(), wait_time.count(), runtime.count(), logical_total_time, actual_total_time);
+//
+//    SPDLOG_CRITICAL(bench_msg);
+//    SPDLOG_CRITICAL(fmt::format("Operator: {}, last sender: {}", name(), lastSenderName));
     //SPDLOG_CRITICAL(fmt::format("{} generateFinalResult called.", name()));
 
     std::shared_ptr<core::message::Message>

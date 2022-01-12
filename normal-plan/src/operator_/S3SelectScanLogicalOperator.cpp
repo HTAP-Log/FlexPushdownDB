@@ -39,8 +39,8 @@ S3SelectScanLogicalOperator::S3SelectScanLogicalOperator(
 std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectScanLogicalOperator::toOperators() {
     //  validPartitions_ = (!predicate_) ? getPartitioningScheme()->partitions() : getValidPartitions(predicate_);
 
-    // construct physical operators
-    //SPDLOG_CRITICAL("### We are entering into HTAP");
+//    // construct physical operators
+    SPDLOG_CRITICAL("### We are entering into HTAP ###");
     return toOperatorsHTAP();
 
     auto mode = getMode();

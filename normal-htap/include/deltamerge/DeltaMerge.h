@@ -66,8 +66,23 @@ namespace normal::htap::deltamerge {
         void addMemoryDeltaProducer(const std::shared_ptr<Operator> &memoryDeltaProducer);
 
     private:
-        std::chrono::time_point<std::chrono::system_clock> time_start;
-        std::chrono::time_point<std::chrono::system_clock> time_end;
+        // Benchmarking parameters
+        // wait time = first message received ~ all message received
+        std::chrono::time_point<std::chrono::system_clock> wait_start;
+        std::chrono::time_point<std::chrono::system_clock> wait_end;
+
+        // runtime = generateDeleteMap + generateResult
+        std::chrono::time_point<std::chrono::system_clock> runtime_start;
+        std::chrono::time_point<std::chrono::system_clock> runtime_end;
+
+        // logical total = wait + run
+        long logical_total_time;
+
+        // actual total = runtime_end - time_start
+        long actual_total_time;
+
+        std::string lastSenderName;
+
         // std::chrono::time_point<std::chrono::system_clock, std::chrono::duration> time_passed;
 
         std::string tableName_;
