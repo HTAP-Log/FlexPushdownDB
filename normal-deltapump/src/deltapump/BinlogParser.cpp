@@ -291,69 +291,6 @@ void BinlogParser::parse(const char *filePath,  std::unordered_map<int, std::set
         }
     }
 
-
-    /*
- * LO_ORDERKEY,LO_LINENUMBER,LO_CUSTKEY,LO_PARTKEY,LO_SUPPKEY,LO_ORDERDATE,LO_ORDERPRIORITY,LO_SHIPPRIORITY,LO_QUANTITY,LO_EXTENDEDPRICE,LO_ORDTOTALPRICE,LO_DISCOUNT,LO_REVENUE,LO_SUPPLYCOST,LO_TAX,LO_COMMITDATE,LO_SHIPMODE, timestamp, type
-1,1,209,1552,9,"19940925","1-URGENT",0,17,2471035,11507269,4,2372193,87214,2,"19941105","TRUCK", "1", "UPDATE"
-1,2,209,674,2,"19940925","1-URGENT",0,36,5668812,11507269,9,5158618,94481,6,"19941121","MAIL", "1", "UPDATE"
- * */
-//    // TODO: remove the hardcoded part
-//    i::lineorder avro_row1 = i::lineorder();
-//    avro_row1.lo_orderkey = 1;
-//    avro_row1.lo_linenumber = 1;
-//    avro_row1.lo_custkey = 209;
-//    avro_row1.lo_partkey = 1552;
-//    avro_row1.lo_suppkey = 9;
-//    avro_row1.lo_orderdate = 19940925;
-//    avro_row1.lo_orderpriority = "1-URGENT";
-//    avro_row1.lo_shippriority = "0";
-//    avro_row1.lo_quantity = 17;
-//    avro_row1.lo_extendedprice = 2471035;
-//    avro_row1.lo_ordtotalprice = 11507269;
-//    avro_row1.lo_discount = 4;
-//    avro_row1.lo_revenue = 2372193;
-//    avro_row1.lo_supplycost = 87214;
-//    avro_row1.lo_tax = 2;
-//    avro_row1.lo_commitdate = 19941105;
-//    avro_row1.lo_shipmode = "TRUCK";
-//    avro_row1.timestamp = 1;
-//    avro_row1.type = "UPDATE";
-//
-//    i::lineorder avro_row2 = i::lineorder();
-//    avro_row2.lo_orderkey = 1;
-//    avro_row2.lo_linenumber = 2;
-//    avro_row2.lo_custkey = 209;
-//    avro_row2.lo_partkey = 674;
-//    avro_row2.lo_suppkey = 2;
-//    avro_row2.lo_orderdate = 19940925;
-//    avro_row2.lo_orderpriority = "1-URGENT";
-//    avro_row2.lo_shippriority = "0";
-//    avro_row2.lo_quantity = 36;
-//    avro_row2.lo_extendedprice = 2471035;
-//    avro_row2.lo_ordtotalprice = 11507269;
-//    avro_row2.lo_discount = 4;
-//    avro_row2.lo_revenue = 2372193;
-//    avro_row2.lo_supplycost = 87214;
-//    avro_row2.lo_tax = 2;
-//    avro_row2.lo_commitdate = 19941105;
-//    avro_row2.lo_shipmode = "MAIL";
-//    avro_row2.timestamp = 1;
-//    avro_row2.type = "UPDATE";
-//    struct lineorder_record record1 = {
-//            1,
-//            1,
-//            MakeTuple::makeLineorderDeltaTuple(avro_row1)
-//    };
-//    struct lineorder_record record2 = {
-//            1,
-//            2,
-//            MakeTuple::makeLineorderDeltaTuple(avro_row1)
-//    };
-//    std::set<struct lineorder_record> temp_records {record1, record2};
-//    auto *temp_set = new std::unordered_map<int, std::set<struct lineorder_record>>;
-//    temp_set->insert(std::make_pair(0, temp_records)); // partition 0 -> 2 hardcoded records
-//    *lineorder_record_ptr = temp_set;
-
     //Assign pointers
     *lineorder_record_ptr = lineorder_record_map;
     *customer_record_ptr = customer_record_map;

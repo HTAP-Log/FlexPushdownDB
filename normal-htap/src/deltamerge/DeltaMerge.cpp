@@ -455,25 +455,25 @@ void DeltaMerge::deltaMerge() {
     auto timeGenerateDeleteMap = end_1 - start_1;
     auto timeGenerateFinalResult = end_2 - start_2;
 
-    SPDLOG_CRITICAL(fmt::format("Operator: {}, time generateDeleteMaps {}, time generateFinalResults {}", name(), timeGenerateDeleteMap.count(), timeGenerateFinalResult.count()));
+    // Display DeltaMerge Stats
+    SPDLOG_INFO(fmt::format("Operator: {}, time generateDeleteMaps {}, time generateFinalResults {}", name(), timeGenerateDeleteMap.count(), timeGenerateFinalResult.count()));
 
-    // Stats
-//    auto wait_time = wait_end - wait_start;
-//    auto runtime = runtime_end - runtime_start;
-//    logical_total_time = wait_time.count() + runtime.count();
-//    auto actual_temp = runtime_end - wait_start;
-//    actual_total_time = actual_temp.count();
-//
-//    auto bench_msg = fmt::format("Operator: {}, wait time: {}, runtime: {}, logical total time: {}, actual total time: {}"
-//            , name(), wait_time.count(), runtime.count(), logical_total_time, actual_total_time);
-//
-//    SPDLOG_CRITICAL(bench_msg);
-//    SPDLOG_CRITICAL(fmt::format("Operator: {}, last sender: {}", name(), lastSenderName));
-    //SPDLOG_CRITICAL(fmt::format("{} generateFinalResult called.", name()));
+    auto wait_time = wait_end - wait_start;
+    auto runtime = runtime_end - runtime_start;
+    logical_total_time = wait_time.count() + runtime.count();
+    auto actual_temp = runtime_end - wait_start;
+    actual_total_time = actual_temp.count();
+
+    auto bench_msg = fmt::format("Operator: {}, wait time: {}, runtime: {}, logical total time: {}, actual total time: {}"
+            , name(), wait_time.count(), runtime.count(), logical_total_time, actual_total_time);
+
+    SPDLOG_INFO(bench_msg);
+    SPDLOG_INFO(fmt::format("Operator: {}, last sender: {}", name(), lastSenderName));
+    SPDLOG_INFO(fmt::format("{} generateFinalResult called.", name()));
 
     std::shared_ptr<core::message::Message>
     tupleMessage = std::make_shared<core::message::TupleMessage>(output->toTupleSetV1(), name());
-    ctx()->tell(tupleMessage);  // TODO: Problem might at here
+    ctx()->tell(tupleMessage);
 
     //SPDLOG_CRITICAL("{}: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~TupleMessage was send.", name());
 }
