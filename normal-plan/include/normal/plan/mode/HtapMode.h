@@ -1,0 +1,10 @@
+//
+// Created by ZhangOscar on 1/13/22.
+//
+
+#ifndef HTAP_LOG_FULLPULLUPWITHHTAP_H
+#define HTAP_LOG_FULLPULLUPWITHHTAP_H
+
+
+
+#endif //HTAP_LOG_FULLPULLUPWITHHTAP_H
