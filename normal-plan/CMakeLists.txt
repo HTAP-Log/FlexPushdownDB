@@ -37,7 +37,8 @@ add_library(normal-plan STATIC
         src/mode/HybridCachingMode.cpp include/normal/plan/mode/HybridCachingMode.h
         src/mode/Modes.cpp include/normal/plan/mode/Modes.h
         src/mode/FullPullupMode.cpp include/normal/plan/mode/FullPullupMode.h
-        src/mode/HybridCachingLastMode.cpp include/normal/plan/mode/HybridCachingLastMode.h)
+        src/mode/HybridCachingLastMode.cpp include/normal/plan/mode/HybridCachingLastMode.h
+        src/mode/HtapMode.cpp include/normal/plan/mode/HtapMode.h)
 
 target_include_directories(normal-plan PUBLIC include)
 
@@ -45,7 +46,6 @@ target_link_libraries(normal-plan PRIVATE spdlog::spdlog)
 target_link_libraries(normal-plan PRIVATE fmt::fmt)
 target_link_libraries(normal-plan PUBLIC normal-pushdown)
 target_link_libraries(normal-plan PUBLIC normal-connector)
-target_link_libraries(normal-plan PUBLIC normal-htap)
 
 
 #-----------------------------------------------------------------------------------------------------------------------

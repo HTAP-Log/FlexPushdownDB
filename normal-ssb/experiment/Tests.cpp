@@ -304,7 +304,7 @@ void normal::ssb::concurrentGetTest(int numRequests) {
                 (((double) totalBytesReturned * 8 / numTrials / 1024.0 / 1024.0 / 1024.0) / averageTrialTimeNS));
 }
 
-void normal::ssb::htapTest() {
+void normal::ssb::htapTest(int test_mode) {
 
     const std::vector<std::string> queryNames{
             "1.1", "1.2", "1.3",
@@ -327,7 +327,17 @@ void normal::ssb::htapTest() {
     auto currentPath = std::filesystem::current_path();
     auto sql_file_dir_path = currentPath.append("sql/original"); // running original SSB queries
 
-    auto mode = normal::plan::operator_::mode::Modes::fullPullupMode();
+    std::shared_ptr<Mode> mode;
+    switch (test_mode) {
+        case 0:
+            mode = normal::plan::operator_::mode::Modes::fullPullupMode();
+            break;
+        case 1:
+            mode = normal::plan::operator_::mode::Modes::htapMode();
+            break;
+        default:
+            throw std::runtime_error("Mode not found, type: " + std::to_string(test_mode));
+    }
     auto cachingPolicy = LRUCachingPolicy::make(cacheSize, mode);;
 
     // interpreter
@@ -353,7 +363,6 @@ void normal::ssb::htapTest() {
 void normal::ssb::mainTest(size_t cacheSize, int modeType, int cachingPolicyType, const std::string &dirPrefix,
                            size_t networkLimit, bool writeResults) {
     spdlog::set_level(spdlog::level::warn);
-    SPDLOG_CRITICAL("### Check ");
     // parameters
     const int warmBatchSize = 50, executeBatchSize = 50;
     std::string bucket_name = "pushdowndb-htap";

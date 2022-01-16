@@ -7,21 +7,25 @@
 using namespace normal::plan::operator_::mode;
 
 std::shared_ptr<FullPullupMode> Modes::fullPullupMode() {
-  return std::make_shared<FullPullupMode>();
+    return std::make_shared<FullPullupMode>();
 }
 
 std::shared_ptr<FullPushdownMode> Modes::fullPushdownMode() {
-  return std::make_shared<FullPushdownMode>();
+    return std::make_shared<FullPushdownMode>();
 }
 
 std::shared_ptr<PullupCachingMode> Modes::pullupCachingMode() {
-  return std::make_shared<PullupCachingMode>();
+    return std::make_shared<PullupCachingMode>();
 }
 
 std::shared_ptr<HybridCachingMode> Modes::hybridCachingMode() {
-  return std::make_shared<HybridCachingMode>();
+    return std::make_shared<HybridCachingMode>();
 }
 
 std::shared_ptr<HybridCachingLastMode> Modes::hybridCachingLastMode() {
-  return std::make_shared<HybridCachingLastMode>();
+    return std::make_shared<HybridCachingLastMode>();
+}
+
+std::shared_ptr<HtapMode> Modes::htapMode() {
+    return std::make_shared<HtapMode>();
 }

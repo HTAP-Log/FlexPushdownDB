@@ -39,9 +39,6 @@ S3SelectScanLogicalOperator::S3SelectScanLogicalOperator(
 std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectScanLogicalOperator::toOperators() {
     //  validPartitions_ = (!predicate_) ? getPartitioningScheme()->partitions() : getValidPartitions(predicate_);
 
-    // construct physical operators
-    return toOperatorsHTAP();
-
     auto mode = getMode();
     switch (mode->id()) {
         case plan::operator_::mode::FullPullup: return toOperatorsFullPullup(NumRanges);
@@ -49,6 +46,7 @@ std::shared_ptr<std::vector<std::shared_ptr<normal::core::Operator>>> S3SelectSc
         case plan::operator_::mode::PullupCaching: return toOperatorsPullupCaching(NumRanges);
         case plan::operator_::mode::HybridCaching: return toOperatorsHybridCaching(NumRanges);
         case plan::operator_::mode::HybridCachingLast: return toOperatorsHybridCachingLast(NumRanges);
+        case plan::operator_::mode::Htap: return toOperatorsHTAP();
         default:
             throw std::runtime_error(fmt::format("Unrecognized mode: '{}'", mode->toString()));
     }
@@ -303,23 +301,23 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
     for (const auto &partition: *getPartitioningScheme()->partitions()) {
         // Check if valid for predicates (if will get empty result), and extract only useful predicates (can at least filter out some)
-        auto validPair = checkPartitionValid(partition);
-        if (!validPair.first) {
-            continue;
-        }
-        auto finalPredicate = validPair.second;
+//        auto validPair = checkPartitionValid(partition);
+//        if (!validPair.first) {
+//            continue;
+//        }
+//        auto finalPredicate = validPair.second;
 
         // Prepare filterPredicate, neededColumnNames
         auto predicateColumnNames = std::make_shared<std::vector<std::string>>();
         std::shared_ptr<pushdown::filter::FilterPredicate> filterPredicate;
-        if (finalPredicate) {
-            // predicate column names
-            predicateColumnNames = finalPredicate->involvedColumnNames();
-            auto predicateColumnNameSet = std::make_shared<std::set<std::string>>(predicateColumnNames->begin(), predicateColumnNames->end());
-            predicateColumnNames->assign(predicateColumnNameSet->begin(), predicateColumnNameSet->end());
-            // filter predicate
-            filterPredicate = filter::FilterPredicate::make(finalPredicate);
-        }
+//        if (finalPredicate) {
+//            // predicate column names
+//            predicateColumnNames = finalPredicate->involvedColumnNames();
+//            auto predicateColumnNameSet = std::make_shared<std::set<std::string>>(predicateColumnNames->begin(), predicateColumnNames->end());
+//            predicateColumnNames->assign(predicateColumnNameSet->begin(), predicateColumnNameSet->end());
+//            // filter predicate
+//            filterPredicate = filter::FilterPredicate::make(finalPredicate);
+//        }
         auto allNeededColumnNameSet = std::make_shared<std::set<std::string>>(projectedColumnNames_->begin(), projectedColumnNames_->end());
         allNeededColumnNameSet->insert(predicateColumnNames->begin(), predicateColumnNames->end());
         auto allNeededColumnNames = std::make_shared<std::vector<std::string>>(allNeededColumnNameSet->begin(), allNeededColumnNameSet->end());
@@ -371,19 +369,20 @@ S3SelectScanLogicalOperator::toOperatorsFullPullup(int numRanges) {
 
             std::shared_ptr<Operator> upStreamOfProj;
             // Filter if it has filterPredicate
-            if (finalPredicate) {
-                auto filter = filter::Filter::make(
-                        fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
-                        filterPredicate,
-                        queryId);
-                operators->emplace_back(filter);
-
-                scanOp->produce(filter);
-                filter->consume(scanOp);
-                streamOutPhysicalOperators_->emplace_back(filter);
-            } else {
-                streamOutPhysicalOperators_->emplace_back(scanOp);
-            }
+//            if (finalPredicate) {
+//                auto filter = filter::Filter::make(
+//                        fmt::format("filter-{}/{}-{}", s3Bucket, s3Object, rangeId),
+//                        filterPredicate,
+//                        queryId);
+//                operators->emplace_back(filter);
+//
+//                scanOp->produce(filter);
+//                filter->consume(scanOp);
+//                streamOutPhysicalOperators_->emplace_back(filter);
+//            } else {
+//                streamOutPhysicalOperators_->emplace_back(scanOp);
+//            }
+            streamOutPhysicalOperators_->emplace_back(scanOp);
             // No project needed as S3Get does a project based on the neededColumns input
 
             rangeId++;

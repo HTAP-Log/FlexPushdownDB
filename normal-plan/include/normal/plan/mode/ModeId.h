@@ -7,14 +7,14 @@
 
 namespace normal::plan::operator_::mode {
 
-enum ModeId {
-  HTAP,
-  FullPullup,
-  FullPushdown,
-  PullupCaching,
-  HybridCaching,
-  HybridCachingLast
-};
+    enum ModeId {
+        FullPullup,
+        FullPushdown,
+        PullupCaching,
+        HybridCaching,
+        HybridCachingLast,
+        Htap
+    };
 
 }
 

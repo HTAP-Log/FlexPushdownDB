@@ -88,7 +88,10 @@ int main(int argc, char **argv) {
             mainTest(cacheSize, modeType, cachingPolicyType, dirPrefix, networkLimit, false);
         } else if (std::string(argv[4]) == "htap") {
             SPDLOG_INFO("Running HTAP mode");
-            htapTest();
+            htapTest(1);
+        } else if (std::string(argv[4]) == "base") {
+            SPDLOG_INFO("Running BASE mode");
+            htapTest(0);
         } else {
             // write result
             bool writeResults = atoi(argv[4]);

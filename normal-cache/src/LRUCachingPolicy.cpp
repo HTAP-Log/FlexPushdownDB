@@ -17,7 +17,7 @@ std::shared_ptr<LRUCachingPolicy> LRUCachingPolicy::make() {
                                             normal::plan::operator_::mode::Modes::pullupCachingMode());
 }
 
-std::shared_ptr<LRUCachingPolicy> LRUCachingPolicy::make(size_t maxSize, std::shared_ptr<normal::plan::operator_::mode::Mode> mode) {
+std::shared_ptr<LRUCachingPolicy> LRUCachingPolicy::make(size_t maxSize, const std::shared_ptr<normal::plan::operator_::mode::Mode>& mode) {
   return std::make_shared<LRUCachingPolicy>(maxSize, mode);
 }
 

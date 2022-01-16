@@ -11,21 +11,28 @@
 #include "PullupCachingMode.h"
 #include "HybridCachingMode.h"
 #include "HybridCachingLastMode.h"
+#include "HtapMode.h"
 
-namespace normal::plan::operator_::mode{
+namespace normal::plan::operator_::mode {
 
-/**
- * Mode factories
- */
-class Modes {
+    /**
+     * Mode factories
+     */
+    class Modes {
 
-public:
-  static std::shared_ptr<FullPullupMode> fullPullupMode();
-  static std::shared_ptr<FullPushdownMode> fullPushdownMode();
-  static std::shared_ptr<PullupCachingMode> pullupCachingMode();
-  static std::shared_ptr<HybridCachingMode> hybridCachingMode();
-  static std::shared_ptr<HybridCachingLastMode> hybridCachingLastMode();
-};
+    public:
+        static std::shared_ptr<FullPullupMode> fullPullupMode();
+
+        static std::shared_ptr<FullPushdownMode> fullPushdownMode();
+
+        static std::shared_ptr<PullupCachingMode> pullupCachingMode();
+
+        static std::shared_ptr<HybridCachingMode> hybridCachingMode();
+
+        static std::shared_ptr<HybridCachingLastMode> hybridCachingLastMode();
+
+        static std::shared_ptr<HtapMode> htapMode();
+    };
 
 }
 

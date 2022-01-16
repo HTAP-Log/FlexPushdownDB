@@ -11,7 +11,7 @@
 #include <spdlog/spdlog.h>
 
 namespace normal::ssb {
-    void htapTest();
+    void htapTest(int test_mode);
 }
 
 #endif //NORMAL_NORMAL_SSB_INCLUDE_NORMAL_SSB_GLOBALS_H
